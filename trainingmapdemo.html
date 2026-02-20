@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Mappa Leaflet da Google Sheet - Tema Scuro</title>
+  <!-- Google Fonts: Comfortaa -->
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    body, table {
+      font-family: 'Comfortaa', cursive;
+      background-color: #1e1e1e; /* sfondo scuro globale */
+      color: #f0f0f0; /* testo chiaro */
+      margin: 0;
+    }
+    #map { height: 100vh; width: 100%; }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+    }
+    td {
+      padding: 4px 8px;
+      border: 1px solid #444;
+    }
+    tr:nth-child(even) { background-color: #2a2a2a; }
+    tr:nth-child(odd) { background-color: #1f1f1f; }
+    td.value { font-weight: bold; text-align: right; color: #ffd700; } /* valori gialli */
+    td.key { text-align: left; color: #f0f0f0; }
+
+    /* popup scrollabile */
+    .leaflet-popup-content-wrapper {
+      max-height: 400px;
+      overflow-y: auto;
+      background-color: #2a2a2a;
+      color: #f0f0f0;
+    }
+    .leaflet-popup-content table {
+      width: 100%;
+    }
+
+    /* pulsante Naviga a giallo */
+    .popup-btn {
+      margin-bottom: 5px;
+      padding: 5px 10px;
+      font-size: 13px;
+      background-color: #ffd700; /* giallo */
+      color: #1e1e1e; /* testo scuro */
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<script>
+// Link CSV del foglio Real_Time_Map
+const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3asr7iNREmon_px3MLiLhbU78DDi-MucJx8sds6yX1e303P23wjR0IitnaNhFRNzDkzd/pub?gid=744101024&single=true&output=csv";
+
+// Inizializza mappa
+const map = L.map('map').setView([41.9, 12.5], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+// Funzione per scegliere icona Flaticon (puoi sostituire con versioni colorate per ogni tipologia)
+function getIconUrl(tipo) {
+  tipo = tipo?.toLowerCase() || "";
+  if(tipo.includes("addestramento")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
+  if(tipo.includes("esercitazione")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
+  if(tipo.includes("intervento")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
+  return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
+}
+
+// Legge CSV
+Papa.parse(sheetUrl, {
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  complete: function(results) {
+    const data = results.data;
+    if(data.length === 0) return;
+
+    const markers = L.featureGroup();
+    const headers = Object.keys(data[0]);
+
+    data.forEach(row => {
+      const coordStr = row["Coordinate"];
+      if(coordStr) {
+        const [lat, lng] = coordStr.split(',').map(x => parseFloat(x.trim()));
+        if(!isNaN(lat) && !isNaN(lng)) {
+
+          // Marker con icona Flaticon
+          const icon = L.icon({
+            iconUrl: getIconUrl(row["Tipologia addestramento"]),
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+          });
+
+          const marker = L.marker([lat, lng], {icon: icon}).addTo(map);
+
+          // popup con pulsante in alto e tabella
+          let popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">
+Naviga a
+</button>`;
+
+          popupContent += "<table>";
+          headers.forEach(key => {
+            if(row[key] !== undefined) {
+              popupContent += `<tr><td class="key">${key}</td><td class="value">${row[key]}</td></tr>`;
+            }
+          });
+          popupContent += "</table>";
+
+          marker.bindPopup(popupContent);
+
+          // hover effetto porta marker sopra gli altri
+          marker.on('mouseover', function() {
+            this.setZIndexOffset(1000);
+          });
+          marker.on('mouseout', function() {
+            this.setZIndexOffset(0);
+          });
+
+          markers.addLayer(marker);
+        }
+      }
+    });
+
+    if(markers.getLayers().length > 0) {
+      map.fitBounds(markers.getBounds().pad(0.2));
+    }
+  }
+});
+</script>
+</body>
+</html>
