@@ -100,12 +100,26 @@ Papa.parse(sheetUrl, {
 
           // popup con tabella a righe alternate
           let popupContent = "<table>";
-          headers.forEach((key, index) => {
+          headers.forEach((key) => {
             if(row[key] !== undefined) {
               popupContent += `<tr><td class="key">${key}</td><td class="value">${row[key]}</td></tr>`;
             }
           });
           popupContent += "</table>";
+          
+          // Aggiungi pulsante Naviga dentro il popup
+          popupContent += `<button style="
+            margin-top:5px;
+            padding:5px 10px;
+            font-size:13px;
+            background-color:#007bff;
+            color:white;
+            border:none;
+            border-radius:3px;
+            cursor:pointer;
+          " onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">
+            Naviga a
+          </button>`;
 
           marker.bindPopup(popupContent);
 
