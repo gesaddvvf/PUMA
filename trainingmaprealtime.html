@@ -2,15 +2,19 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Mappa Leaflet da Google Sheet</title>
+  <title>Mappa Leaflet da Google Sheet - Tema Scuro</title>
   <!-- Google Fonts: Comfortaa -->
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     body, table {
       font-family: 'Comfortaa', cursive;
+      background-color: #1e1e1e; /* sfondo scuro globale */
+      color: #f0f0f0; /* testo chiaro */
+      margin: 0;
     }
     #map { height: 100vh; width: 100%; }
+
     table {
       border-collapse: collapse;
       width: 100%;
@@ -18,29 +22,35 @@
     }
     td {
       padding: 4px 8px;
-      border: 1px solid #ddd;
+      border: 1px solid #444;
     }
-    tr:nth-child(even) { background-color: #f0f8ff; }
-    tr:nth-child(odd) { background-color: #ffffff; }
-    td.value { font-weight: bold; text-align: right; }
-    td.key { text-align: left; }
+    tr:nth-child(even) { background-color: #2a2a2a; }
+    tr:nth-child(odd) { background-color: #1f1f1f; }
+    td.value { font-weight: bold; text-align: right; color: #ffd700; } /* valori gialli */
+    td.key { text-align: left; color: #f0f0f0; }
 
     /* popup scrollabile */
     .leaflet-popup-content-wrapper {
       max-height: 400px;
       overflow-y: auto;
+      background-color: #2a2a2a;
+      color: #f0f0f0;
+    }
+    .leaflet-popup-content table {
+      width: 100%;
     }
 
-    /* stile pulsante interno popup */
+    /* pulsante Naviga a giallo */
     .popup-btn {
       margin-bottom: 5px;
       padding: 5px 10px;
       font-size: 13px;
-      background-color: #28a745; /* verde */
-      color: white;
+      background-color: #ffd700; /* giallo */
+      color: #1e1e1e; /* testo scuro */
       border: none;
       border-radius: 3px;
       cursor: pointer;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -64,7 +74,7 @@ function getIconUrl(tipo) {
   if(tipo.includes("addestramento")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
   if(tipo.includes("esercitazione")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
   if(tipo.includes("intervento")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
-  return "https://cdn-icons-png.flaticon.com/512/684/684908.png"; // default blu
+  return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
 }
 
 // Legge CSV
