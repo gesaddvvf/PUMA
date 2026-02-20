@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Mappa Leaflet dinamica da Google Sheet</title>
+  <title>Mappa Leaflet da Google Sheet</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #map { height: 100vh; width: 100%; }
@@ -43,6 +43,7 @@ Papa.parse(sheetUrl, {
     const headers = Object.keys(data[0]); // tutte le intestazioni
 
     data.forEach(row => {
+      // Coordinate sempre dalla colonna E
       const coordStr = row["Coordinate"];
       if(coordStr) {
         const [lat, lng] = coordStr.split(',').map(x => parseFloat(x.trim()));
@@ -50,7 +51,7 @@ Papa.parse(sheetUrl, {
 
           const marker = L.circleMarker([lat, lng], {
             radius: 6,
-            fillColor: getMarkerColor(row["Tipologia addestramento"]),
+            fillColor: getMarkerColor(row["Tipologia addestramento"]), // colonna D
             color: "#000",
             weight: 1,
             opacity: 1,
