@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Mappa Leaflet con dati Google Sheet</title>
+  <title>Mappa Leaflet dinamica da Google Sheet</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #map { height: 100vh; width: 100%; }
@@ -17,13 +17,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 <script>
-const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3asr7iNREmon_px3MLiLhbU78DDi-MucJx8sds6yX1e303P23wjR0IitnaNhFRNzDkzd/pub?gid=744101024&single=true&output=csv";
+const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3asr7iNREmon_px3MLiLhbU78DDi-MucJx8sds6yX1e303P23wjR0IitnaNhFRNzDkzd/pub?gid=990096396&single=true&output=csv";
 
-// Inizializza mappa centrata sull'Italia
+// Inizializza mappa
 const map = L.map('map').setView([41.9, 12.5], 6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-// Colore marker in base a Tipologia addestramento (colonna D)
+// Colore marker in base a Tipologia addestramento
 function getMarkerColor(tipo) {
   if(tipo && tipo.toLowerCase().includes("addestramento")) return "red";
   return "blue";
@@ -33,37 +33,34 @@ function getMarkerColor(tipo) {
 Papa.parse(sheetUrl, {
   download: true,
   header: true,
+  skipEmptyLines: true,
   complete: function(results) {
     const data = results.data;
+    if(data.length === 0) return;
+
     const markers = L.featureGroup();
+    // Prende tutte le intestazioni dalla prima riga
+    const headers = Object.keys(data[0]);
 
     data.forEach(row => {
-      const coordStr = row["Coordinate"]; // colonna E
+      const coordStr = row["Coordinate"];
       if(coordStr) {
         const [lat, lng] = coordStr.split(',').map(x => parseFloat(x.trim()));
         if(!isNaN(lat) && !isNaN(lng)) {
 
           const marker = L.circleMarker([lat, lng], {
             radius: 6,
-            fillColor: getMarkerColor(row["Tipologia addestramento"]), // colonna D
+            fillColor: getMarkerColor(row["Tipologia addestramento"]),
             color: "#000",
             weight: 1,
             opacity: 1,
             fillOpacity: 0.8
           }).addTo(map);
 
-          // popup con colonne da A a O
-          const cols = [
-            "Informazioni cronologiche","Comando Organizzatore","Squadra",
-            "Tipologia addestramento","Coordinate","Area di Addestramento",
-            "Giorno ed Ora Inizio","Giorno ed Ora Fine","Targhe, sigle o tipologia",
-            "Canale Radio (VHF)","Canale Radio di Squadra (UHF)","Nominativo Veterinario",
-            "Numero di telefono Veterinario","Data","Presenti"
-          ];
-
+          // popup dinamico con tutte le colonne
           let popupContent = "<table>";
-          cols.forEach(key => {
-            if(row[key] !== undefined){
+          headers.forEach(key => {
+            if(row[key] !== undefined) {
               popupContent += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`;
             }
           });
@@ -75,7 +72,7 @@ Papa.parse(sheetUrl, {
       }
     });
 
-    // centra la mappa sui marker
+    // centra mappa sui marker
     if(markers.getLayers().length > 0) {
       map.fitBounds(markers.getBounds().pad(0.2));
     }
