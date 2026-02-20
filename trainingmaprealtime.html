@@ -10,7 +10,7 @@
     body, table {
       font-family: 'Comfortaa', cursive;
     }
-    #map { height: 90vh; width: 100%; }
+    #map { height: 100vh; width: 100%; }
     table {
       border-collapse: collapse;
       width: 100%;
@@ -20,35 +20,31 @@
       padding: 4px 8px;
       border: 1px solid #ddd;
     }
-    tr:nth-child(even) { background-color: #f0f8ff; } /* colore chiaro alternato */
+    tr:nth-child(even) { background-color: #f0f8ff; }
     tr:nth-child(odd) { background-color: #ffffff; }
     td.value { font-weight: bold; text-align: right; }
     td.key { text-align: left; }
-    #navigateBtn {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      z-index: 1000;
-      display: none;
-    }
-      /* Aggiunto scroll ai popup grandi */
+
+    /* popup scrollabile */
     .leaflet-popup-content-wrapper {
       max-height: 400px;
       overflow-y: auto;
+    }
+    /* stile pulsante interno popup */
+    .popup-btn {
+      margin-top:5px;
+      padding:5px 10px;
+      font-size:13px;
+      background-color:#007bff;
+      color:white;
+      border:none;
+      border-radius:3px;
+      cursor:pointer;
     }
   </style>
 </head>
 <body>
 <div id="map"></div>
-<button id="navigateBtn">Naviga a</button>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -61,15 +57,14 @@ const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3as
 const map = L.map('map').setView([41.9, 12.5], 6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-// Colore marker in base a Tipologia addestramento
-function getMarkerColor(tipo) {
-  if(tipo && tipo.toLowerCase().includes("addestramento")) return "red";
-  return "blue";
+// Funzione per scegliere colore icona in base alla tipologia
+function getIconUrl(tipo) {
+  tipo = tipo?.toLowerCase() || "";
+  if(tipo.includes("addestramento")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png"; // rosso
+  if(tipo.includes("esercitazione")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png"; // arancione
+  if(tipo.includes("intervento")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png"; // verde
+  return "https://cdn-icons-png.flaticon.com/512/684/684908.png"; // default blu
 }
-
-// Bottone navigazione
-const navigateBtn = document.getElementById('navigateBtn');
-let currentCoords = null;
 
 // Legge CSV
 Papa.parse(sheetUrl, {
@@ -89,51 +84,36 @@ Papa.parse(sheetUrl, {
         const [lat, lng] = coordStr.split(',').map(x => parseFloat(x.trim()));
         if(!isNaN(lat) && !isNaN(lng)) {
 
-          const marker = L.circleMarker([lat, lng], {
-            radius: 6,
-            fillColor: getMarkerColor(row["Tipologia addestramento"]),
-            color: "#000",
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.8
-          }).addTo(map);
+          // Marker con icona Flaticon
+          const icon = L.icon({
+            iconUrl: getIconUrl(row["Tipologia addestramento"]),
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+          });
 
-          // popup con tabella a righe alternate
+          const marker = L.marker([lat, lng], {icon: icon}).addTo(map);
+
+          // popup con tabella
           let popupContent = "<table>";
-          headers.forEach((key) => {
+          headers.forEach(key => {
             if(row[key] !== undefined) {
               popupContent += `<tr><td class="key">${key}</td><td class="value">${row[key]}</td></tr>`;
             }
           });
           popupContent += "</table>";
-          
-          // Aggiungi pulsante Naviga dentro il popup
-          popupContent += `<button style="
-            margin-top:5px;
-            padding:5px 10px;
-            font-size:13px;
-            background-color:#007bff;
-            color:white;
-            border:none;
-            border-radius:3px;
-            cursor:pointer;
-          " onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">
-            Naviga a
-          </button>`;
+
+          // pulsante naviga dentro popup
+          popupContent += `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">Naviga a</button>`;
 
           marker.bindPopup(popupContent);
 
-          // Aggiorna coordinate correnti e mostra bottone al click
-          marker.on('click', function() {
-            currentCoords = [lat, lng];
-            navigateBtn.style.display = "block";
-          
-            // Fa spostare la mappa verso il marker con un offset verticale
-            const popupHeight = 150; // altezza stimata del popup in pixel
-            const point = map.latLngToContainerPoint([lat, lng]);
-            const targetPoint = L.point(point.x, point.y - popupHeight / 2);
-            const targetLatLng = map.containerPointToLatLng(targetPoint);
-            map.panTo(targetLatLng, { animate: true });
+          // hover effetto
+          marker.on('mouseover', function() {
+            this.setZIndexOffset(1000); // porta sopra
+          });
+          marker.on('mouseout', function() {
+            this.setZIndexOffset(0);
           });
 
           markers.addLayer(marker);
@@ -144,41 +124,6 @@ Papa.parse(sheetUrl, {
     if(markers.getLayers().length > 0) {
       map.fitBounds(markers.getBounds().pad(0.2));
     }
-  }
-});
-
-function getMarkerColor(tipo) {
-  if(!tipo) return "#3498db"; // blu di default
-  tipo = tipo.toLowerCase();
-  if(tipo.includes("addestramento")) return "#e74c3c"; // rosso
-  if(tipo.includes("esercitazione")) return "#f39c12"; // arancione
-  if(tipo.includes("intervento")) return "#27ae60"; // verde
-  return "#3498db";
-}
-
-const marker = L.circleMarker([lat, lng], {
-  radius: 12,                 // più grande
-  fillColor: getMarkerColor(row["Tipologia addestramento"]),
-  color: "#222",               // bordo scuro
-  weight: 2,                   // bordo più evidente
-  opacity: 1,
-  fillOpacity: 0.9
-}).addTo(map);
-
-// Effetto hover: ingrandisce leggermente il marker
-marker.on('mouseover', function() {
-  this.setRadius(16);
-});
-marker.on('mouseout', function() {
-  this.setRadius(12);
-});
-
-// Navigazione
-navigateBtn.addEventListener('click', function() {
-  if(currentCoords) {
-    const [lat, lng] = currentCoords;
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-    window.open(url, "_blank");
   }
 });
 </script>
