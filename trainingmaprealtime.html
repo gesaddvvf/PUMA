@@ -31,10 +31,13 @@
 
     /* popup scrollabile */
     .leaflet-popup-content-wrapper {
-      max-height: 400px;
-      overflow-y: auto;
-      background-color: #2a2a2a;
-      color: #f0f0f0;
+        max-height: 70vh; /* meglio su mobile */
+        min-width: 200px;
+        max-width: 90vw;
+        overflow-y: auto;
+    }
+    .leaflet-popup-tip {
+        background: #2a2a2a; /* punta popup tema scuro */
     }
     .leaflet-popup-content table {
       width: 100%;
@@ -43,8 +46,8 @@
     /* pulsante Naviga a giallo */
     .popup-btn {
       margin-bottom: 5px;
-      padding: 5px 10px;
-      font-size: 13px;
+      padding: 10px 114px;
+      font-size: 16px;
       background-color: #ffd700; /* giallo */
       color: #1e1e1e; /* testo scuro */
       border: none;
@@ -65,7 +68,10 @@
 const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3asr7iNREmon_px3MLiLhbU78DDi-MucJx8sds6yX1e303P23wjR0IitnaNhFRNzDkzd/pub?gid=744101024&single=true&output=csv";
 
 // Inizializza mappa
-const map = L.map('map').setView([41.9, 12.5], 6);
+const map = L.map('map', {
+    tap: true,
+    touchZoom: true
+}).setView([41.9, 12.5], 6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
 // Funzione per scegliere icona Flaticon (puoi sostituire con versioni colorate per ogni tipologia)
