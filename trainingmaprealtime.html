@@ -108,6 +108,13 @@ Papa.parse(sheetUrl, {
           marker.on('click', function() {
             currentCoords = [lat, lng];
             navigateBtn.style.display = "block";
+          
+            // Fa spostare la mappa verso il marker con un offset verticale
+            const popupHeight = 150; // altezza stimata del popup in pixel
+            const point = map.latLngToContainerPoint([lat, lng]);
+            const targetPoint = L.point(point.x, point.y - popupHeight / 2);
+            const targetLatLng = map.containerPointToLatLng(targetPoint);
+            map.panTo(targetLatLng, { animate: true });
           });
 
           markers.addLayer(marker);
