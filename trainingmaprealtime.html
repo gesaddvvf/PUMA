@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Mappa Leaflet con dati Google Sheet</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-o9N1j7kM0r4p1nXH6E6ZpG/wKtp1n7yCw3+j8FZ0zZk=" crossorigin=""/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #map { height: 100vh; width: 100%; }
   </style>
@@ -12,52 +11,46 @@
 <body>
 <div id="map"></div>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-pvHRZVn+VxbU5l3EnwMC3AdJv0f06lBbbTNVdR9U7a4=" crossorigin=""></script>
-
-<!-- PapaParse per leggere CSV -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 <script>
 const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3asr7iNREmon_px3MLiLhbU78DDi-MucJx8sds6yX1e303P23wjR0IitnaNhFRNzDkzd/pub?gid=990096396&single=true&output=csv";
 
-// Inizializza mappa centrata su Italia
+// Inizializza la mappa centrata sull'Italia
 const map = L.map('map').setView([41.9, 12.5], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-// Aggiunge basemap OpenStreetMap
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19
-}).addTo(map);
-
-// Funzione per colore pallini in base al tipo
+// Colore marker in base a Tipologia addestramento
 function getMarkerColor(tipo) {
-  if(tipo.toLowerCase() === "addestramento") return "red";
+  if(tipo && tipo.toLowerCase().includes("addestramento")) return "red";
   return "blue";
 }
 
-// Legge CSV con PapaParse
+// Legge CSV
 Papa.parse(sheetUrl, {
   download: true,
-  header: true,  // usa intestazioni
+  header: true,
   complete: function(results) {
     const data = results.data;
+    const markers = L.featureGroup(); // per centrare la mappa sui marker
+
     data.forEach(row => {
-      const coordStr = row["E"]; // colonna E per lat,lng
+      const coordStr = row["Coordinate"];
       if(coordStr) {
-        // coordStr es: "44.1234,12.5678"
-        const [lat, lng] = coordStr.split(',').map(Number);
+        const [lat, lng] = coordStr.split(',').map(x => parseFloat(x.trim()));
         if(!isNaN(lat) && !isNaN(lng)) {
-          const marker = L.circleMarker([lat,lng], {
+
+          const marker = L.circleMarker([lat, lng], {
             radius: 6,
-            fillColor: getMarkerColor(row["Tipo"] || row["Azione"] || "addestramento"), 
+            fillColor: getMarkerColor(row["Tipologia addestramento"]),
             color: "#000",
             weight: 1,
             opacity: 1,
             fillOpacity: 0.8
           }).addTo(map);
 
-          // popup con tutte le info della riga
+          // popup con tutte le informazioni
           let popupContent = "<table>";
           Object.keys(row).forEach(key => {
             popupContent += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`;
@@ -65,9 +58,15 @@ Papa.parse(sheetUrl, {
           popupContent += "</table>";
 
           marker.bindPopup(popupContent);
+          markers.addLayer(marker);
         }
       }
     });
+
+    // centra la mappa sui marker
+    if(markers.getLayers().length > 0) {
+      map.fitBounds(markers.getBounds().pad(0.2));
+    }
   }
 });
 </script>
