@@ -3,15 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <title>Mappa Leaflet da Google Sheet</title>
+  <!-- Google Fonts: Comfortaa -->
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    #map { height: 100vh; width: 100%; }
-    table { border-collapse: collapse; }
-    td { padding: 2px 5px; border: 1px solid #ccc; }
+    body, table {
+      font-family: 'Comfortaa', cursive;
+    }
+    #map { height: 90vh; width: 100%; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+    }
+    td {
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+    }
+    tr:nth-child(even) { background-color: #f0f8ff; } /* colore chiaro alternato */
+    tr:nth-child(odd) { background-color: #ffffff; }
+    td.value { font-weight: bold; text-align: right; }
+    td.key { text-align: left; }
+    #navigateBtn {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 1000;
+      display: none;
+    }
   </style>
 </head>
 <body>
 <div id="map"></div>
+<button id="navigateBtn">Naviga a</button>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -30,6 +62,10 @@ function getMarkerColor(tipo) {
   return "blue";
 }
 
+// Bottone navigazione
+const navigateBtn = document.getElementById('navigateBtn');
+let currentCoords = null;
+
 // Legge CSV
 Papa.parse(sheetUrl, {
   download: true,
@@ -40,10 +76,9 @@ Papa.parse(sheetUrl, {
     if(data.length === 0) return;
 
     const markers = L.featureGroup();
-    const headers = Object.keys(data[0]); // tutte le intestazioni
+    const headers = Object.keys(data[0]);
 
     data.forEach(row => {
-      // Coordinate sempre dalla colonna E
       const coordStr = row["Coordinate"];
       if(coordStr) {
         const [lat, lng] = coordStr.split(',').map(x => parseFloat(x.trim()));
@@ -51,32 +86,47 @@ Papa.parse(sheetUrl, {
 
           const marker = L.circleMarker([lat, lng], {
             radius: 6,
-            fillColor: getMarkerColor(row["Tipologia addestramento"]), // colonna D
+            fillColor: getMarkerColor(row["Tipologia addestramento"]),
             color: "#000",
             weight: 1,
             opacity: 1,
             fillOpacity: 0.8
           }).addTo(map);
 
-          // popup dinamico con tutte le colonne
+          // popup con tabella a righe alternate
           let popupContent = "<table>";
-          headers.forEach(key => {
+          headers.forEach((key, index) => {
             if(row[key] !== undefined) {
-              popupContent += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`;
+              popupContent += `<tr><td class="key">${key}</td><td class="value">${row[key]}</td></tr>`;
             }
           });
           popupContent += "</table>";
 
           marker.bindPopup(popupContent);
+
+          // Aggiorna coordinate correnti e mostra bottone al click
+          marker.on('click', function() {
+            currentCoords = [lat, lng];
+            navigateBtn.style.display = "block";
+          });
+
           markers.addLayer(marker);
         }
       }
     });
 
-    // centra mappa sui marker
     if(markers.getLayers().length > 0) {
       map.fitBounds(markers.getBounds().pad(0.2));
     }
+  }
+});
+
+// Navigazione
+navigateBtn.addEventListener('click', function() {
+  if(currentCoords) {
+    const [lat, lng] = currentCoords;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    window.open(url, "_blank");
   }
 });
 </script>
