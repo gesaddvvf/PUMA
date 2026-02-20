@@ -106,9 +106,7 @@ Papa.parse(sheetUrl, {
           const marker = L.marker([lat, lng], {icon: icon}).addTo(map);
 
           // popup con pulsante in alto e tabella
-          let popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">
-Naviga a
-</button>`;
+          let popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>`;
 
           popupContent += "<table>";
           headers.forEach(key => {
