@@ -30,16 +30,17 @@
       max-height: 400px;
       overflow-y: auto;
     }
+
     /* stile pulsante interno popup */
     .popup-btn {
-      margin-top:5px;
-      padding:5px 10px;
-      font-size:13px;
-      background-color:#007bff;
-      color:white;
-      border:none;
-      border-radius:3px;
-      cursor:pointer;
+      margin-bottom: 5px;
+      padding: 5px 10px;
+      font-size: 13px;
+      background-color: #28a745; /* verde */
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -57,12 +58,12 @@ const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3as
 const map = L.map('map').setView([41.9, 12.5], 6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-// Funzione per scegliere colore icona in base alla tipologia
+// Funzione per scegliere icona Flaticon (puoi sostituire con versioni colorate per ogni tipologia)
 function getIconUrl(tipo) {
   tipo = tipo?.toLowerCase() || "";
-  if(tipo.includes("addestramento")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png"; // rosso
-  if(tipo.includes("esercitazione")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png"; // arancione
-  if(tipo.includes("intervento")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png"; // verde
+  if(tipo.includes("addestramento")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
+  if(tipo.includes("esercitazione")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
+  if(tipo.includes("intervento")) return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
   return "https://cdn-icons-png.flaticon.com/512/684/684908.png"; // default blu
 }
 
@@ -94,8 +95,10 @@ Papa.parse(sheetUrl, {
 
           const marker = L.marker([lat, lng], {icon: icon}).addTo(map);
 
-          // popup con tabella
-          let popupContent = "<table>";
+          // popup con pulsante in alto e tabella
+          let popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>`;
+
+          popupContent += "<table>";
           headers.forEach(key => {
             if(row[key] !== undefined) {
               popupContent += `<tr><td class="key">${key}</td><td class="value">${row[key]}</td></tr>`;
@@ -103,14 +106,11 @@ Papa.parse(sheetUrl, {
           });
           popupContent += "</table>";
 
-          // pulsante naviga dentro popup
-          popupContent += `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>`;
-
           marker.bindPopup(popupContent);
 
-          // hover effetto
+          // hover effetto porta marker sopra gli altri
           marker.on('mouseover', function() {
-            this.setZIndexOffset(1000); // porta sopra
+            this.setZIndexOffset(1000);
           });
           marker.on('mouseout', function() {
             this.setZIndexOffset(0);
