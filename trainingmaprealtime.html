@@ -133,6 +133,32 @@ Papa.parse(sheetUrl, {
   }
 });
 
+function getMarkerColor(tipo) {
+  if(!tipo) return "#3498db"; // blu di default
+  tipo = tipo.toLowerCase();
+  if(tipo.includes("addestramento")) return "#e74c3c"; // rosso
+  if(tipo.includes("esercitazione")) return "#f39c12"; // arancione
+  if(tipo.includes("intervento")) return "#27ae60"; // verde
+  return "#3498db";
+}
+
+const marker = L.circleMarker([lat, lng], {
+  radius: 12,                 // più grande
+  fillColor: getMarkerColor(row["Tipologia addestramento"]),
+  color: "#222",               // bordo scuro
+  weight: 2,                   // bordo più evidente
+  opacity: 1,
+  fillOpacity: 0.9
+}).addTo(map);
+
+// Effetto hover: ingrandisce leggermente il marker
+marker.on('mouseover', function() {
+  this.setRadius(16);
+});
+marker.on('mouseout', function() {
+  this.setRadius(12);
+});
+
 // Navigazione
 navigateBtn.addEventListener('click', function() {
   if(currentCoords) {
