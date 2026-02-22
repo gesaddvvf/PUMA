@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accesso Moduli</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #000000, #2b2b2b);
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 10px;
+}
+
+/* CONTENITORE */
+.container {
+  background: #111;
+  padding: 22px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+  text-align: center;
+  width: 100%;
+  max-width: 480px;
+  border: 2px solid #ffd100;
+}
+
+h1 {
+  color: #ffd100;
+  margin-bottom: 15px;
+}
+
+/* PULSANTI */
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 10px 0;
+  padding: 20px;
+  border: none;
+  border-radius: 40px;
+  background: linear-gradient(135deg, #ffd100, #ffb800);
+  color: #000;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: left;
+  transition: 0.2s;
+}
+
+.btn:hover {
+  transform: scale(1.03);
+  background: linear-gradient(135deg, #ffe45c, #ffc400);
+}
+
+/* pulsante gestione comando */
+.admin-btn {
+  background: #ffffff;
+  color: #000;
+  font-weight: bold;
+}
+
+.admin-btn:hover {
+  background: #f2f2f2;
+}
+
+/* area riservata evidenziata */
+.area-box {
+  margin-top: 15px;
+  padding: 15px;
+  border: 2px dashed #ffd100;
+  border-radius: 15px;
+  background: #0d0d0d;
+}
+
+/* ICONA */
+.btn .icon {
+  font-size: 28px;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* TESTO */
+.btn .text {
+  line-height: 1.3;
+}
+
+/* SECONDARIO */
+.secondary {
+  background: #333;
+  color: #ffd100;
+}
+
+.secondary:hover {
+  background: #444;
+}
+
+/* LOGIN */
+input {
+  width: 90%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ffd100;
+  background: #000;
+  color: #ffd100;
+}
+
+#loginBox {
+  margin-top: 10px;
+}
+
+/* FOOTER */
+footer {
+  margin-top: 15px;
+  font-size: 12px;
+  color: #aaa;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Accesso Moduli</h1>
+
+<a class="btn" href="https://forms.gle/7zLVo9W4BLd7i4yE9" target="_blank">
+  <span class="icon">1 📋</span>
+  <span class="text">Profilazione individuale iniziale</span>
+</a>
+
+<a class="btn" href="https://forms.gle/B6xQDnDTXL5EvcBj8" target="_blank">
+  <span class="icon">2 📝</span>
+  <span class="text">
+    Registrazione attività,<br>modifica utente<br>stampa report individuale
+  </span>
+</a>
+
+<a class="btn" href="https://forms.gle/Vns7AzW3KyTztyv36" target="_blank">
+  <span class="icon">3 📅</span>
+  <span class="text">Pianificazione e gestione addestramenti collettivi<br></span>
+</a>
+
+  <!-- Accesso area riservata -->
+<button class="btn secondary" onclick="mostraLogin()">
+  <span class="icon">4 🔒</span>
+  <span class="text">Area Riservata</span>
+</button>
+
+  <!-- Form login -->
+  <div id="loginBox" class="hidden">
+    <input type="password" id="password" placeholder="Inserisci password">
+    <button class="btn" onclick="login()">Accedi</button>
+  </div>
+
+  <!-- Area protetta -->
+  <div id="areaProtetta" class="hidden area-box">
+    <h3 style="color:#ffd100; margin-bottom:10px;">
+⚠️⚠️⚠️ Area Gestione Comando ⚠️⚠️⚠️
+</h3>
+
+<button class="btn admin-btn" onclick="apriModulo()">
+  <span class="icon">🏢</span>
+  <span class="text">
+    Apri Modulo Gestione Comando<br>
+    Stampa Report Collettivi
+  </span>
+</button>
+
+    <button class="btn secondary" onclick="logout()">
+      Logout
+    </button>
+  </div>
+
+  <footer>Area operativa riservata</footer>
+</div>
+
+<script>
+const PASSWORD_CORRETTA = "********"; // cambia qui
+
+function mostraLogin() {
+  document.getElementById("loginBox").classList.remove("hidden");
+}
+
+function login() {
+  const passField = document.getElementById("password");
+  const pass = passField.value;
+
+  if(pass === PASSWORD_CORRETTA){
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("areaProtetta").classList.remove("hidden");
+    passField.value = "";
+  } else {
+    alert("Password errata");
+    passField.value = "";
+  }
+}
+
+function apriModulo(){
+  window.open("https://forms.gle/WoabAMrU5jfUouzL7", "_blank");
+}
+
+function logout(){
+  document.getElementById("areaProtetta").classList.add("hidden");
+  document.getElementById("loginBox").classList.add("hidden");
+}
+</script>
+
+</body>
+</html>
