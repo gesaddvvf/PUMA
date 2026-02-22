@@ -183,6 +183,12 @@ footer {
 <script>
 const PASSWORD_CORRETTA = "********"; // cambia qui
 
+document.addEventListener("DOMContentLoaded", function() {
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("areaProtetta").classList.add("hidden");
+  document.getElementById("password").value = "";
+});
+
 function mostraLogin() {
   document.getElementById("loginBox").classList.remove("hidden");
 }
@@ -195,9 +201,11 @@ function login() {
     document.getElementById("loginBox").classList.add("hidden");
     document.getElementById("areaProtetta").classList.remove("hidden");
     passField.value = "";
+    passField.blur();
   } else {
     alert("Password errata");
     passField.value = "";
+    passField.blur();
   }
 }
 
@@ -208,6 +216,7 @@ function apriModulo(){
 function logout(){
   document.getElementById("areaProtetta").classList.add("hidden");
   document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("password").value = "";
 }
 </script>
 
