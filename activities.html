@@ -8,12 +8,11 @@
 <style>
 body {
   font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #000000, #2b2b2b);
+  background: trasparent;
   margin: 0;
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
   padding: 20px 10px;
 }
 
@@ -22,102 +21,130 @@ body {
   background: #111;
   padding: 22px;
   border-radius: 20px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
-  text-align: center;
   width: 100%;
   max-width: 480px;
   border: 2px solid #ffd100;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
 }
 
 h1 {
   color: #ffd100;
+  text-align: center;
   margin-bottom: 15px;
 }
 
-/* PULSANTI */
+/* PULSANTI PRINCIPALI */
 .btn {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
+  box-sizing: border-box;
   margin: 10px 0;
-  padding: 20px;
-  border: none;
+  padding: 15px;
   border-radius: 40px;
   background: linear-gradient(135deg, #ffd100, #ffb800);
   color: #000;
   font-size: 16px;
   font-weight: bold;
+  border: none;
   cursor: pointer;
   text-decoration: none;
   text-align: left;
-  transition: 0.2s;
 }
 
 .btn:hover {
-  transform: scale(1.03);
   background: linear-gradient(135deg, #ffe45c, #ffc400);
 }
 
-/* pulsante gestione comando */
-.admin-btn {
-  background: #ffffff;
-  color: #000;
-  font-weight: bold;
+/* icona */
+.icon {
+  font-size: 26px;
+  min-width: 60px;
+  text-align: center;
 }
 
-.admin-btn:hover {
-  background: #f2f2f2;
+/* pulsante area riservata */
+.secondary {
+  background: #333;
+  color: #ff3333;
 }
 
-/* area riservata evidenziata */
+/* AREA RISERVATA */
 .area-box {
   margin-top: 15px;
   padding: 15px;
   border: 2px dashed #ffd100;
   border-radius: 15px;
   background: #0d0d0d;
+  color: #ff3333;
 }
 
-/* ICONA */
-.btn .icon {
-  font-size: 28px;
-  min-width: 80px;
+/* titolo area riservata */
+.area-box h3 {
+  margin-top: 0;
   text-align: center;
 }
 
-/* TESTO */
-.btn .text {
-  line-height: 1.3;
+/* pulsante gestione comando */
+.admin-btn {
+  background: #ffffff;
+  color: #000;
 }
 
-/* SECONDARIO */
-.secondary {
-  background: #333;
-  color: #ffd100;
-}
-
-.secondary:hover {
-  background: #444;
-}
-
-/* LOGIN */
-input {
-  width: 90%;
+/* CAMPO PASSWORD */
+#loginBox input {
+  width: 100%;
   padding: 10px;
   margin-top: 10px;
   border-radius: 8px;
-  border: 1px solid #ffd100;
-  background: #000;
-  color: #ffd100;
+  border: 2px solid #ff3333;
+  background: #333;
+  color: #ff3333;
+  box-sizing: border-box;
 }
 
-#loginBox {
-  margin-top: 10px;
+/* BOTTONI LOGIN */
+.login-btn {
+  background: #333;
+  color: #ff3333;
+  border: 2px solid #ff3333;
+  font-weight: bold;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  padding: 10px;
 }
 
-/* FOOTER */
+/* PULSANTE ANNULLA */
+.cancel-btn {
+  background: #333;
+  color: #ff3333;
+  border: 2px solid #ff3333;
+  font-weight: bold;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  padding: 10px;
+}
+
+.login-btn:hover {
+  background: #444;
+  color: #ff6666;
+}
+
+.hidden {
+  display: none;
+}
+
 footer {
+  text-align: center;
   margin-top: 15px;
   font-size: 12px;
   color: #aaa;
@@ -129,84 +156,81 @@ footer {
 <div class="container">
   <h1>Accesso Moduli</h1>
 
-<a class="btn" href="https://forms.gle/7zLVo9W4BLd7i4yE9" target="_blank">
-  <span class="icon">1 📋</span>
-  <span class="text">Profilazione individuale iniziale</span>
-</a>
+  <!-- PULSANTI PUBBLICI -->
+  <a class="btn" href="https://forms.gle/7zLVo9W4BLd7i4yE9" target="_blank">
+    <span class="icon">1 📋</span>
+    Profilazione individuale iniziale
+  </a>
 
-<a class="btn" href="https://forms.gle/B6xQDnDTXL5EvcBj8" target="_blank">
-  <span class="icon">2 📝</span>
-  <span class="text">
-    Registrazione attività,<br>modifica utente<br>stampa report individuale
-  </span>
-</a>
+  <a class="btn" href="https://forms.gle/B6xQDnDTXL5EvcBj8" target="_blank">
+    <span class="icon">2 📝</span>
+    Registrazione attività<br>Modifica utente<br>Stampa report individuale
+  </a>
 
-<a class="btn" href="https://forms.gle/Vns7AzW3KyTztyv36" target="_blank">
-  <span class="icon">3 📅</span>
-  <span class="text">Pianificazione e gestione addestramenti collettivi<br></span>
-</a>
+  <a class="btn" href="https://forms.gle/Vns7AzW3KyTztyv36" target="_blank">
+    <span class="icon">3 📅</span>
+    Pianificazione e gestione addestramenti collettivi
+  </a>
 
-  <!-- Accesso area riservata -->
-<button class="btn secondary" onclick="mostraLogin()">
-  <span class="icon">4 🔒</span>
-  <span class="text">Area Riservata</span>
-</button>
+  <!-- ACCESSO AREA RISERVATA -->
+  <button class="btn secondary" onclick="mostraLogin()">
+    <span class="icon">4 🔒</span>
+    Area Riservata
+  </button>
 
-  <!-- Form login -->
+  <!-- LOGIN -->
   <div id="loginBox" class="hidden">
-    <input type="password" id="password" placeholder="Inserisci password">
-    <button class="btn" onclick="login()">Accedi</button>
+    <input type="password" id="password" placeholder="Inserisci password"
+           onkeypress="if(event.key==='Enter') login()">
+
+    <div style="display:flex; justify-content:space-between; margin-top:10px;">
+    <button class="btn login-btn" style="width:120px;" onclick="login()">ACCEDI</button>
+    <button class="btn cancel-btn" style="width:120px;" onclick="annullaLogin()">ANNULLA</button>
+    </div>
   </div>
 
-  <!-- Area protetta -->
+  <!-- AREA PROTETTA -->
   <div id="areaProtetta" class="hidden area-box">
-    <h3 style="color:#ffd100; margin-bottom:10px;">
-⚠️⚠️⚠️ Area Gestione Comando ⚠️⚠️⚠️
-</h3>
+    <h3>⚠️ Area Gestione Comando ⚠️</h3>
 
-<button class="btn admin-btn" onclick="apriModulo()">
-  <span class="icon">🏢</span>
-  <span class="text">
-    Apri Modulo Gestione Comando<br>
-    Stampa Report Collettivi
-  </span>
-</button>
-
-    <button class="btn secondary" onclick="logout()">
-      Logout
+    <button class="btn admin-btn" onclick="apriModulo()">
+      <span class="icon">🏢</span>
+      Apri Modulo Gestione Comando<br>
+      Stampa Report Collettivi
     </button>
+
+    <button class="btn secondary" onclick="logout()">Logout</button>
   </div>
 
-  <footer>Area operativa riservata</footer>
+  <footer>P.U.M.A. Piattaforma Unificata Monitoraggio Addestramenti</footer>
 </div>
 
 <script>
 const PASSWORD_CORRETTA = "********"; // cambia qui
 
-document.addEventListener("DOMContentLoaded", function() {
-  document.getElementById("loginBox").classList.add("hidden");
-  document.getElementById("areaProtetta").classList.add("hidden");
-  document.getElementById("password").value = "";
+document.addEventListener("DOMContentLoaded", () => {
+  logout(); // reset stato all'apertura
 });
 
 function mostraLogin() {
   document.getElementById("loginBox").classList.remove("hidden");
 }
 
+function annullaLogin() {
+  logout();
+}
+
 function login() {
   const passField = document.getElementById("password");
-  const pass = passField.value;
 
-  if(pass === PASSWORD_CORRETTA){
+  if(passField.value === PASSWORD_CORRETTA){
     document.getElementById("loginBox").classList.add("hidden");
     document.getElementById("areaProtetta").classList.remove("hidden");
-    passField.value = "";
-    passField.blur();
   } else {
     alert("Password errata");
-    passField.value = "";
-    passField.blur();
   }
+
+  passField.value = "";
 }
 
 function apriModulo(){
@@ -214,8 +238,8 @@ function apriModulo(){
 }
 
 function logout(){
-  document.getElementById("areaProtetta").classList.add("hidden");
   document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("areaProtetta").classList.add("hidden");
   document.getElementById("password").value = "";
 }
 </script>
