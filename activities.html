@@ -119,6 +119,12 @@ h1 {
   padding: 10px;
 }
 
+.login-btn:hover {
+  background: linear-gradient(135deg, #ffe45c, #ffc400);
+  color: #000;
+  border-color: #ffc400;
+}
+
 /* PULSANTE ANNULLA */
 .cancel-btn {
   background: #ff3333;
@@ -134,9 +140,10 @@ h1 {
   padding: 10px;
 }
 
-.login-btn:hover {
-  background: #444;
-  color: #ff6666;
+.cancel-btn:hover {
+  background: linear-gradient(135deg, #ffe45c, #ffc400);
+  color: #000;
+  border-color: #ffc400;
 }
 
 .hidden {
@@ -184,8 +191,8 @@ footer {
            onkeypress="if(event.key==='Enter') login()">
 
     <div style="display:flex; justify-content:space-between; margin-top:10px;">
-    <button class="btn login-btn" style="width:120px;" onclick="login()">ACCEDI</button>
-    <button class="btn cancel-btn" style="width:120px;" onclick="annullaLogin()">ANNULLA</button>
+    <button class="btn login-btn" style="width:140px;" onclick="login()">ACCEDI</button>
+    <button class="btn cancel-btn" style="width:140px;" onclick="annullaLogin()">ANNULLA</button>
     </div>
   </div>
 
@@ -213,7 +220,21 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function mostraLogin() {
-  document.getElementById("loginBox").classList.remove("hidden");
+  const loginBox = document.getElementById("loginBox");
+  const areaProtetta = document.getElementById("areaProtetta");
+
+  // se qualcosa è visibile → nasconde tutto
+  if (!loginBox.classList.contains("hidden") || 
+      !areaProtetta.classList.contains("hidden")) {
+
+    loginBox.classList.add("hidden");
+    areaProtetta.classList.add("hidden");
+    document.getElementById("password").value = "";
+
+  } else {
+    // altrimenti mostra il login
+    loginBox.classList.remove("hidden");
+  }
 }
 
 function annullaLogin() {
