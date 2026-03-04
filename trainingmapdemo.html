@@ -95,6 +95,7 @@ Papa.parse(sheetUrl, {
     const markers = L.featureGroup();
     const headers = Object.keys(data[0]);
 
+// Dentro Papa.parse, nella funzione data.forEach
 data.forEach(row => {
   const coordStr = row["Coordinate"];
   if(coordStr) {
@@ -110,37 +111,8 @@ data.forEach(row => {
 
       const marker = L.marker([lat,lng], {icon: icon}).addTo(map);
 
-      // Pulsante navigazione
-      let popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>`;
-
       // Tabella popup
-      popupContent += "<div style='position: relative;'>";
-
-      // Se Compilazione = TEST, aggiungi filigrana bianca ripetuta
-      if(row["Compilazione"]?.toUpperCase() === "TEST") {
-        popupContent += `
-          <div style="
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #0000ff; /* blu */
-            z-index: 0;
-            overflow: hidden;
-            display: flex;
-            flex-wrap: wrap;
-            align-content: center;
-            justify-content: center;
-            color: rgba(255,255,255,0.15);
-            font-size: 48px;
-            font-weight: bold;
-            pointer-events: none;
-          ">
-            TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST
-          </div>
-        `;
-      }
-
-      // Tabella con z-index sopra la filigrana
-      popupContent += `<table style="position: relative; z-index: 1;">`;
+      let tableHtml = `<table>`;
       headers.forEach(key => {
         if(key === "Compilazione") return; // non mostrare Compilazione
         if(row[key] !== undefined) {
@@ -148,12 +120,52 @@ data.forEach(row => {
           val = val.replace(/\((\d+)\)/g, (match, num) => {
             return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
           });
-          popupContent += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
+          tableHtml += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
         }
       });
-      popupContent += "</table></div>";
+      tableHtml += "</table>";
 
-      marker.bindPopup(popupContent);
+      let popupContent = "";
+
+      // Controllo Compilazione = TEST
+      if(row["Compilazione"]?.toUpperCase() === "TEST") {
+        // Sfondo blu + filigrana diagonale
+        popupContent = `
+          <div style="
+            position: relative;
+            background-color: #0000ff;
+            color: #ffffff;
+          ">
+            <!-- Filigrana diagonale -->
+            <div style="
+              position: absolute;
+              top: 0; left: 0; right: 0; bottom: 0;
+              background-image: repeating-linear-gradient(
+                45deg,
+                rgba(255,255,255,0.1) 0px,
+                rgba(255,255,255,0.1) 1px,
+                transparent 1px,
+                transparent 20px
+              );
+              pointer-events: none;
+              z-index: 0;
+            "></div>
+
+            <!-- Contenuto sopra -->
+            <div style="position: relative; z-index: 1; padding: 5px;">
+              <button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>
+              ${tableHtml}
+            </div>
+          </div>
+        `;
+      } else {
+        // Popup normale
+        popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>` + tableHtml;
+      }
+
+      marker.bindPopup(popupContent, {
+        className: row["Compilazione"]?.toUpperCase() === "TEST" ? 'test-popup' : ''
+      });
 
       marker.on('mouseover', function() { this.setZIndexOffset(1000); });
       marker.on('mouseout', function() { this.setZIndexOffset(0); });
