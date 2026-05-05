@@ -147,7 +147,21 @@ function chiudiTutti(){
 
 /* APERTURA MODULI */
 function apriModulo(n){
+  const frame = document.getElementById("frame"+n);
+  const btn = document.querySelectorAll(".btn")[n-1];
+
+  // Se è già aperto → chiudi
+  if(!frame.classList.contains("hidden")){
+    frame.classList.add("hidden");
+    frame.src = "";
+    btn.classList.remove("active");
+    return;
+  }
+
+  // Chiudi tutto prima
   chiudiTutti();
+
+  document.querySelectorAll(".btn").forEach(b => b.classList.remove("active"));
 
   const link = {
     1: "https://docs.google.com/forms/d/e/1FAIpQLSex-4B482W87qQfynn76qGeesezbszvUNR8gDXlB-Lo-ylQWw/viewform?embedded=true",
@@ -155,9 +169,11 @@ function apriModulo(n){
     3: "https://docs.google.com/forms/d/e/1FAIpQLSeqQNgaqhXLEPl7ilHosVrspMHhVwUzdGL24pWWhMxKKREBhA/viewform?embedded=true"
   };
 
-  const frame = document.getElementById("frame"+n);
   frame.src = link[n];
   frame.classList.remove("hidden");
+
+  // Attiva effetto compressione
+  btn.classList.add("active");
 }
 
 /* ADMIN */
