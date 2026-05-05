@@ -167,16 +167,28 @@ footer {
     <span class="icon">1 📋</span>
     Profilazione individuale iniziale
   </a>
+  
+  <iframe id="frameModulo1" class="hidden" 
+        style="width:100%; height:600px; border:none; margin-top:15px;">
+  </iframe>
 
   <a class="btn" href="https://forms.gle/B6xQDnDTXL5EvcBj8" target="_blank">
     <span class="icon">2 📝</span>
     Registrazione attività<br>Modifica utente<br>Stampa report individuale
   </a>
+  
+  <iframe id="frameModulo2" class="hidden" 
+        style="width:100%; height:600px; border:none; margin-top:15px;">
+  </iframe>  
 
   <a class="btn" href="https://forms.gle/Vns7AzW3KyTztyv36" target="_blank">
     <span class="icon">3 📅</span>
     Pianificazione e gestione addestramenti collettivi
   </a>
+  
+  <iframe id="frameModulo3" class="hidden" 
+        style="width:100%; height:600px; border:none; margin-top:15px;">
+  </iframe>
 
   <!-- ACCESSO AREA RISERVATA -->
   <button class="btn secondary" onclick="mostraLogin()">
@@ -255,6 +267,24 @@ function login() {
 
 function apriModulo(){
   window.open("https://forms.gle/WoabAMrU5jfUouzL7", "_blank");
+}
+
+function apriModulo1(){
+  const frame1 = document.getElementById("frameModulo1");
+  frame1.src = "https://forms.gle/7zLVo9W4BLd7i4yE9";
+  frame1.classList.remove("hidden");
+}
+
+function apriModulo2(){
+  const frame2 = document.getElementById("frameModulo2");
+  frame2.src = "https://forms.gle/B6xQDnDTXL5EvcBj8";
+  frame2.classList.remove("hidden");
+}
+
+function apriModulo3(){
+  const frame3 = document.getElementById("frameModulo2");
+  frame3.src = "https://forms.gle/Vns7AzW3KyTztyv36";
+  frame3.classList.remove("hidden");
 }
 
 function logout(){
