@@ -265,6 +265,13 @@ function login() {
   passField.value = "";
 }
 
+function chiudiTutti(){
+  document.getElementById("frameModulo").classList.add("hidden");
+  document.getElementById("frameModulo1").classList.add("hidden");
+  document.getElementById("frameModulo2").classList.add("hidden");
+  document.getElementById("frameModulo3").classList.add("hidden");
+}
+
 function apriModulo(){
   window.open("https://forms.gle/WoabAMrU5jfUouzL7", "_blank");
 }
