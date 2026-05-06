@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accesso Moduli</title>
+<title>Accesso Moduli P.U.M.A.</title>
 
 <style>
 body {
   font-family: Arial, sans-serif;
-  background: trasparent;
+  background: transparent;
   margin: 0;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   padding: 20px 10px;
-  overflow: hidden;
+  /* Rimosso overflow:hidden per permettere lo scorrimento dei frame */
 }
 
 /* CONTENITORE */
@@ -32,6 +32,7 @@ h1 {
   color: #ffd100;
   text-align: center;
   margin-bottom: 15px;
+  font-size: 24px;
 }
 
 /* PULSANTI PRINCIPALI */
@@ -61,7 +62,7 @@ h1 {
 /* icona */
 .icon {
   font-size: 26px;
-  min-width: 60px;
+  min-width: 50px;
   text-align: center;
 }
 
@@ -81,13 +82,11 @@ h1 {
   color: #ff3333;
 }
 
-/* titolo area riservata */
 .area-box h3 {
   margin-top: 0;
   text-align: center;
 }
 
-/* pulsante gestione comando */
 .admin-btn {
   background: #ffffff;
   color: #000;
@@ -96,64 +95,43 @@ h1 {
 /* CAMPO PASSWORD */
 #loginBox input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   margin-top: 10px;
   border-radius: 8px;
   border: 2px solid #ff3333;
   background: #333;
-  color: #ff3333;
+  color: #fff;
   box-sizing: border-box;
 }
 
-/* BOTTONI LOGIN */
 .login-btn {
   background: #333;
   color: #ff3333;
   border: 2px solid #ff3333;
-  font-weight: bold;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  text-align: center;
-  padding: 10px;
 }
 
-.login-btn:hover {
-  background: linear-gradient(135deg, #ffe45c, #ffc400);
-  color: #000;
-  border-color: #ffc400;
-}
-
-/* PULSANTE ANNULLA */
 .cancel-btn {
   background: #ff3333;
-  color: #333;
-  border: 2px solid #333;
-  font-weight: bold;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  text-align: center;
-  padding: 10px;
-}
-
-.cancel-btn:hover {
-  background: linear-gradient(135deg, #ffe45c, #ffc400);
-  color: #000;
-  border-color: #ffc400;
+  color: #fff;
 }
 
 .hidden {
   display: none;
 }
 
+/* STILE FRAME */
+iframe {
+  width: 100%;
+  height: 600px;
+  border: none;
+  margin-top: 15px;
+  border-radius: 15px;
+  background: #fff;
+}
+
 footer {
   text-align: center;
-  margin-top: 15px;
+  margin-top: 20px;
   font-size: 12px;
   color: #aaa;
 }
@@ -162,33 +140,28 @@ footer {
 <body>
 
 <div class="container">
-  <!-- PULSANTI PUBBLICI -->
-  <a class="btn" onclick="apriModulo1() target="_blank">
+  <h1>P.U.M.A.</h1>
+
+  <!-- MODULO 1 -->
+  <button class="btn" onclick="toggleModulo(1)">
     <span class="icon">1 📋</span>
     Profilazione individuale iniziale
-  </a>
-  
-  <iframe id="frameModulo1" class="hidden" 
-        style="width:100%; height:600px; border:none; margin-top:15px;">
-  </iframe>
+  </button>
+  <iframe id="frame1" class="hidden"></iframe>
 
-  <a class="btn" href="https://forms.gle/B6xQDnDTXL5EvcBj8" target="_blank">
+  <!-- MODULO 2 -->
+  <button class="btn" onclick="toggleModulo(2)">
     <span class="icon">2 📝</span>
-    Registrazione attività<br>Modifica utente<br>Stampa report individuale
-  </a>
-  
-  <iframe id="frameModulo2" class="hidden" 
-        style="width:100%; height:600px; border:none; margin-top:15px;">
-  </iframe>  
+    Registrazione attività / Report individuale
+  </button>
+  <iframe id="frame2" class="hidden"></iframe>
 
-  <a class="btn" href="https://forms.gle/Vns7AzW3KyTztyv36" target="_blank">
+  <!-- MODULO 3 -->
+  <button class="btn" onclick="toggleModulo(3)">
     <span class="icon">3 📅</span>
-    Pianificazione e gestione addestramenti collettivi
-  </a>
-  
-  <iframe id="frameModulo3" class="hidden" 
-        style="width:100%; height:600px; border:none; margin-top:15px;">
-  </iframe>
+    Pianificazione addestramenti collettivi
+  </button>
+  <iframe id="frame3" class="hidden"></iframe>
 
   <!-- ACCESSO AREA RISERVATA -->
   <button class="btn secondary" onclick="mostraLogin()">
@@ -198,103 +171,88 @@ footer {
 
   <!-- LOGIN -->
   <div id="loginBox" class="hidden">
-    <input type="password" id="password" placeholder="Inserisci password"
-           onkeypress="if(event.key==='Enter') login()">
-
-    <div style="display:flex; justify-content:space-between; margin-top:10px;">
-    <button class="btn login-btn" style="width:140px;" onclick="login()">ACCEDI</button>
-    <button class="btn cancel-btn" style="width:140px;" onclick="annullaLogin()">ANNULLA</button>
+    <input type="password" id="password" placeholder="Inserisci password" onkeypress="if(event.key==='Enter') login()">
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button class="btn login-btn" onclick="login()">ACCEDI</button>
+      <button class="btn cancel-btn" onclick="annullaLogin()">ANNULLA</button>
     </div>
   </div>
 
   <!-- AREA PROTETTA -->
   <div id="areaProtetta" class="hidden area-box">
-    <h3>⚠️ Area Gestione Comando ⚠️</h3>
-
-    <button class="btn admin-btn" onclick="apriModulo()">
+    <h3>⚠️ Gestione Comando ⚠️</h3>
+    <button class="btn admin-btn" onclick="toggleModulo('Admin')">
       <span class="icon">🏢</span>
-      Apri Modulo Gestione Comando<br>
-      Stampa Report Collettivi
+      Apri Modulo Gestione Comando
     </button>
-
-    <button class="btn secondary" onclick="logout()">Logout</button>
+    <iframe id="frameAdmin" class="hidden"></iframe>
+    <button class="btn secondary" style="margin-top:10px;" onclick="logout()">Logout</button>
   </div>
 
-  <footer>P.U.M.A. Piattaforma Unificata Monitoraggio Addestramenti</footer>
+  <footer>Piattaforma Unificata Monitoraggio Addestramenti</footer>
 </div>
 
 <script>
-const PASSWORD_CORRETTA = "********"; // cambia qui
+const PASSWORD_CORRETTA = "********"; // Inserisci qui la tua password
 
-document.addEventListener("DOMContentLoaded", () => {
-  logout(); // reset stato all'apertura
-});
+const LINKS = {
+  1: "https://docs.google.com/forms/d/e/1FAIpQLSex-4B482W87qQfynn76qGeesezbszvUNR8gDXlB-Lo-ylQWw/viewform?embedded=true",
+  2: "https://docs.google.com/forms/d/e/1FAIpQLSdbrjXdP6l7n3yrcVvoiVZsh9hRdZSVrQO4aJyF9riOhuxiBA/viewform?embedded=true",
+  3: "https://docs.google.com/forms/d/e/1FAIpQLSeqQNgaqhXLEPl7ilHosVrspMHhVwUzdGL24pWWhMxKKREBhA/viewform?embedded=true",
+  'Admin': "https://docs.google.com/forms/d/e/1FAIpQLSe_Jav6RwQRWk-l6lWYE_4xQ7tNg8I6Sb-Lq9NeUWJJRCldIg/viewform?embedded=true"
+};
+
+function chiudiTuttiIFrame() {
+  document.querySelectorAll("iframe").forEach(f => {
+    f.classList.add("hidden");
+    f.src = "";
+  });
+}
+
+function toggleModulo(n) {
+  const frame = document.getElementById("frame" + n);
+  
+  if (!frame.classList.contains("hidden")) {
+    frame.classList.add("hidden");
+    frame.src = "";
+  } else {
+    chiudiTuttiIFrame();
+    frame.src = LINKS[n];
+    frame.classList.remove("hidden");
+    // Scroll fluido verso il frame aperto
+    setTimeout(() => frame.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
+  }
+}
 
 function mostraLogin() {
-  const loginBox = document.getElementById("loginBox");
-  const areaProtetta = document.getElementById("areaProtetta");
-
-  // se qualcosa è visibile → nasconde tutto
-  if (!loginBox.classList.contains("hidden") || 
-      !areaProtetta.classList.contains("hidden")) {
-
-    loginBox.classList.add("hidden");
-    areaProtetta.classList.add("hidden");
-    document.getElementById("password").value = "";
-
+  const lb = document.getElementById("loginBox");
+  const ap = document.getElementById("areaProtetta");
+  
+  if (!lb.classList.contains("hidden") || !ap.classList.contains("hidden")) {
+    logout();
   } else {
-    // altrimenti mostra il login
-    loginBox.classList.remove("hidden");
+    chiudiTuttiIFrame();
+    lb.classList.remove("hidden");
   }
+}
+
+function login() {
+  const pass = document.getElementById("password").value;
+  if (pass === PASSWORD_CORRETTA) {
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("areaProtetta").classList.remove("hidden");
+  } else {
+    alert("Password errata");
+  }
+  document.getElementById("password").value = "";
 }
 
 function annullaLogin() {
   logout();
 }
 
-function login() {
-  const passField = document.getElementById("password");
-
-  if(passField.value === PASSWORD_CORRETTA){
-    document.getElementById("loginBox").classList.add("hidden");
-    document.getElementById("areaProtetta").classList.remove("hidden");
-  } else {
-    alert("Password errata");
-  }
-
-  passField.value = "";
-}
-
-function chiudiTutti(){
-  document.getElementById("frameModulo").classList.add("hidden");
-  document.getElementById("frameModulo1").classList.add("hidden");
-  document.getElementById("frameModulo2").classList.add("hidden");
-  document.getElementById("frameModulo3").classList.add("hidden");
-}
-
-function apriModulo(){
-  window.open("https://forms.gle/WoabAMrU5jfUouzL7", "_blank");
-}
-
-function apriModulo1(){
-  const frame1 = document.getElementById("frameModulo1");
-  frame1.src = "https://forms.gle/7zLVo9W4BLd7i4yE9";
-  frame1.classList.remove("hidden");
-}
-
-function apriModulo2(){
-  const frame2 = document.getElementById("frameModulo2");
-  frame2.src = "https://forms.gle/B6xQDnDTXL5EvcBj8";
-  frame2.classList.remove("hidden");
-}
-
-function apriModulo3(){
-  const frame3 = document.getElementById("frameModulo3");
-  frame3.src = "https://forms.gle/Vns7AzW3KyTztyv36";
-  frame3.classList.remove("hidden");
-}
-
-function logout(){
+function logout() {
+  chiudiTuttiIFrame();
   document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("areaProtetta").classList.add("hidden");
   document.getElementById("password").value = "";
