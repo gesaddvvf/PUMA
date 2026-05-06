@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accesso Moduli</title>
+<title>Accesso Moduli P.U.M.A.</title>
 
 <style>
 body {
@@ -14,9 +14,10 @@ body {
   display: flex;
   justify-content: center;
   padding: 20px 10px;
-  overflow: auto; /* FIX scroll */
+  /* Rimosso overflow:hidden per permettere lo scorrimento dei frame */
 }
 
+/* CONTENITORE */
 .container {
   background: #111;
   padding: 22px;
@@ -27,11 +28,20 @@ body {
   box-shadow: 0 8px 25px rgba(0,0,0,0.6);
 }
 
+h1 {
+  color: #ffd100;
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+
+/* PULSANTI PRINCIPALI */
 .btn {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
+  box-sizing: border-box;
   margin: 10px 0;
   padding: 15px;
   border-radius: 40px;
@@ -41,169 +51,211 @@ body {
   font-weight: bold;
   border: none;
   cursor: pointer;
+  text-decoration: none;
+  text-align: left;
 }
 
 .btn:hover {
   background: linear-gradient(135deg, #ffe45c, #ffc400);
 }
 
+/* icona */
 .icon {
   font-size: 26px;
-  min-width: 60px;
+  min-width: 50px;
   text-align: center;
 }
 
+/* pulsante area riservata */
 .secondary {
   background: #333;
   color: #ff3333;
 }
 
+/* AREA RISERVATA */
+.area-box {
+  margin-top: 15px;
+  padding: 15px;
+  border: 2px dashed #ffd100;
+  border-radius: 15px;
+  background: #0d0d0d;
+  color: #ff3333;
+}
+
+.area-box h3 {
+  margin-top: 0;
+  text-align: center;
+}
+
 .admin-btn {
-  background: #fff;
+  background: #ffffff;
   color: #000;
+}
+
+/* CAMPO PASSWORD */
+#loginBox input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 2px solid #ff3333;
+  background: #333;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+.login-btn {
+  background: #333;
+  color: #ff3333;
+  border: 2px solid #ff3333;
+}
+
+.cancel-btn {
+  background: #ff3333;
+  color: #fff;
 }
 
 .hidden {
   display: none;
 }
 
+/* STILE FRAME */
 iframe {
   width: 100%;
   height: 600px;
   border: none;
   margin-top: 15px;
-  border-radius: 10px;
+  border-radius: 15px;
+  background: #fff;
 }
 
 footer {
   text-align: center;
-  margin-top: 15px;
+  margin-top: 20px;
   font-size: 12px;
   color: #aaa;
 }
 </style>
 </head>
-
 <body>
 
 <div class="container">
+  <h1>P.U.M.A.</h1>
 
   <!-- MODULO 1 -->
-  <button class="btn" onclick="apriModulo(1)">
+  <button class="btn" onclick="toggleModulo(1)">
     <span class="icon">1 📋</span>
     Profilazione individuale iniziale
   </button>
   <iframe id="frame1" class="hidden"></iframe>
 
   <!-- MODULO 2 -->
-  <button class="btn" onclick="apriModulo(2)">
+  <button class="btn" onclick="toggleModulo(2)">
     <span class="icon">2 📝</span>
-    Registrazione attività<br>Modifica utente<br>Stampa report individuale
+    Registrazione attività / Report individuale
   </button>
   <iframe id="frame2" class="hidden"></iframe>
 
   <!-- MODULO 3 -->
-  <button class="btn" onclick="apriModulo(3)">
+  <button class="btn" onclick="toggleModulo(3)">
     <span class="icon">3 📅</span>
     Pianificazione addestramenti collettivi
   </button>
   <iframe id="frame3" class="hidden"></iframe>
 
-  <!-- AREA RISERVATA -->
+  <!-- ACCESSO AREA RISERVATA -->
   <button class="btn secondary" onclick="mostraLogin()">
     <span class="icon">4 🔒</span>
     Area Riservata
   </button>
 
+  <!-- LOGIN -->
   <div id="loginBox" class="hidden">
-    <input type="password" id="password" placeholder="Inserisci password">
-    <button class="btn" onclick="login()">ACCEDI</button>
+    <input type="password" id="password" placeholder="Inserisci password" onkeypress="if(event.key==='Enter') login()">
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button class="btn login-btn" onclick="login()">ACCEDI</button>
+      <button class="btn cancel-btn" onclick="annullaLogin()">ANNULLA</button>
+    </div>
   </div>
 
-  <div id="areaProtetta" class="hidden">
-    <button class="btn admin-btn" onclick="apriAdmin()">
+  <!-- AREA PROTETTA -->
+  <div id="areaProtetta" class="hidden area-box">
+    <h3>⚠️ Gestione Comando ⚠️</h3>
+    <button class="btn admin-btn" onclick="toggleModulo('Admin')">
       <span class="icon">🏢</span>
-      Gestione Comando
+      Apri Modulo Gestione Comando
     </button>
-
-    <button class="btn secondary" onclick="logout()">Logout</button>
+    <iframe id="frameAdmin" class="hidden"></iframe>
+    <button class="btn secondary" style="margin-top:10px;" onclick="logout()">Logout</button>
   </div>
 
-  <iframe id="frameAdmin" class="hidden"></iframe>
-
-  <footer>P.U.M.A.</footer>
+  <footer>Piattaforma Unificata Monitoraggio Addestramenti</footer>
 </div>
 
 <script>
-const PASSWORD_CORRETTA = "********";
+const PASSWORD_CORRETTA = "********"; // Inserisci qui la tua password
 
-/* CHIUDE TUTTI I FRAME */
-function chiudiTutti(){
+const LINKS = {
+  1: "https://docs.google.com/forms/d/e/1FAIpQLSex-4B482W87qQfynn76qGeesezbszvUNR8gDXlB-Lo-ylQWw/viewform?embedded=true",
+  2: "https://docs.google.com/forms/d/e/1FAIpQLSdbrjXdP6l7n3yrcVvoiVZsh9hRdZSVrQO4aJyF9riOhuxiBA/viewform?embedded=true",
+  3: "https://docs.google.com/forms/d/e/1FAIpQLSeqQNgaqhXLEPl7ilHosVrspMHhVwUzdGL24pWWhMxKKREBhA/viewform?embedded=true",
+  'Admin': "https://docs.google.com/forms/d/e/1FAIpQLSe_Jav6RwQRWk-l6lWYE_4xQ7tNg8I6Sb-Lq9NeUWJJRCldIg/viewform?embedded=true"
+};
+
+function chiudiTuttiIFrame() {
   document.querySelectorAll("iframe").forEach(f => {
     f.classList.add("hidden");
     f.src = "";
   });
 }
 
-/* APERTURA MODULI */
-function apriModulo(n){
-  const frame = document.getElementById("frame"+n);
-  const btn = document.querySelectorAll(".btn")[n-1];
-
-  // Se è già aperto → chiudi
-  if(!frame.classList.contains("hidden")){
+function toggleModulo(n) {
+  const frame = document.getElementById("frame" + n);
+  
+  if (!frame.classList.contains("hidden")) {
     frame.classList.add("hidden");
     frame.src = "";
-    btn.classList.remove("active");
-    return;
+  } else {
+    chiudiTuttiIFrame();
+    frame.src = LINKS[n];
+    frame.classList.remove("hidden");
+    // Scroll fluido verso il frame aperto
+    setTimeout(() => frame.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
   }
-
-  // Chiudi tutto prima
-  chiudiTutti();
-
-  document.querySelectorAll(".btn").forEach(b => b.classList.remove("active"));
-
-  const link = {
-    1: "https://docs.google.com/forms/d/e/1FAIpQLSex-4B482W87qQfynn76qGeesezbszvUNR8gDXlB-Lo-ylQWw/viewform?embedded=true",
-    2: "https://docs.google.com/forms/d/e/1FAIpQLSdbrjXdP6l7n3yrcVvoiVZsh9hRdZSVrQO4aJyF9riOhuxiBA/viewform?embedded=true",
-    3: "https://docs.google.com/forms/d/e/1FAIpQLSeqQNgaqhXLEPl7ilHosVrspMHhVwUzdGL24pWWhMxKKREBhA/viewform?embedded=true"
-  };
-
-  frame.src = link[n];
-  frame.classList.remove("hidden");
-
-  // Attiva effetto compressione
-  btn.classList.add("active");
 }
 
-/* ADMIN */
-function apriAdmin(){
-  chiudiTutti();
-  const frame = document.getElementById("frameAdmin");
-  frame.src = "https://docs.google.com/forms/d/e/1FAIpQLSe_Jav6RwQRWk-l6lWYE_4xQ7tNg8I6Sb-Lq9NeUWJJRCldIg/viewform?embedded=true";
-  frame.classList.remove("hidden");
+function mostraLogin() {
+  const lb = document.getElementById("loginBox");
+  const ap = document.getElementById("areaProtetta");
+  
+  if (!lb.classList.contains("hidden") || !ap.classList.contains("hidden")) {
+    logout();
+  } else {
+    chiudiTuttiIFrame();
+    lb.classList.remove("hidden");
+  }
 }
 
-/* LOGIN */
-function mostraLogin(){
-  document.getElementById("loginBox").classList.toggle("hidden");
-}
-
-function login(){
+function login() {
   const pass = document.getElementById("password").value;
-
-  if(pass === PASSWORD_CORRETTA){
-    document.getElementById("areaProtetta").classList.remove("hidden");
+  if (pass === PASSWORD_CORRETTA) {
     document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("areaProtetta").classList.remove("hidden");
   } else {
     alert("Password errata");
   }
-
   document.getElementById("password").value = "";
 }
 
-function logout(){
+function annullaLogin() {
+  logout();
+}
+
+function logout() {
+  chiudiTuttiIFrame();
+  document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("areaProtetta").classList.add("hidden");
+  document.getElementById("password").value = "";
 }
 </script>
 
