@@ -27,27 +27,28 @@
       width: 100%;
     }
 
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      font-size: 13px;
-      table-layout: fixed; /* evita che colonne lunghe sfondino il popup */
+    .popup-field {
+      padding: 8px 10px;
+      border-bottom: 1px solid #444;
     }
-    td {
-      padding: 4px 8px;
-      border: 1px solid #444;
-      overflow-wrap: normal; /* non spezza le parole a metà, va a capo solo tra una parola e l'altra */
-      word-break: keep-all;
+    .popup-field:nth-child(even) { background-color: #2a2a2a; }
+    .popup-field:nth-child(odd) { background-color: #1f1f1f; }
+    .popup-field .key {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: #aaaaaa;
+      margin-bottom: 3px;
     }
-    tr:nth-child(even) { background-color: #2a2a2a; }
-    tr:nth-child(odd) { background-color: #1f1f1f; }
-    td.key { text-align: left; color: #f0f0f0; width: 40%; }
-    td.value {
+    .popup-field .value {
+      display: block;
       font-weight: bold;
-      text-align: left;
       color: #ffd700;
-      width: 60%;
-      white-space: pre-line; /* rispetta \n e a capo naturali, ma collassa spazi multipli */
+      font-size: 14px;
+      white-space: pre-line;
+      overflow-wrap: normal;
+      word-break: keep-all;
     }
 
     /* Popup Leaflet responsive */
@@ -55,7 +56,7 @@
       max-height: 70vh;
       max-height: 70dvh;
       min-width: 320px;
-      max-width: min(1300px, 96vw);
+      max-width: min(1100px, 96vw);
       overflow-y: auto;
       background-color: #2a2a2a;
       color: #f0f0f0;
@@ -172,8 +173,8 @@ Papa.parse(sheetUrl, {
           // Pulsante in alto
           let popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>`;
 
-          // Tabella popup
-          popupContent += "<table>";
+          // Blocchi popup (etichetta sopra, valore sotto, su tutta la larghezza)
+          popupContent += `<div class="popup-fields">`;
           headers.forEach(key => {
             if(row[key] !== undefined) {
               let val = row[key];
@@ -192,10 +193,10 @@ Papa.parse(sheetUrl, {
                   .join('\n');
               }
 
-              popupContent += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
+              popupContent += `<div class="popup-field"><span class="key">${key}</span><span class="value">${val}</span></div>`;
             }
           });
-          popupContent += "</table>";
+          popupContent += `</div>`;
 
           marker.bindPopup(popupContent, {
             maxWidth: window.innerWidth < 480 ? window.innerWidth * 0.96 : 1100,
