@@ -185,12 +185,21 @@ Papa.parse(sheetUrl, {
                 return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
               });
 
-              // Se il valore è su più righe (es. elenco nominativi), aggiunge una freccia davanti a ogni riga
+              // Se il valore è su più righe (es. elenco nominativi), aggiunge una freccia davanti a ogni riga.
+              // Prima unisce le righe che terminano con un trattino "-" alla riga successiva
+              // (caso tipico: "Nome Cognome -" e "Codice Fiscale (telefono)" su due righe separate nel foglio)
               if (val.includes('\n')) {
-                val = val
-                  .split('\n')
-                  .map(line => line.trim() ? `▸ ${line.trim()}` : line)
-                  .join('\n');
+                const righeGrezze = val.split('\n').map(l => l.trim()).filter(l => l !== '');
+                const righeUnite = [];
+                for (let i = 0; i < righeGrezze.length; i++) {
+                  let riga = righeGrezze[i];
+                  while (riga.endsWith('-') && i + 1 < righeGrezze.length) {
+                    i++;
+                    riga = riga + ' ' + righeGrezze[i];
+                  }
+                  righeUnite.push(riga);
+                }
+                val = righeUnite.map(riga => `▸ ${riga}`).join('\n');
               }
 
               popupContent += `<div class="popup-field"><span class="key">${key}</span><span class="value">${val}</span></div>`;
