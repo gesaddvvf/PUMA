@@ -50,6 +50,22 @@
       overflow-wrap: normal;
       word-break: keep-all;
     }
+    .persona {
+      margin-bottom: 8px;
+    }
+    .persona:last-child {
+      margin-bottom: 0;
+    }
+    .persona-nome {
+      font-weight: bold;
+      color: #ffd700;
+    }
+    .persona-dettaglio {
+      margin-left: 16px;
+      font-weight: normal;
+      font-size: 13px;
+      color: #d9c46a;
+    }
 
     /* Popup Leaflet responsive */
     .leaflet-popup-content-wrapper {
@@ -179,27 +195,43 @@ Papa.parse(sheetUrl, {
             if(row[key] !== undefined) {
               let val = row[key];
 
-              // Se la colonna contiene numeri tra parentesi, crea link "chiama" con +39
-              // esempio: "Comando (12345)" diventa <a href="tel:+3912345">
-              val = val.replace(/\((\d+)\)/g, (match, num) => {
-                return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
-              });
+              // Se il valore contiene un elenco di persone nel formato:
+              // > Nome Cognome
+              //    CF: CODICEFISCALE
+              //    Tel. numero
+              // lo trasforma in blocchi con nome in grassetto e dettagli indentati sotto
+              if (val.includes('>')) {
+                const righe = val.split('\n').map(l => l.trim()).filter(l => l !== '');
+                const persone = [];
+                let corrente = null;
 
-              // Se il valore è su più righe (es. elenco nominativi), aggiunge una freccia davanti a ogni riga.
-              // Prima unisce le righe che terminano con un trattino "-" alla riga successiva
-              // (caso tipico: "Nome Cognome -" e "Codice Fiscale (telefono)" su due righe separate nel foglio)
-              if (val.includes('\n')) {
-                const righeGrezze = val.split('\n').map(l => l.trim()).filter(l => l !== '');
-                const righeUnite = [];
-                for (let i = 0; i < righeGrezze.length; i++) {
-                  let riga = righeGrezze[i];
-                  while (riga.endsWith('-') && i + 1 < righeGrezze.length) {
-                    i++;
-                    riga = riga + ' ' + righeGrezze[i];
+                righe.forEach(riga => {
+                  if (riga.startsWith('>')) {
+                    corrente = { nome: riga.replace(/^>\s*/, ''), dettagli: [] };
+                    persone.push(corrente);
+                  } else if (corrente) {
+                    corrente.dettagli.push(riga);
                   }
-                  righeUnite.push(riga);
+                });
+
+                if (persone.length > 0) {
+                  val = persone.map(p => {
+                    const dettagliHtml = p.dettagli.map(d => {
+                      const telMatch = d.match(/^tel\.?:?\s*(\+?\d[\d\s]*)/i);
+                      if (telMatch) {
+                        const numero = telMatch[1].replace(/\s+/g, '');
+                        return `<div class="persona-dettaglio">Tel: <a class="tel-link" href="tel:+39${numero}">${numero}</a></div>`;
+                      }
+                      return `<div class="persona-dettaglio">${d}</div>`;
+                    }).join('');
+                    return `<div class="persona"><div class="persona-nome">${p.nome}</div>${dettagliHtml}</div>`;
+                  }).join('');
                 }
-                val = righeUnite.map(riga => `▸ ${riga}`).join('\n');
+              } else {
+                // Colonne normali a riga singola: converte eventuali numeri tra parentesi in link "chiama"
+                val = val.replace(/\((\d+)\)/g, (match, num) => {
+                  return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
+                });
               }
 
               popupContent += `<div class="popup-field"><span class="key">${key}</span><span class="value">${val}</span></div>`;
