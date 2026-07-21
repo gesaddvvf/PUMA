@@ -156,7 +156,7 @@ window.addEventListener('resize', () => map.invalidateSize());
 window.addEventListener('orientationchange', () => setTimeout(() => map.invalidateSize(), 200));
 
 // --- Gestione popup in base allo zoom ---
-const MIN_ZOOM_PER_POPUP = 10; // sotto questo livello di zoom i popup si chiudono/non si aprono
+const MIN_ZOOM_PER_POPUP = 6; // sotto questo livello di zoom i popup si chiudono/non si aprono
 let markerAttivo = null;
 
 map.on('popupopen', function(e) {
