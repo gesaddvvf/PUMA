@@ -228,10 +228,22 @@ Papa.parse(sheetUrl, {
                   }).join('');
                 }
               } else {
-                // Colonne normali a riga singola: converte eventuali numeri tra parentesi in link "chiama"
-                val = val.replace(/\((\d+)\)/g, (match, num) => {
-                  return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
-                });
+                // Riconosce anche il formato su riga singola "Nome Cognome - CODICEFISCALE (telefono)"
+                // tipico dei campi Funzione Comando, e lo mostra con lo stesso stile nome/CF/tel
+                const matchPersonaSingola = val.match(/^(.+?)\s*-\s*([A-Za-z0-9]{16})\s*\(?\s*(\+?\d[\d\s]*)\)?\s*$/);
+                if (matchPersonaSingola) {
+                  const nome = matchPersonaSingola[1].trim();
+                  const cf = matchPersonaSingola[2].trim();
+                  const numero = matchPersonaSingola[3].replace(/\s+/g, '');
+                  val = `<div class="persona"><div class="persona-nome">${nome}</div>`
+                      + `<div class="persona-dettaglio">CF: ${cf}</div>`
+                      + `<div class="persona-dettaglio">Tel: <a class="tel-link" href="tel:+39${numero}">${numero}</a></div></div>`;
+                } else {
+                  // Colonne normali: converte eventuali numeri tra parentesi in link "chiama"
+                  val = val.replace(/\((\d+)\)/g, (match, num) => {
+                    return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
+                  });
+                }
               }
 
               popupContent += `<div class="popup-field"><span class="key">${key}</span><span class="value">${val}</span></div>`;
