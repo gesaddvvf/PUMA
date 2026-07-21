@@ -184,6 +184,14 @@ Papa.parse(sheetUrl, {
                 return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
               });
 
+              // Se il valore è su più righe (es. elenco nominativi), aggiunge una freccia davanti a ogni riga
+              if (val.includes('\n')) {
+                val = val
+                  .split('\n')
+                  .map(line => line.trim() ? `▸ ${line.trim()}` : line)
+                  .join('\n');
+              }
+
               popupContent += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
             }
           });
