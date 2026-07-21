@@ -42,14 +42,20 @@
     tr:nth-child(even) { background-color: #2a2a2a; }
     tr:nth-child(odd) { background-color: #1f1f1f; }
     td.key { text-align: left; color: #f0f0f0; width: 40%; }
-    td.value { font-weight: bold; text-align: right; color: #ffd700; width: 60%; }
+    td.value {
+      font-weight: bold;
+      text-align: left;
+      color: #ffd700;
+      width: 60%;
+      white-space: pre-line; /* rispetta \n e a capo naturali, ma collassa spazi multipli */
+    }
 
     /* Popup Leaflet responsive */
     .leaflet-popup-content-wrapper {
       max-height: 70vh;
       max-height: 70dvh;
-      min-width: 280px;
-      max-width: min(600px, 95vw);
+      min-width: 320px;
+      max-width: min(800px, 95vw);
       overflow-y: auto;
       background-color: #2a2a2a;
       color: #f0f0f0;
@@ -184,7 +190,7 @@ Papa.parse(sheetUrl, {
           popupContent += "</table>";
 
           marker.bindPopup(popupContent, {
-            maxWidth: window.innerWidth < 480 ? window.innerWidth * 0.95 : 600,
+            maxWidth: window.innerWidth < 480 ? window.innerWidth * 0.95 : 800,
             autoPanPadding: [20, 20]
           });
 
