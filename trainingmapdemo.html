@@ -155,6 +155,39 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 
 window.addEventListener('resize', () => map.invalidateSize());
 window.addEventListener('orientationchange', () => setTimeout(() => map.invalidateSize(), 200));
 
+// --- Gestione popup in base allo zoom ---
+const MIN_ZOOM_PER_POPUP = 10; // sotto questo livello di zoom i popup si chiudono/non si aprono
+let markerAttivo = null;
+
+map.on('popupopen', function(e) {
+  markerAttivo = e.popup._source || null;
+  // Se il popup si apre mentre lo zoom è già troppo basso, lo richiude subito
+  if (map.getZoom() < MIN_ZOOM_PER_POPUP) {
+    map.closePopup();
+  }
+});
+
+map.on('popupclose', function(e) {
+  if (e.popup._source === markerAttivo) {
+    markerAttivo = null;
+  }
+});
+
+map.on('zoomend', function() {
+  const zoomAttuale = map.getZoom();
+  if (zoomAttuale < MIN_ZOOM_PER_POPUP) {
+    // Zoom troppo basso: chiude qualunque popup aperto
+    map.closePopup();
+    return;
+  }
+  if (markerAttivo) {
+    // Riapre il popup sullo stesso marker per forzare il ricalcolo della posizione
+    // (autoPan) e tenerlo sempre dentro lo schermo anche a zoom molto alti
+    markerAttivo.closePopup();
+    markerAttivo.openPopup();
+  }
+});
+
 function getIconUrl(tipo) {
   tipo = tipo?.toLowerCase() || "";
   return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
@@ -253,6 +286,7 @@ Papa.parse(sheetUrl, {
 
           marker.bindPopup(popupContent, {
             maxWidth: window.innerWidth < 480 ? window.innerWidth * 0.96 : 1100,
+            autoPan: true,
             autoPanPadding: [20, 20]
           });
 
