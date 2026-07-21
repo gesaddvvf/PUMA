@@ -36,8 +36,8 @@
     td {
       padding: 4px 8px;
       border: 1px solid #444;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
+      overflow-wrap: normal; /* non spezza le parole a metà, va a capo solo tra una parola e l'altra */
+      word-break: keep-all;
     }
     tr:nth-child(even) { background-color: #2a2a2a; }
     tr:nth-child(odd) { background-color: #1f1f1f; }
@@ -55,7 +55,7 @@
       max-height: 70vh;
       max-height: 70dvh;
       min-width: 320px;
-      max-width: min(800px, 95vw);
+      max-width: min(1100px, 96vw);
       overflow-y: auto;
       background-color: #2a2a2a;
       color: #f0f0f0;
@@ -198,7 +198,7 @@ Papa.parse(sheetUrl, {
           popupContent += "</table>";
 
           marker.bindPopup(popupContent, {
-            maxWidth: window.innerWidth < 480 ? window.innerWidth * 0.95 : 800,
+            maxWidth: window.innerWidth < 480 ? window.innerWidth * 0.96 : 1100,
             autoPanPadding: [20, 20]
           });
 
