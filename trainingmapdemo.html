@@ -2,40 +2,61 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Mappa Leaflet da Google Sheet - Tema Scuro</title>
   <!-- Google Fonts: Comfortaa -->
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
     body, table {
       font-family: 'Comfortaa', cursive;
       background-color: #1e1e1e;
       color: #f0f0f0;
-      margin: 0;
     }
-    #map { height: 100vh; width: 100%; }
+    #map {
+      height: 100vh;
+      height: 100dvh; /* usa dynamic viewport height su mobile, evita salti con barra indirizzi */
+      width: 100%;
+    }
 
     table {
       border-collapse: collapse;
       width: 100%;
       font-size: 13px;
+      table-layout: fixed; /* evita che colonne lunghe sfondino il popup */
     }
     td {
       padding: 4px 8px;
       border: 1px solid #444;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     tr:nth-child(even) { background-color: #2a2a2a; }
     tr:nth-child(odd) { background-color: #1f1f1f; }
-    td.value { font-weight: bold; text-align: right; color: #ffd700; }
-    td.key { text-align: left; color: #f0f0f0; }
+    td.key { text-align: left; color: #f0f0f0; width: 40%; }
+    td.value { font-weight: bold; text-align: right; color: #ffd700; width: 60%; }
 
+    /* Popup Leaflet responsive */
     .leaflet-popup-content-wrapper {
       max-height: 70vh;
+      max-height: 70dvh;
       min-width: 200px;
-      max-width: 90vw;
+      max-width: min(320px, 90vw);
       overflow-y: auto;
       background-color: #2a2a2a;
       color: #f0f0f0;
+    }
+    .leaflet-popup-content {
+      margin: 10px 12px;
+      width: auto !important; /* Leaflet forza una larghezza inline, la sblocchiamo */
     }
     .leaflet-popup-tip {
       background: #2a2a2a;
@@ -44,10 +65,10 @@
     .popup-btn {
       width: 100%;
       box-sizing: border-box;
-      margin-bottom: 5px;
-      padding: 10px 0;
+      margin-bottom: 8px;
+      padding: 12px 0;
       font-size: 16px;
-      background-color: #ffd700; 
+      background-color: #ffd700;
       color: #1e1e1e;
       border: none;
       border-radius: 3px;
@@ -55,10 +76,35 @@
       font-weight: bold;
       text-align: center;
     }
+    .popup-btn:active {
+      background-color: #e6c200;
+    }
 
     a.tel-link {
-      color: #00ffff; /* colore link telefono */
+      color: #00ffff;
       text-decoration: underline;
+    }
+
+    /* Controlli Leaflet più grandi e leggibili su touch */
+    .leaflet-control-zoom a {
+      width: 36px !important;
+      height: 36px !important;
+      line-height: 36px !important;
+      font-size: 20px !important;
+    }
+
+    /* Schermi molto piccoli: popup più largo e testo leggermente più grande */
+    @media (max-width: 480px) {
+      .leaflet-popup-content-wrapper {
+        max-width: 88vw;
+      }
+      table {
+        font-size: 14px;
+      }
+      .popup-btn {
+        font-size: 17px;
+        padding: 14px 0;
+      }
     }
   </style>
 </head>
@@ -74,10 +120,17 @@ const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3as
 
 const map = L.map('map', {
     tap: true,
-    touchZoom: true
+    touchZoom: true,
+    zoomControl: false // riposizioniamo lo zoom control per non coprire i marker in basso su mobile
 }).setView([41.9, 12.5], 6);
 
+L.control.zoom({ position: 'topright' }).addTo(map);
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+// Ricalcola le dimensioni della mappa se cambia l'orientamento o la barra indirizzi mobile appare/scompare
+window.addEventListener('resize', () => map.invalidateSize());
+window.addEventListener('orientationchange', () => setTimeout(() => map.invalidateSize(), 200));
 
 function getIconUrl(tipo) {
   tipo = tipo?.toLowerCase() || "";
@@ -95,85 +148,53 @@ Papa.parse(sheetUrl, {
     const markers = L.featureGroup();
     const headers = Object.keys(data[0]);
 
-// Dentro Papa.parse, nella funzione data.forEach
-data.forEach(row => {
-  const coordStr = row["Coordinate"];
-  if(coordStr) {
-    const [lat, lng] = coordStr.split(',').map(x => parseFloat(x.trim()));
-    if(!isNaN(lat) && !isNaN(lng)) {
+    data.forEach(row => {
+      const coordStr = row["Coordinate"];
+      if(coordStr) {
+        const [lat, lng] = coordStr.split(',').map(x => parseFloat(x.trim()));
+        if(!isNaN(lat) && !isNaN(lng)) {
 
-      const icon = L.icon({
-        iconUrl: getIconUrl(row["Tipologia addestramento"]),
-        iconSize: [32,32],
-        iconAnchor: [16,32],
-        popupAnchor: [0,-32]
-      });
-
-      const marker = L.marker([lat,lng], {icon: icon}).addTo(map);
-
-      // Tabella popup
-      let tableHtml = `<table>`;
-      headers.forEach(key => {
-        if(key === "Compilazione") return; // non mostrare Compilazione
-        if(row[key] !== undefined) {
-          let val = row[key];
-          val = val.replace(/\((\d+)\)/g, (match, num) => {
-            return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
+          const icon = L.icon({
+            iconUrl: getIconUrl(row["Tipologia addestramento"]),
+            iconSize: [32,32],
+            iconAnchor: [16,32],
+            popupAnchor: [0,-32]
           });
-          tableHtml += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
+
+          const marker = L.marker([lat,lng], {icon: icon}).addTo(map);
+
+          // Pulsante in alto
+          let popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>`;
+
+          // Tabella popup
+          popupContent += "<table>";
+          headers.forEach(key => {
+            if(row[key] !== undefined) {
+              let val = row[key];
+
+              // Se la colonna contiene numeri tra parentesi, crea link "chiama" con +39
+              // esempio: "Comando (12345)" diventa <a href="tel:+3912345">
+              val = val.replace(/\((\d+)\)/g, (match, num) => {
+                return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
+              });
+
+              popupContent += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
+            }
+          });
+          popupContent += "</table>";
+
+          marker.bindPopup(popupContent, {
+            maxWidth: window.innerWidth < 480 ? window.innerWidth * 0.88 : 320,
+            autoPanPadding: [20, 20]
+          });
+
+          marker.on('mouseover', function() { this.setZIndexOffset(1000); });
+          marker.on('mouseout', function() { this.setZIndexOffset(0); });
+
+          markers.addLayer(marker);
         }
-      });
-      tableHtml += "</table>";
-
-      let popupContent = "";
-
-      // Controllo Compilazione = TEST
-      if(row["Compilazione"]?.toUpperCase() === "TEST") {
-        // Sfondo blu + filigrana diagonale
-        popupContent = `
-          <div style="
-            position: relative;
-            background-color: #0000ff;
-            color: #ffffff;
-          ">
-            <!-- Filigrana diagonale -->
-            <div style="
-              position: absolute;
-              top: 0; left: 0; right: 0; bottom: 0;
-              background-image: repeating-linear-gradient(
-                45deg,
-                rgba(255,255,255,0.1) 0px,
-                rgba(255,255,255,0.1) 1px,
-                transparent 1px,
-                transparent 20px
-              );
-              pointer-events: none;
-              z-index: 0;
-            "></div>
-
-            <!-- Contenuto sopra -->
-            <div style="position: relative; z-index: 1; padding: 5px;">
-              <button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>
-              ${tableHtml}
-            </div>
-          </div>
-        `;
-      } else {
-        // Popup normale
-        popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>` + tableHtml;
       }
-
-      marker.bindPopup(popupContent, {
-        className: row["Compilazione"]?.toUpperCase() === "TEST" ? 'test-popup' : ''
-      });
-
-      marker.on('mouseover', function() { this.setZIndexOffset(1000); });
-      marker.on('mouseout', function() { this.setZIndexOffset(0); });
-
-      markers.addLayer(marker);
-    }
-  }
-});
+    });
 
     if(markers.getLayers().length>0){
       map.fitBounds(markers.getBounds().pad(0.2));
