@@ -29,6 +29,16 @@
             margin: 0 auto;
         }
 
+        /* Barra di ricerca bloccata in alto con sfondo completamente trasparente */
+        .search-container {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: transparent;
+            padding:10px 0px 0px 0;
+            margin-bottom: 15px;
+        }
+
         .search-box {
             width: 100%;
             padding: 14px 18px;
@@ -37,7 +47,6 @@
             color: var(--text-main);
             border: 2px solid var(--border-color);
             border-radius: 10px;
-            margin-bottom: 20px;
             box-sizing: border-box;
             outline: none;
             transition: border-color 0.3s, box-shadow 0.3s;
@@ -215,7 +224,9 @@
 <body>
 
 <div class="layout-container">
-    <input type="text" id="searchInput" class="search-box" placeholder="Cerca comando o direzione regionale..." onkeyup="filterData()">
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-box" placeholder="Cerca comando o direzione regionale..." onkeyup="filterData()">
+    </div>
     <div id="accordionContainer"></div>
     <div id="noResults" class="no-results">Nessun risultato trovato</div>
 </div>
