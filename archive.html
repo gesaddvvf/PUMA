@@ -25,64 +25,8 @@
         }
 
         .layout-container {
-            display: flex;
-            gap: 20px;
-            max-width: 1400px;
+            max-width: 900px;
             margin: 0 auto;
-            align-items: flex-start;
-        }
-
-        .sidebar {
-            flex: 1;
-            min-width: 350px;
-            max-width: 500px;
-        }
-
-        .preview-pane {
-            flex: 2;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            height: 750px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            position: sticky;
-            top: 10px;
-        }
-
-        .preview-header {
-            padding: 12px 20px;
-            background-color: rgba(0,0,0,0.2);
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: var(--primary-color);
-        }
-
-        .preview-frame-container {
-            flex: 1;
-            width: 100%;
-            background: #fff;
-            position: relative;
-        }
-
-        .preview-frame-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .preview-placeholder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--text-muted);
-            text-align: center;
-            padding: 20px;
         }
 
         .search-box {
@@ -239,7 +183,7 @@
             color: #ffffff;
         }
 
-        /* Contenitore anteprima incorporata */
+        /* Contenitore anteprima incorporata (sotto al comando) */
         .embedded-preview-container {
             max-height: 400px;
             overflow-y: auto;
@@ -266,43 +210,14 @@
             display: none;
             font-size: 1.1rem;
         }
-
-        @media (max-width: 950px) {
-            .layout-container {
-                flex-direction: column;
-            }
-            .sidebar {
-                max-width: 100%;
-                width: 100%;
-            }
-            .preview-pane {
-                position: relative;
-                width: 100%;
-                height: 500px;
-            }
-        }
     </style>
 </head>
 <body>
 
 <div class="layout-container">
-    <div class="sidebar">
-        <input type="text" id="searchInput" class="search-box" placeholder="Cerca comando o direzione regionale..." onkeyup="filterData()">
-        <div id="accordionContainer"></div>
-        <div id="noResults" class="no-results">Nessun risultato trovato</div>
-    </div>
-
-    <div class="preview-pane">
-        <div class="preview-header" id="previewTitle">Anteprima Google Drive</div>
-        <div class="preview-frame-container" id="previewContainer">
-            <div class="preview-placeholder">
-                <svg width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 15px; opacity: 0.5;">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0A2.25 2.25 0 004.5 15h15a2.25 2.25 0 002.25-2.25m-19.5 0v3A2.25 2.25 0 004.5 18h15a2.25 2.25 0 002.25-2.25v-3m-19.5 0h19.5"></path>
-                </svg>
-                <p>Seleziona un comando o una direzione dalla lista o usa il pannello laterale.</p>
-            </div>
-        </div>
-    </div>
+    <input type="text" id="searchInput" class="search-box" placeholder="Cerca comando o direzione regionale..." onkeyup="filterData()">
+    <div id="accordionContainer"></div>
+    <div id="noResults" class="no-results">Nessun risultato trovato</div>
 </div>
 
 <script>
@@ -584,13 +499,12 @@
 
                 const titleDiv = document.createElement('div');
                 titleDiv.className = 'command-title';
-                titleDiv.innerText = cmd.nome; // NOME DEL COMANDO PURO, SENZA "DETTAGLI"
+                titleDiv.innerText = cmd.nome;
 
                 if (query !== "" && cmd.nome.toLowerCase().includes(query)) {
                     titleDiv.classList.add('matched');
                 }
 
-                // Pulsante quadratino Drive esterno
                 const driveUrl = `https://drive.google.com/drive/folders/${cmd.id}`;
                 const extLink = document.createElement('a');
                 extLink.className = 'external-link-btn';
@@ -618,16 +532,12 @@
                     if (e.target.closest('.external-link-btn')) return;
                     
                     const isOpen = commandItem.classList.contains('open');
-                    // Chiudi tutti gli altri comandi dello stesso gruppo se preferisci, oppure lasciali liberi
                     commandItem.classList.toggle('open', !isOpen);
 
                     if (!isOpen && !iframeLoaded) {
                         const embedUrl = `https://drive.google.com/embeddedfolderview?id=${cmd.id}#list`;
                         previewDiv.innerHTML = `<iframe src="${embedUrl}" allow="autoplay"></iframe>`;
                         iframeLoaded = true;
-                    }
-                    if (!isOpen) {
-                        loadPreview(cmd.id, cmd.nome);
                     }
                 };
 
@@ -648,13 +558,6 @@
         } else {
             noResults.style.display = 'none';
         }
-    }
-
-    function loadPreview(folderId, folderName) {
-        document.getElementById('previewTitle').innerText = "Anteprima: " + folderName;
-        const container = document.getElementById('previewContainer');
-        const embedUrl = `https://drive.google.com/embeddedfolderview?id=${folderId}#list`;
-        container.innerHTML = `<iframe src="${embedUrl}" allow="autoplay"></iframe>`;
     }
 
     function filterData() {
