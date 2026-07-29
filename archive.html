@@ -6,30 +6,85 @@
     <title>Archivio Direzioni VVF e Comandi</title>
     <style>
         :root {
-            --primary-color: #ff5252; /* Rosso VVF più luminoso per tema scuro */
+            --primary-color: #ff5252;
             --primary-hover: #ff7979;
-            --card-bg: #1e1e2f;       /* Sfondo scuro della scheda */
+            --card-bg: #1e1e2f;
             --card-hover: #252538;
-            --text-main: #f5f5f7;     /* Testo chiaro */
-            --text-muted: #a0a0b2;    /* Testo secondario */
-            --border-color: #2a2a40;  /* Colore dei bordi scuri */
-            --highlight-bg: rgba(255, 82, 82, 0.15); /* Evidenziazione ricerca */
+            --text-main: #f5f5f7;
+            --text-muted: #a0a0b2;
+            --border-color: #2a2a40;
+            --highlight-bg: rgba(255, 82, 82, 0.15);
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: transparent; /* Sfondo trasparente */
+            background-color: transparent;
             color: var(--text-main);
             margin: 0;
             padding: 10px;
         }
 
-        .container {
-            max-width: 900px;
+        .layout-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
             margin: 0 auto;
+            align-items: flex-start;
         }
 
-        /* Barra di ricerca */
+        .sidebar {
+            flex: 1;
+            min-width: 350px;
+            max-width: 500px;
+        }
+
+        .preview-pane {
+            flex: 2;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            height: 750px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 10px;
+        }
+
+        .preview-header {
+            padding: 12px 20px;
+            background-color: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: var(--primary-color);
+        }
+
+        .preview-frame-container {
+            flex: 1;
+            width: 100%;
+            background: #fff;
+            position: relative;
+        }
+
+        .preview-frame-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .preview-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 20px;
+        }
+
         .search-box {
             width: 100%;
             padding: 14px 18px;
@@ -53,7 +108,7 @@
             color: var(--text-muted);
         }
 
-        /* Stile Accordion (Direzioni Regionali) */
+        /* Fisarmonica Direzioni */
         .accordion-item {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -61,7 +116,6 @@
             margin-bottom: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             overflow: hidden;
-            transition: all 0.3s ease;
         }
 
         .accordion-header {
@@ -75,10 +129,7 @@
             justify-content: space-between;
             align-items: center;
             user-select: none;
-            border: none;
-            width: 100%;
-            text-align: left;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, color 0.2s;
         }
 
         .accordion-header:hover {
@@ -86,76 +137,126 @@
             color: var(--primary-color);
         }
 
-        /* Freccia indicatore */
-        .accordion-header::after {
-            content: '\25BC';
+        .accordion-header .arrow {
             font-size: 0.75rem;
             color: var(--text-muted);
             transition: transform 0.3s ease;
         }
 
-        .accordion-header.active::after {
+        .accordion-item.open .accordion-header .arrow {
             transform: rotate(180deg);
             color: var(--primary-color);
         }
 
-        /* Contenuto espandibile */
         .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.35s cubic-bezier(0, 1, 0, 1);
             background-color: rgba(0, 0, 0, 0.15);
-            border-top: 1px solid transparent;
+            border-top: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: none;
+        }
+
+        .accordion-item.open .accordion-content {
+            display: block;
         }
 
         .command-list {
             list-style: none;
-            padding: 10px 20px;
+            padding: 0;
             margin: 0;
         }
 
+        /* Singolo Comando */
         .command-item {
+            background: var(--card-hover);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .command-row {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
+            justify-content: space-between;
+            cursor: pointer;
             transition: background-color 0.2s;
         }
 
-        .command-item:last-child {
-            border-bottom: none;
+        .command-row:hover {
+            background-color: rgba(255, 82, 82, 0.1);
         }
 
-        /* Evidenziazione quando l'elemento corrisponde alla ricerca */
-        .command-item.matched {
-            background-color: var(--highlight-bg);
-            padding-left: 8px;
-            padding-right: 8px;
-            border-radius: 6px;
-        }
-
-        .command-name {
+        .command-title {
+            padding: 12px 15px;
             font-weight: 500;
             color: var(--text-main);
+            font-size: 0.95rem;
+            flex-grow: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
         }
 
-        /* Pulsante Link Drive */
-        .drive-btn {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            padding: 7px 14px;
+        .command-title::after {
+            content: '\25BC';
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            transition: transform 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .command-item.open .command-title::after {
+            transform: rotate(180deg);
+            color: var(--primary-color);
+        }
+
+        .command-title.matched {
+            background-color: var(--highlight-bg);
             border-radius: 6px;
-            text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: background-color 0.2s, transform 0.1s;
-            white-space: nowrap;
         }
 
-        .drive-btn:hover {
-            background-color: var(--primary-hover);
-            transform: scale(1.03);
+        /* Pulsante quadratino per Google Drive esterno */
+        .external-link-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 8px;
+            margin-right: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            z-index: 2;
+        }
+
+        .external-link-btn:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #ffffff;
+        }
+
+        /* Contenitore anteprima incorporata */
+        .embedded-preview-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #fff;
+            border-top: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .command-item.open .embedded-preview-container {
+            display: block;
+        }
+
+        .embedded-preview-container iframe {
+            width: 100%;
+            height: 350px;
+            border: none;
+            display: block;
         }
 
         .no-results {
@@ -165,18 +266,43 @@
             display: none;
             font-size: 1.1rem;
         }
+
+        @media (max-width: 950px) {
+            .layout-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                max-width: 100%;
+                width: 100%;
+            }
+            .preview-pane {
+                position: relative;
+                width: 100%;
+                height: 500px;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <input type="text" id="searchInput" class="search-box" placeholder="Cerca comando o direzione regionale..." onkeyup="filterData()">
-
-    <div id="accordionContainer">
-        <!-- Generato dinamicamente via JS -->
+<div class="layout-container">
+    <div class="sidebar">
+        <input type="text" id="searchInput" class="search-box" placeholder="Cerca comando o direzione regionale..." onkeyup="filterData()">
+        <div id="accordionContainer"></div>
+        <div id="noResults" class="no-results">Nessun risultato trovato</div>
     </div>
 
-    <div id="noResults" class="no-results">Nessun risultato trovato</div>
+    <div class="preview-pane">
+        <div class="preview-header" id="previewTitle">Anteprima Google Drive</div>
+        <div class="preview-frame-container" id="previewContainer">
+            <div class="preview-placeholder">
+                <svg width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 15px; opacity: 0.5;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0A2.25 2.25 0 004.5 15h15a2.25 2.25 0 002.25-2.25m-19.5 0v3A2.25 2.25 0 004.5 18h15a2.25 2.25 0 002.25-2.25v-3m-19.5 0h19.5"></path>
+                </svg>
+                <p>Seleziona un comando o una direzione dalla lista o usa il pannello laterale.</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -414,74 +540,106 @@
             const matchDirezione = group.direzione.toLowerCase().includes(query);
             const matchingComandi = group.comandi.filter(cmd => cmd.nome.toLowerCase().includes(query));
 
-            // Se c'è una ricerca attiva e non corrisponde né la direzione né alcun comando, saltiamo questo gruppo
             if (query !== "" && !matchDirezione && matchingComandi.length === 0) {
                 return;
             }
 
             visibleGroupsCount++;
 
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'accordion-item';
+            const itemDir = document.createElement('div');
+            itemDir.className = 'accordion-item';
+            if (query !== "") {
+                itemDir.classList.add('open');
+            }
 
-            const header = document.createElement('button');
-            header.className = 'accordion-header';
-            header.innerText = group.direzione;
+            const headerDir = document.createElement('div');
+            headerDir.className = 'accordion-header';
+            headerDir.innerHTML = `<span>${group.direzione}</span><span class="arrow">&#9660;</span>`;
+            
+            const contentDir = document.createElement('div');
+            contentDir.className = 'accordion-content';
 
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'accordion-content';
+            headerDir.onclick = () => {
+                itemDir.classList.toggle('open');
+            };
 
             const ul = document.createElement('ul');
             ul.className = 'command-list';
 
-            // Decidiamo quali comandi mostrare: se c'è ricerca attiva, mostriamo quelli corrispondenti (o tutti se corrisponde la direzione)
             const comandiDaMostrare = (query !== "" && !matchDirezione) ? matchingComandi : group.comandi;
 
             comandiDaMostrare.forEach(cmd => {
                 const li = document.createElement('li');
-                li.className = 'command-item';
-                
-                // Evidenzia visivamente se il singolo comando corrisponde esattamente alla ricerca
+
+                const commandItem = document.createElement('div');
+                commandItem.className = 'command-item';
+
                 if (query !== "" && cmd.nome.toLowerCase().includes(query)) {
-                    li.classList.add('matched');
+                    commandItem.classList.add('open');
+                    itemDir.classList.add('open');
                 }
 
-                const span = document.createElement('span');
-                span.className = 'command-name';
-                span.innerText = cmd.nome;
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'command-row';
 
-                const a = document.createElement('a');
-                a.className = 'drive-btn';
-                a.href = `https://drive.google.com/drive/folders/${cmd.id}`;
-                a.target = "_blank";
-                a.innerText = "Apri Drive";
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'command-title';
+                titleDiv.innerText = cmd.nome; // NOME DEL COMANDO PURO, SENZA "DETTAGLI"
 
-                li.appendChild(span);
-                li.appendChild(a);
+                if (query !== "" && cmd.nome.toLowerCase().includes(query)) {
+                    titleDiv.classList.add('matched');
+                }
+
+                // Pulsante quadratino Drive esterno
+                const driveUrl = `https://drive.google.com/drive/folders/${cmd.id}`;
+                const extLink = document.createElement('a');
+                extLink.className = 'external-link-btn';
+                extLink.href = driveUrl;
+                extLink.target = '_blank';
+                extLink.title = "Apri cartella in Google Drive";
+                extLink.innerHTML = `
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"></path>
+                    </svg>
+                `;
+                extLink.onclick = (e) => {
+                    e.stopPropagation();
+                };
+
+                rowDiv.appendChild(titleDiv);
+                rowDiv.appendChild(extLink);
+                commandItem.appendChild(rowDiv);
+
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'embedded-preview-container';
+
+                let iframeLoaded = false;
+                rowDiv.onclick = (e) => {
+                    if (e.target.closest('.external-link-btn')) return;
+                    
+                    const isOpen = commandItem.classList.contains('open');
+                    // Chiudi tutti gli altri comandi dello stesso gruppo se preferisci, oppure lasciali liberi
+                    commandItem.classList.toggle('open', !isOpen);
+
+                    if (!isOpen && !iframeLoaded) {
+                        const embedUrl = `https://drive.google.com/embeddedfolderview?id=${cmd.id}#list`;
+                        previewDiv.innerHTML = `<iframe src="${embedUrl}" allow="autoplay"></iframe>`;
+                        iframeLoaded = true;
+                    }
+                    if (!isOpen) {
+                        loadPreview(cmd.id, cmd.nome);
+                    }
+                };
+
+                commandItem.appendChild(previewDiv);
+                li.appendChild(commandItem);
                 ul.appendChild(li);
             });
 
-            contentDiv.appendChild(ul);
-            itemDiv.appendChild(header);
-            itemDiv.appendChild(contentDiv);
-            container.appendChild(itemDiv);
-
-            // GESTIONE ESPANSIONE AUTOMATICA:
-            // Se l'utente sta scrivendo nella ricerca, espandi automaticamente la tendina!
-            if (query !== "") {
-                header.classList.add('active');
-                contentDiv.style.maxHeight = contentDiv.scrollHeight + "px";
-            }
-
-            // Click manuale per aprire/chiudere
-            header.onclick = function() {
-                this.classList.toggle('active');
-                if (contentDiv.style.maxHeight) {
-                    contentDiv.style.maxHeight = null;
-                } else {
-                    contentDiv.style.maxHeight = contentDiv.scrollHeight + "px";
-                }
-            };
+            contentDir.appendChild(ul);
+            itemDir.appendChild(headerDir);
+            itemDir.appendChild(contentDir);
+            container.appendChild(itemDir);
         });
 
         const noResults = document.getElementById('noResults');
@@ -492,12 +650,18 @@
         }
     }
 
+    function loadPreview(folderId, folderName) {
+        document.getElementById('previewTitle').innerText = "Anteprima: " + folderName;
+        const container = document.getElementById('previewContainer');
+        const embedUrl = `https://drive.google.com/embeddedfolderview?id=${folderId}#list`;
+        container.innerHTML = `<iframe src="${embedUrl}" allow="autoplay"></iframe>`;
+    }
+
     function filterData() {
         const input = document.getElementById('searchInput').value;
         renderAccordion(input);
     }
 
-    // Caricamento iniziale (tutto chiuso di default)
     renderAccordion();
 </script>
 
