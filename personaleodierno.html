@@ -33,6 +33,11 @@
     font-weight: normal;
     margin: 0 0 4px 0;
   }
+  #today-date {
+    color: #ffd700;
+    font-weight: bold;
+    text-transform: capitalize;
+  }
   #meta-info {
     font-size: 12px;
     color: #999;
@@ -75,6 +80,31 @@
   tbody tr:hover { background-color: #333; }
 
   td.comando { font-weight: bold; }
+
+  .badge-sicurezza {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 11px;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+  }
+  .badge-effettuato {
+    background-color: #000;
+    color: #2ecc40;
+    border: 1px solid #2ecc40;
+  }
+  .badge-da-effettuare {
+    background-color: #ff3b30;
+    color: #000;
+  }
+  tbody tr.row-da-effettuare {
+    background-color: #4a1210 !important;
+  }
+  tbody tr.row-da-effettuare:hover {
+    background-color: #5c1815 !important;
+  }
 
   details.nominativi-list summary {
     cursor: pointer;
@@ -173,7 +203,7 @@
 <body>
 
 <h1>PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
-<h2>Riepilogo presenze odierne</h2>
+<h2>Riepilogo presenze odierne <span id="today-date"></span></h2>
 <div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span><button id="refresh-btn">Aggiorna ora</button></div>
 
 <div id="status">Caricamento dati in corso...</div>
@@ -200,6 +230,12 @@ const lastUpdateEl = document.getElementById('last-update');
 
 function findColIndex(headers, keyword) {
   return headers.findIndex(h => h && h.toLowerCase().includes(keyword.toLowerCase()));
+}
+
+// Interpreta il valore booleano esportato da Google Sheets (VERO/FALSO, TRUE/FALSE, 1/0)
+function isTrueValue(val) {
+  const v = (val || '').trim().toLowerCase();
+  return v === 'vero' || v === 'true' || v === '1' || v === 'sì' || v === 'si';
 }
 
 // Colonne (per parola chiave nell'intestazione) da non mostrare in tabella
@@ -265,7 +301,20 @@ function loadData() {
       for (let i = START_COL; i <= endCol; i++) {
         if (!hiddenIdx.includes(i - START_COL)) visibleCols.push(i);
       }
+
+      // Sposta "Piano di sicurezza" subito dopo la prima colonna (Comando Organizzatore)
+      const sicurezzaAbsIdx = findColIndex(allHeaders, 'sicurezza');
+      const sicurezzaColAbs = sicurezzaAbsIdx >= 0 ? START_COL + sicurezzaAbsIdx : -1;
+      if (sicurezzaColAbs !== -1) {
+        const pos = visibleCols.indexOf(sicurezzaColAbs);
+        if (pos > 1) {
+          visibleCols.splice(pos, 1);
+          visibleCols.splice(1, 0, sicurezzaColAbs);
+        }
+      }
+
       const headers = visibleCols.map(i => headerRow[i]);
+      const sicurezzaIdx = visibleCols.indexOf(sicurezzaColAbs);
 
       const nominativiIdx = findColIndex(headers, 'nominativi');
       // La colonna "Presenti" resta nascosta ma serve comunque il suo indice assoluto
@@ -290,6 +339,8 @@ function loadData() {
 
       dataRows.forEach(row => {
         const tr = document.createElement('tr');
+        let daEffettuare = false;
+
         visibleCols.forEach((i, localIdx) => {
           const td = document.createElement('td');
           td.setAttribute('data-label', headers[localIdx] || '');
@@ -307,6 +358,13 @@ function loadData() {
             details.appendChild(summary);
             details.appendChild(content);
             td.appendChild(details);
+          } else if (localIdx === sicurezzaIdx) {
+            const ok = isTrueValue(val);
+            daEffettuare = !ok;
+            const badge = document.createElement('span');
+            badge.className = 'badge-sicurezza ' + (ok ? 'badge-effettuato' : 'badge-da-effettuare');
+            badge.textContent = ok ? 'EFFETTUATO!!!' : 'DA EFFETTUARE!!!';
+            td.appendChild(badge);
           } else if (localIdx === 0) {
             td.classList.add('comando');
             td.textContent = val;
@@ -315,6 +373,8 @@ function loadData() {
           }
           tr.appendChild(td);
         });
+
+        if (daEffettuare) tr.classList.add('row-da-effettuare');
         tbody.appendChild(tr);
       });
 
@@ -331,6 +391,13 @@ function loadData() {
 
 document.getElementById('refresh-btn').addEventListener('click', loadData);
 
+function setTodayDate() {
+  const oggi = new Date();
+  const formatted = oggi.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  document.getElementById('today-date').textContent = `– ${formatted}`;
+}
+
+setTodayDate();
 loadData();
 // Auto-refresh ogni 60 secondi
 setInterval(loadData, 60000);
