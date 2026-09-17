@@ -74,27 +74,42 @@
 
   details.nominativi-list summary {
     cursor: pointer;
-    color: #00ffff;
+    color: #ffd700;
     outline: none;
+    font-weight: bold;
   }
   details.nominativi-list summary:hover { text-decoration: underline; }
   .nominativi-content {
-    margin-top: 8px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .persona-item {
+    background-color: #2a2a2a;
+    border-left: 3px solid #ffd700;
+    border-radius: 3px;
+    padding: 6px 10px;
     font-size: 12px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    color: #ccc;
+    line-height: 1.6;
+  }
+  .persona-nome {
+    display: block;
+    font-weight: bold;
+    color: #f0f0f0;
+  }
+  .persona-cf {
+    display: inline-block;
+    font-family: monospace;
+    color: #999;
+    margin-right: 12px;
   }
   a.tel-link {
-    color: #00ffff;
-    text-decoration: underline;
-  }
-  a.coord-link {
-    color: #ffd700;
+    color: #f0f0f0;
     text-decoration: none;
-    white-space: nowrap;
+    border-bottom: 1px dotted #999;
   }
-  a.coord-link:hover { text-decoration: underline; }
+  a.tel-link:hover { color: #ffd700; border-bottom-color: #ffd700; }
 
   #refresh-btn {
     background-color: #ffd700;
@@ -138,25 +153,38 @@ const theadRow = document.getElementById('thead-row');
 const tbody = document.getElementById('tbody');
 const lastUpdateEl = document.getElementById('last-update');
 
-function linkifyPhones(text) {
-  return text.replace(/(Tel\.?\s*)(\d{6,})/gi, (m, label, num) => {
-    return `${label}<a class="tel-link" href="tel:+39${num}">${num}</a>`;
-  });
-}
-
-function renderCoordLink(value) {
-  const coords = value.trim();
-  const parts = coords.split(',').map(p => p.trim());
-  if (parts.length === 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))) {
-    const lat = parseFloat(parts[0]);
-    const lng = parseFloat(parts[1]);
-    return `<a class="coord-link" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank">📍 ${coords}</a>`;
-  }
-  return coords;
-}
-
 function findColIndex(headers, keyword) {
   return headers.findIndex(h => h && h.toLowerCase().includes(keyword.toLowerCase()));
+}
+
+// Colonne (per parola chiave nell'intestazione) da non mostrare in tabella
+const HIDDEN_COL_KEYWORDS = ['codice', 'coord'];
+
+// Trasforma il testo grezzo "> Nome   CF: ...   Tel. ..." in un elenco di card leggibili
+function renderNominativi(raw) {
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const persone = [];
+  let current = null;
+
+  lines.forEach(line => {
+    if (line.startsWith('>')) {
+      current = { nome: line.replace(/^>\s*/, ''), cf: '', tel: '' };
+      persone.push(current);
+    } else if (current) {
+      const cfMatch = line.match(/^CF:\s*(.+)$/i);
+      const telMatch = line.match(/^Tel\.?\s*(.+)$/i);
+      if (cfMatch) current.cf = cfMatch[1].trim();
+      else if (telMatch) current.tel = telMatch[1].trim();
+    }
+  });
+
+  if (persone.length === 0) return `<div class="persona-item">${raw}</div>`;
+
+  return persone.map(p => {
+    const cfHtml = p.cf ? `<span class="persona-cf">CF: ${p.cf}</span>` : '';
+    const telHtml = p.tel ? `<a class="tel-link" href="tel:+39${p.tel}">📞 ${p.tel}</a>` : '';
+    return `<div class="persona-item"><span class="persona-nome">${p.nome}</span>${cfHtml}${telHtml}</div>`;
+  }).join('');
 }
 
 function loadData() {
@@ -178,12 +206,23 @@ function loadData() {
         if (headerRow[i] && headerRow[i].trim() !== '') { endCol = i; break; }
       }
 
-      const headers = headerRow.slice(START_COL, endCol + 1);
+      const allHeaders = headerRow.slice(START_COL, endCol + 1);
       const dataRows = rows.slice(HEADER_ROW_INDEX + 1)
         .filter(r => r[START_COL] && r[START_COL].trim() !== '');
 
+      // Indici (relativi ad allHeaders) delle colonne da nascondere
+      const hiddenIdx = allHeaders
+        .map((h, idx) => (h && HIDDEN_COL_KEYWORDS.some(k => h.toLowerCase().includes(k))) ? idx : -1)
+        .filter(idx => idx !== -1);
+
+      // Colonne effettivamente visibili, come indici assoluti nella riga CSV
+      const visibleCols = [];
+      for (let i = START_COL; i <= endCol; i++) {
+        if (!hiddenIdx.includes(i - START_COL)) visibleCols.push(i);
+      }
+      const headers = visibleCols.map(i => headerRow[i]);
+
       const nominativiIdx = findColIndex(headers, 'nominativi');
-      const coordIdx = findColIndex(headers, 'coord');
       const presentiIdx = findColIndex(headers, 'presenti');
 
       // Header
@@ -203,36 +242,33 @@ function loadData() {
 
       dataRows.forEach(row => {
         const tr = document.createElement('tr');
-        for (let i = START_COL; i <= endCol; i++) {
+        visibleCols.forEach((i, localIdx) => {
           const td = document.createElement('td');
-          const localIdx = i - START_COL;
           let val = (row[i] || '').trim();
 
           if (localIdx === nominativiIdx) {
-            const count = presentiIdx >= 0 ? (row[START_COL + presentiIdx] || '').trim() : '';
+            const count = presentiIdx >= 0 ? (row[visibleCols[presentiIdx]] || '').trim() : '';
             const details = document.createElement('details');
             details.className = 'nominativi-list';
             const summary = document.createElement('summary');
             summary.textContent = `${count || '—'} presenti (mostra elenco)`;
             const content = document.createElement('div');
             content.className = 'nominativi-content';
-            content.innerHTML = linkifyPhones(val.replace(/\n/g, '<br>'));
+            content.innerHTML = renderNominativi(val);
             details.appendChild(summary);
             details.appendChild(content);
             td.appendChild(details);
-          } else if (localIdx === coordIdx) {
-            td.innerHTML = renderCoordLink(val);
           } else if (localIdx === presentiIdx) {
             td.classList.add('presenti-count');
             td.textContent = val;
-          } else if (i === START_COL) {
+          } else if (localIdx === 0) {
             td.classList.add('comando');
             td.textContent = val;
           } else {
             td.textContent = val;
           }
           tr.appendChild(td);
-        }
+        });
         tbody.appendChild(tr);
       });
 
