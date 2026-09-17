@@ -8,78 +8,50 @@
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    * {
-      box-sizing: border-box;
-    }
     html, body {
       height: 100%;
+      width: 100%;
       margin: 0;
+      padding: 0;
       overflow: hidden;
     }
-    body, table {
+    body {
       font-family: 'Comfortaa', cursive;
       background-color: #1e1e1e;
       color: #f0f0f0;
     }
     #map {
-      height: 100vh;
-      height: 100dvh; /* usa dynamic viewport height su mobile, evita salti con barra indirizzi */
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 100%;
       width: 100%;
     }
 
-    .popup-field {
-      padding: 8px 10px;
-      border-bottom: 1px solid #444;
-    }
-    .popup-field:nth-child(even) { background-color: #2a2a2a; }
-    .popup-field:nth-child(odd) { background-color: #1f1f1f; }
-    .popup-field .key {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      color: #aaaaaa;
-      margin-bottom: 3px;
-    }
-    .popup-field .value {
-      display: block;
-      font-weight: bold;
-      color: #ffd700;
-      font-size: 14px;
-      white-space: pre-line;
-      overflow-wrap: normal;
-      word-break: keep-all;
-    }
-    .persona {
-      margin-bottom: 8px;
-    }
-    .persona:last-child {
-      margin-bottom: 0;
-    }
-    .persona-nome {
-      font-weight: bold;
-      color: #ffd700;
-    }
-    .persona-dettaglio {
-      margin-left: 16px;
-      font-weight: normal;
+    table {
+      font-family: 'Comfortaa', cursive;
+      border-collapse: collapse;
+      width: 100%;
       font-size: 13px;
-      color: #d9c46a;
     }
+    td {
+      padding: 4px 8px;
+      border: 1px solid #444;
+    }
+    tr:nth-child(even) { background-color: #2a2a2a; }
+    tr:nth-child(odd) { background-color: #1f1f1f; }
+    td.value { font-weight: bold; text-align: right; color: #ffd700; }
+    td.key { text-align: left; color: #f0f0f0; }
 
-    /* Popup Leaflet responsive */
     .leaflet-popup-content-wrapper {
-      max-height: 70vh;
-      max-height: 70dvh;
-      min-width: 320px;
-      max-width: min(1100px, 96vw);
+      max-height: 60vh;
+      min-width: 300px;
+      max-width: 90vw;
       overflow-y: auto;
       background-color: #2a2a2a;
       color: #f0f0f0;
-    }
-    .leaflet-popup-content {
-      margin: 10px 12px;
-      width: auto !important; /* Leaflet forza una larghezza inline, la sblocchiamo */
     }
     .leaflet-popup-tip {
       background: #2a2a2a;
@@ -88,10 +60,10 @@
     .popup-btn {
       width: 100%;
       box-sizing: border-box;
-      margin-bottom: 8px;
-      padding: 12px 0;
+      margin-bottom: 5px;
+      padding: 10px 0;
       font-size: 16px;
-      background-color: #ffd700;
+      background-color: #ffd700; 
       color: #1e1e1e;
       border: none;
       border-radius: 3px;
@@ -99,35 +71,10 @@
       font-weight: bold;
       text-align: center;
     }
-    .popup-btn:active {
-      background-color: #e6c200;
-    }
 
     a.tel-link {
-      color: #00ffff;
+      color: #00ffff; /* colore link telefono */
       text-decoration: underline;
-    }
-
-    /* Controlli Leaflet più grandi e leggibili su touch */
-    .leaflet-control-zoom a {
-      width: 36px !important;
-      height: 36px !important;
-      line-height: 36px !important;
-      font-size: 20px !important;
-    }
-
-    /* Schermi molto piccoli: popup più largo e testo leggermente più grande */
-    @media (max-width: 480px) {
-      .leaflet-popup-content-wrapper {
-        max-width: 95vw;
-      }
-      table {
-        font-size: 14px;
-      }
-      .popup-btn {
-        font-size: 17px;
-        padding: 14px 0;
-      }
     }
   </style>
 </head>
@@ -143,50 +90,17 @@ const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3as
 
 const map = L.map('map', {
     tap: true,
-    touchZoom: true,
-    zoomControl: false // riposizioniamo lo zoom control per non coprire i marker in basso su mobile
+    touchZoom: true
 }).setView([41.9, 12.5], 6);
-
-L.control.zoom({ position: 'topright' }).addTo(map);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-// Ricalcola le dimensioni della mappa se cambia l'orientamento o la barra indirizzi mobile appare/scompare
-window.addEventListener('resize', () => map.invalidateSize());
-window.addEventListener('orientationchange', () => setTimeout(() => map.invalidateSize(), 200));
-
-// --- Gestione popup in base allo zoom ---
-const MIN_ZOOM_PER_POPUP = 3; // sotto questo livello di zoom i popup si chiudono/non si aprono
-let markerAttivo = null;
-
-map.on('popupopen', function(e) {
-  markerAttivo = e.popup._source || null;
-  // Se il popup si apre mentre lo zoom è già troppo basso, lo richiude subito
-  if (map.getZoom() < MIN_ZOOM_PER_POPUP) {
-    map.closePopup();
-  }
+// Forza Leaflet a ricalcolare le dimensioni quando la finestra/iframe cambia size
+window.addEventListener('resize', function() {
+  map.invalidateSize();
 });
-
-map.on('popupclose', function(e) {
-  if (e.popup._source === markerAttivo) {
-    markerAttivo = null;
-  }
-});
-
-map.on('zoomend', function() {
-  const zoomAttuale = map.getZoom();
-  if (zoomAttuale < MIN_ZOOM_PER_POPUP) {
-    // Zoom troppo basso: chiude qualunque popup aperto
-    map.closePopup();
-    return;
-  }
-  if (markerAttivo) {
-    // Riapre il popup sullo stesso marker per forzare il ricalcolo della posizione
-    // (autoPan) e tenerlo sempre dentro lo schermo anche a zoom molto alti
-    markerAttivo.closePopup();
-    markerAttivo.openPopup();
-  }
-});
+// Ricalcola anche subito dopo il caricamento, utile dentro iframe di Google Sites
+setTimeout(function() { map.invalidateSize(); }, 300);
 
 function getIconUrl(tipo) {
   tipo = tipo?.toLowerCase() || "";
@@ -222,73 +136,24 @@ Papa.parse(sheetUrl, {
           // Pulsante in alto
           let popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>`;
 
-          // Blocchi popup (etichetta sopra, valore sotto, su tutta la larghezza)
-          popupContent += `<div class="popup-fields">`;
+          // Tabella popup
+          popupContent += "<table>";
           headers.forEach(key => {
             if(row[key] !== undefined) {
               let val = row[key];
 
-              // Se il valore contiene un elenco di persone nel formato:
-              // > Nome Cognome
-              //    CF: CODICEFISCALE
-              //    Tel. numero
-              // lo trasforma in blocchi con nome in grassetto e dettagli indentati sotto
-              if (val.includes('>')) {
-                const righe = val.split('\n').map(l => l.trim()).filter(l => l !== '');
-                const persone = [];
-                let corrente = null;
+              // Se la colonna contiene numeri tra parentesi, crea link "chiama" con +39
+              // esempio: "Comando (12345)" diventa <a href="tel:+3912345">
+              val = val.replace(/\((\d+)\)/g, (match, num) => {
+                return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
+              });
 
-                righe.forEach(riga => {
-                  if (riga.startsWith('>')) {
-                    corrente = { nome: riga.replace(/^>\s*/, ''), dettagli: [] };
-                    persone.push(corrente);
-                  } else if (corrente) {
-                    corrente.dettagli.push(riga);
-                  }
-                });
-
-                if (persone.length > 0) {
-                  val = persone.map(p => {
-                    const dettagliHtml = p.dettagli.map(d => {
-                      const telMatch = d.match(/^tel\.?:?\s*(\+?\d[\d\s]*)/i);
-                      if (telMatch) {
-                        const numero = telMatch[1].replace(/\s+/g, '');
-                        return `<div class="persona-dettaglio">Tel: <a class="tel-link" href="tel:+39${numero}">${numero}</a></div>`;
-                      }
-                      return `<div class="persona-dettaglio">${d}</div>`;
-                    }).join('');
-                    return `<div class="persona"><div class="persona-nome">${p.nome}</div>${dettagliHtml}</div>`;
-                  }).join('');
-                }
-              } else {
-                // Riconosce anche il formato su riga singola "Nome Cognome - CODICEFISCALE (telefono)"
-                // tipico dei campi Funzione Comando, e lo mostra con lo stesso stile nome/CF/tel
-                const matchPersonaSingola = val.match(/^(.+?)\s*-\s*([A-Za-z0-9]{16})\s*\(?\s*(\+?\d[\d\s]*)\)?\s*$/);
-                if (matchPersonaSingola) {
-                  const nome = matchPersonaSingola[1].trim();
-                  const cf = matchPersonaSingola[2].trim();
-                  const numero = matchPersonaSingola[3].replace(/\s+/g, '');
-                  val = `<div class="persona"><div class="persona-nome">${nome}</div>`
-                      + `<div class="persona-dettaglio">CF: ${cf}</div>`
-                      + `<div class="persona-dettaglio">Tel: <a class="tel-link" href="tel:+39${numero}">${numero}</a></div></div>`;
-                } else {
-                  // Colonne normali: converte eventuali numeri tra parentesi in link "chiama"
-                  val = val.replace(/\((\d+)\)/g, (match, num) => {
-                    return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
-                  });
-                }
-              }
-
-              popupContent += `<div class="popup-field"><span class="key">${key}</span><span class="value">${val}</span></div>`;
+              popupContent += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
             }
           });
-          popupContent += `</div>`;
+          popupContent += "</table>";
 
-          marker.bindPopup(popupContent, {
-            maxWidth: window.innerWidth < 480 ? window.innerWidth * 0.96 : 1100,
-            autoPan: true,
-            autoPanPadding: [20, 20]
-          });
+          marker.bindPopup(popupContent);
 
           marker.on('mouseover', function() { this.setZIndexOffset(1000); });
           marker.on('mouseout', function() { this.setZIndexOffset(0); });
@@ -301,6 +166,9 @@ Papa.parse(sheetUrl, {
     if(markers.getLayers().length>0){
       map.fitBounds(markers.getBounds().pad(0.2));
     }
+
+    // Ricalcolo finale dopo aver caricato i marker (utile se l'iframe si è ridimensionato nel frattempo)
+    setTimeout(function() { map.invalidateSize(); }, 100);
   }
 });
 </script>
