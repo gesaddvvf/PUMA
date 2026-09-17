@@ -222,6 +222,27 @@
       transform: translateY(-50%);
     }
 
+    /* Alone pulsante attorno al marker dell'addestramento selezionato.
+       L'animazione è su un div INTERNO, non sul wrapper che Leaflet posiziona,
+       per non entrare in conflitto con il transform usato per il posizionamento. */
+    .marker-highlight-wrapper.leaflet-div-icon {
+      background: transparent;
+      border: none;
+    }
+    .marker-highlight-pulse {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,215,0,0.35) 0%, rgba(255,215,0,0.15) 55%, rgba(255,215,0,0) 70%);
+      box-shadow: 0 0 0 2px rgba(255,215,0,0.75);
+      animation: pulse-highlight 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse-highlight {
+      0%   { transform: scale(0.8); opacity: 0.9; }
+      50%  { transform: scale(1.2); opacity: 0.45; }
+      100% { transform: scale(0.8); opacity: 0.9; }
+    }
+
     /* Header a colonna e pulsanti a tutta larghezza su schermi stretti, per non sovrapporsi */
     @media (max-width: 700px) {
       #page-header {
@@ -299,6 +320,41 @@ function getIconUrl(tipo) {
 
 const detailsEmpty = document.getElementById('details-empty');
 const detailsContent = document.getElementById('details-content');
+
+// Alone pulsante attorno al marker dell'addestramento selezionato
+let highlightMarker = null;
+const highlightIcon = L.divIcon({
+  className: 'marker-highlight-wrapper',
+  html: '<div class="marker-highlight-pulse"></div>',
+  iconSize: [48, 48],
+  iconAnchor: [24, 24]
+});
+
+function highlightSelected(lat, lng) {
+  if (highlightMarker) {
+    map.removeLayer(highlightMarker);
+  }
+  highlightMarker = L.marker([lat, lng], {
+    icon: highlightIcon,
+    interactive: false,
+    zIndexOffset: -1000,
+    keyboard: false
+  }).addTo(map);
+}
+
+// Cliccando un punto vuoto della mappa (non un marker) si deseleziona:
+// toglie l'alone e riporta il pannello dettagli allo stato vuoto
+function clearSelection() {
+  if (highlightMarker) {
+    map.removeLayer(highlightMarker);
+    highlightMarker = null;
+  }
+  detailsContent.style.display = 'none';
+  detailsContent.innerHTML = '';
+  detailsEmpty.style.display = 'block';
+  setTimeout(function() { map.invalidateSize(); }, 50);
+}
+map.on('click', clearSelection);
 
 // Copia un numero di telefono negli appunti al click, con un piccolo feedback visivo
 function copyPhone(el, number) {
@@ -427,6 +483,7 @@ Papa.parse(sheetUrl, {
 
           marker.on('click', function() {
             showDetails(row, headers, lat, lng);
+            highlightSelected(lat, lng);
           });
 
           marker.on('mouseover', function() { this.setZIndexOffset(1000); });
@@ -452,6 +509,7 @@ Papa.parse(sheetUrl, {
       map.setView([targetLat, targetLng], targetZoom);
       if (targetMarker && targetMarkerDist < 0.01) { // ~1km di tolleranza
         showDetails(targetRowData, headers, targetLat, targetLng);
+        highlightSelected(targetLat, targetLng);
       }
     } else if (markers.getLayers().length > 0) {
       map.fitBounds(markers.getBounds().pad(0.2));
