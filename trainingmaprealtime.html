@@ -152,12 +152,13 @@
       text-align: center;
     }
 
-    a.tel-link {
+    .tel-link {
       color: #f0f0f0;
       text-decoration: none;
       border-bottom: 1px dotted #999;
+      cursor: pointer;
     }
-    a.tel-link:hover { color: #ffd700; border-bottom-color: #ffd700; }
+    .tel-link:hover { color: #ffd700; border-bottom-color: #ffd700; }
 
     details.nominativi-list summary {
       cursor: pointer;
@@ -299,6 +300,37 @@ function getIconUrl(tipo) {
 const detailsEmpty = document.getElementById('details-empty');
 const detailsContent = document.getElementById('details-content');
 
+// Copia un numero di telefono negli appunti al click, con un piccolo feedback visivo
+function copyPhone(el, number) {
+  const original = el.innerHTML;
+  const done = (ok) => {
+    el.innerHTML = ok ? '✅ Copiato!' : '⚠️ Errore copia';
+    setTimeout(() => { el.innerHTML = original; }, 1200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(number).then(() => done(true)).catch(() => done(false));
+  } else {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = number;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      done(true);
+    } catch (e) {
+      done(false);
+    }
+  }
+}
+
+// Genera un elemento cliccabile "copia numero" invece di un link "chiama"
+function telSpan(num) {
+  return `<span class="tel-link" onclick="copyPhone(this, '${num}')" title="Clicca per copiare il numero">📞 ${num}</span>`;
+}
+
 // Trasforma il testo grezzo "> Nome   CF: ...   Tel. ..." in un elenco di card leggibili
 // (stessa logica usata nella tabella Riepilogo Presenze Odierne)
 function renderNominativi(raw) {
@@ -322,7 +354,7 @@ function renderNominativi(raw) {
 
   return persone.map(p => {
     const cfHtml = p.cf ? `<span class="persona-cf">CF: ${p.cf}</span>` : '';
-    const telHtml = p.tel ? `<a class="tel-link" href="tel:+39${p.tel}">📞 ${p.tel}</a>` : '';
+    const telHtml = p.tel ? telSpan(p.tel) : '';
     return `<div class="persona-item"><span class="persona-nome">${p.nome}</span>${cfHtml}${telHtml}</div>`;
   }).join('');
 }
@@ -340,11 +372,14 @@ function showDetails(row, headers, lat, lng) {
         // Elenco nominativi come elenco espandibile di card leggibili
         const details = `<details class="nominativi-list"><summary>Mostra elenco</summary><div class="nominativi-content">${renderNominativi(row[key])}</div></details>`;
         html += `<tr><td class="key">${key}</td><td class="value nominativi-cell">${details}</td></tr>`;
+      } else if (keyLower.includes('funzione comando')) {
+        // Referente singolo (IC / Responsabile Tecnico Manovre): stessa card, sempre visibile
+        html += `<tr><td class="key">${key}</td><td class="value nominativi-cell">${renderNominativi(row[key])}</td></tr>`;
       } else {
         let val = row[key];
-        // Se la colonna contiene numeri tra parentesi, crea link "chiama" con +39
+        // Se la colonna contiene numeri tra parentesi, li rende cliccabili per copiarli
         val = val.replace(/\((\d+)\)/g, (match, num) => {
-          return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
+          return `(${telSpan(num)})`;
         });
         html += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
       }
@@ -359,6 +394,7 @@ function showDetails(row, headers, lat, lng) {
   // Il pannello può aver cambiato dimensione alla mappa (specialmente su mobile): ricalcola
   setTimeout(function() { map.invalidateSize(); }, 50);
 }
+
 
 Papa.parse(sheetUrl, {
   download: true,

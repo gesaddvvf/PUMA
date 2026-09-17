@@ -216,13 +216,14 @@
       margin-right: 12px;
     }
 
-    a.tel-link {
+    .tel-link {
       color: #f0f0f0;
       text-decoration: none;
       border-bottom: 1px dotted #999;
+      cursor: pointer;
     }
 
-    a.tel-link:hover {
+    .tel-link:hover {
       color: #ffd700;
       border-bottom-color: #ffd700;
     }
@@ -389,6 +390,37 @@
     // Colonne (per parola chiave nell'intestazione) da non mostrare in tabella
     const HIDDEN_COL_KEYWORDS = ['codice', 'coord', 'presenti'];
 
+    // Copia un numero di telefono negli appunti al click, con un piccolo feedback visivo
+    function copyPhone(el, number) {
+      const original = el.innerHTML;
+      const done = (ok) => {
+        el.innerHTML = ok ? '✅ Copiato!' : '⚠️ Errore copia';
+        setTimeout(() => { el.innerHTML = original; }, 1200);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(number).then(() => done(true)).catch(() => done(false));
+      } else {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = number;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          done(true);
+        } catch (e) {
+          done(false);
+        }
+      }
+    }
+
+    // Genera un elemento cliccabile "copia numero" invece di un link "chiama"
+    function telSpan(num) {
+      return `<span class="tel-link" onclick="copyPhone(this, '${num}')" title="Clicca per copiare il numero">📞 ${num}</span>`;
+    }
+
     // Trasforma il testo grezzo "> Nome   CF: ...   Tel. ..." in un elenco di card leggibili
     function renderNominativi(raw) {
       const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -411,7 +443,7 @@
 
       return persone.map(p => {
         const cfHtml = p.cf ? `<span class="persona-cf">CF: ${p.cf}</span>` : '';
-        const telHtml = p.tel ? `<a class="tel-link" href="tel:+39${p.tel}">📞 ${p.tel}</a>` : '';
+        const telHtml = p.tel ? telSpan(p.tel) : '';
         return `<div class="persona-item"><span class="persona-nome">${p.nome}</span>${cfHtml}${telHtml}</div>`;
       }).join('');
     }
