@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riepilogo Presenze Odierne</title>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: 'Comfortaa', cursive;
+    background-color: #1e1e1e;
+    color: #f0f0f0;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+  h1 {
+    font-size: 18px;
+    color: #ffd700;
+    margin: 0 0 4px 0;
+  }
+  #meta-info {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 16px;
+  }
+  #status {
+    font-size: 13px;
+    color: #999;
+    padding: 20px 0;
+  }
+  .table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 6px;
+    border: 1px solid #444;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 700px;
+    font-size: 13px;
+  }
+  thead th {
+    background-color: #2a2a2a;
+    color: #ffd700;
+    text-align: left;
+    padding: 10px 8px;
+    border-bottom: 2px solid #ffd700;
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 8px;
+    border-bottom: 1px solid #333;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) { background-color: #262626; }
+  tbody tr:nth-child(odd)  { background-color: #1f1f1f; }
+  tbody tr:hover { background-color: #333; }
+
+  td.presenti-count {
+    font-weight: bold;
+    color: #ffd700;
+    text-align: center;
+    white-space: nowrap;
+  }
+  td.comando { font-weight: bold; }
+
+  details.nominativi-list summary {
+    cursor: pointer;
+    color: #00ffff;
+    outline: none;
+  }
+  details.nominativi-list summary:hover { text-decoration: underline; }
+  .nominativi-content {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    color: #ccc;
+  }
+  a.tel-link {
+    color: #00ffff;
+    text-decoration: underline;
+  }
+  a.coord-link {
+    color: #ffd700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  a.coord-link:hover { text-decoration: underline; }
+
+  #refresh-btn {
+    background-color: #ffd700;
+    color: #1e1e1e;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-family: 'Comfortaa', cursive;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 8px;
+  }
+  #refresh-btn:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+<h1>🔥 Riepilogo Presenze Odierne</h1>
+<div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span><button id="refresh-btn">Aggiorna ora</button></div>
+
+<div id="status">Caricamento dati in corso...</div>
+<div class="table-wrapper" id="table-wrapper" style="display:none;">
+  <table>
+    <thead><tr id="thead-row"></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+const SHEET_ID = "1WHGKaawomU_jMuO6FnwzYidou-fmpc0ndeE0aiEMYP4";
+const GID = "243050594";
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+const HEADER_ROW_INDEX = 3; // riga 4 del foglio = indice 3 (0-based)
+const START_COL = 1;        // colonna B
+
+const statusEl = document.getElementById('status');
+const wrapperEl = document.getElementById('table-wrapper');
+const theadRow = document.getElementById('thead-row');
+const tbody = document.getElementById('tbody');
+const lastUpdateEl = document.getElementById('last-update');
+
+function linkifyPhones(text) {
+  return text.replace(/(Tel\.?\s*)(\d{6,})/gi, (m, label, num) => {
+    return `${label}<a class="tel-link" href="tel:+39${num}">${num}</a>`;
+  });
+}
+
+function renderCoordLink(value) {
+  const coords = value.trim();
+  const parts = coords.split(',').map(p => p.trim());
+  if (parts.length === 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))) {
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
+    return `<a class="coord-link" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank">📍 ${coords}</a>`;
+  }
+  return coords;
+}
+
+function findColIndex(headers, keyword) {
+  return headers.findIndex(h => h && h.toLowerCase().includes(keyword.toLowerCase()));
+}
+
+function loadData() {
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Caricamento dati in corso...';
+  wrapperEl.style.display = 'none';
+
+  Papa.parse(CSV_URL + '&_=' + Date.now(), {
+    download: true,
+    header: false,
+    skipEmptyLines: false,
+    complete: function(results) {
+      const rows = results.data;
+      const headerRow = rows[HEADER_ROW_INDEX] || [];
+
+      // Trova l'ultima colonna con un'intestazione valida
+      let endCol = START_COL;
+      for (let i = headerRow.length - 1; i >= START_COL; i--) {
+        if (headerRow[i] && headerRow[i].trim() !== '') { endCol = i; break; }
+      }
+
+      const headers = headerRow.slice(START_COL, endCol + 1);
+      const dataRows = rows.slice(HEADER_ROW_INDEX + 1)
+        .filter(r => r[START_COL] && r[START_COL].trim() !== '');
+
+      const nominativiIdx = findColIndex(headers, 'nominativi');
+      const coordIdx = findColIndex(headers, 'coord');
+      const presentiIdx = findColIndex(headers, 'presenti');
+
+      // Header
+      theadRow.innerHTML = '';
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        theadRow.appendChild(th);
+      });
+
+      // Body
+      tbody.innerHTML = '';
+      if (dataRows.length === 0) {
+        statusEl.textContent = 'Nessuna presenza registrata al momento.';
+        return;
+      }
+
+      dataRows.forEach(row => {
+        const tr = document.createElement('tr');
+        for (let i = START_COL; i <= endCol; i++) {
+          const td = document.createElement('td');
+          const localIdx = i - START_COL;
+          let val = (row[i] || '').trim();
+
+          if (localIdx === nominativiIdx) {
+            const count = presentiIdx >= 0 ? (row[START_COL + presentiIdx] || '').trim() : '';
+            const details = document.createElement('details');
+            details.className = 'nominativi-list';
+            const summary = document.createElement('summary');
+            summary.textContent = `${count || '—'} presenti (mostra elenco)`;
+            const content = document.createElement('div');
+            content.className = 'nominativi-content';
+            content.innerHTML = linkifyPhones(val.replace(/\n/g, '<br>'));
+            details.appendChild(summary);
+            details.appendChild(content);
+            td.appendChild(details);
+          } else if (localIdx === coordIdx) {
+            td.innerHTML = renderCoordLink(val);
+          } else if (localIdx === presentiIdx) {
+            td.classList.add('presenti-count');
+            td.textContent = val;
+          } else if (i === START_COL) {
+            td.classList.add('comando');
+            td.textContent = val;
+          } else {
+            td.textContent = val;
+          }
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+
+      statusEl.style.display = 'none';
+      wrapperEl.style.display = 'block';
+      lastUpdateEl.textContent = new Date().toLocaleTimeString('it-IT');
+    },
+    error: function(err) {
+      statusEl.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+      console.error(err);
+    }
+  });
+}
+
+document.getElementById('refresh-btn').addEventListener('click', loadData);
+
+loadData();
+// Auto-refresh ogni 60 secondi
+setInterval(loadData, 60000);
+</script>
+</body>
+</html>
