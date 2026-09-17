@@ -19,6 +19,11 @@
       font-family: 'Comfortaa', cursive;
       background-color: #1e1e1e;
       color: #f0f0f0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .page-content {
       padding: 16px;
       box-sizing: border-box;
     }
@@ -29,6 +34,9 @@
       align-items: flex-start;
       gap: 12px;
       flex-wrap: wrap;
+      border-bottom: 1px solid #444;
+      padding: 10px 16px;
+      box-sizing: border-box;
     }
 
     h1 {
@@ -328,7 +336,7 @@
 
 <body>
 
-  <div class="header-top">
+  <header class="header-top">
     <div>
       <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
       <h2>Riepilogo presenze odierne <span id="today-date"></span></h2>
@@ -337,18 +345,21 @@
       <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html" id="btn-mappa">Mappa Real Time ➡</a>
       <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page" id="btn-puma">Homepage P.U.M.A.</a>
     </div>
-  </div>
-  <div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span><button id="refresh-btn">Aggiorna
-      ora</button></div>
+  </header>
 
-  <div id="status">Caricamento dati in corso...</div>
-  <div class="table-wrapper" id="table-wrapper" style="display:none;">
-    <table>
-      <thead>
-        <tr id="thead-row"></tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
+  <div class="page-content">
+    <div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span><button id="refresh-btn">Aggiorna
+        ora</button></div>
+
+    <div id="status">Caricamento dati in corso...</div>
+    <div class="table-wrapper" id="table-wrapper" style="display:none;">
+      <table>
+        <thead>
+          <tr id="thead-row"></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>

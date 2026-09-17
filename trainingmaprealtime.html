@@ -20,15 +20,58 @@
       font-family: 'Comfortaa', cursive;
       background-color: #1e1e1e;
       color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Layout principale: mappa + pannello dettagli */
+    /* Header a barra: titolo + pulsanti, in flusso normale (non più overlay fisso) */
+    #page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      background-color: #1e1e1e;
+      border-bottom: 1px solid #444;
+      padding: 10px 16px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    #page-header h1 {
+      font-size: 16px;
+      color: #ffd700;
+      margin: 0 0 2px 0;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #page-header .puma-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    #page-header .subtitle-divider {
+      color: #666;
+    }
+    #page-header h2 {
+      font-size: 13px;
+      color: #ccc;
+      font-weight: normal;
+      margin: 0;
+    }
+    #page-header #today-date {
+      color: #ffd700;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    /* Layout principale: mappa + pannello dettagli, sotto l'header */
     #app-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      flex: 1 1 auto;
+      min-height: 0;
       display: flex;
       flex-direction: row;
     }
@@ -91,6 +134,7 @@
     tr:nth-child(even) { background-color: #2a2a2a; }
     tr:nth-child(odd) { background-color: #1f1f1f; }
     td.value { font-weight: bold; text-align: right; color: #ffd700; }
+    td.value.nominativi-cell { text-align: left; }
     td.key { text-align: left; color: #f0f0f0; }
 
     .popup-btn {
@@ -109,17 +153,49 @@
     }
 
     a.tel-link {
-      color: #00ffff; /* colore link telefono */
-      text-decoration: underline;
+      color: #f0f0f0;
+      text-decoration: none;
+      border-bottom: 1px dotted #999;
+    }
+    a.tel-link:hover { color: #ffd700; border-bottom-color: #ffd700; }
+
+    details.nominativi-list summary {
+      cursor: pointer;
+      color: #ffd700;
+      outline: none;
+      font-weight: bold;
+    }
+    details.nominativi-list summary:hover { text-decoration: underline; }
+    .nominativi-content {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .persona-item {
+      background-color: #2a2a2a;
+      border-left: 3px solid #ffd700;
+      border-radius: 3px;
+      padding: 6px 10px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .persona-nome {
+      display: block;
+      font-weight: bold;
+      color: #f0f0f0;
+    }
+    .persona-cf {
+      display: inline-block;
+      font-family: monospace;
+      color: #999;
+      margin-right: 12px;
     }
 
     #nav-buttons {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      z-index: 1000;
       display: flex;
       gap: 8px;
+      flex-shrink: 0;
     }
     .nav-btn {
       display: inline-block;
@@ -132,7 +208,6 @@
       font-weight: bold;
       font-size: 13px;
       text-decoration: none;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
       transition: background-color 0.15s, color 0.15s;
     }
     .nav-btn:hover {
@@ -140,66 +215,38 @@
       color: #1e1e1e;
     }
 
-    #header-overlay {
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 1000;
-      background-color: rgba(30, 30, 30, 0.9);
-      border: 1px solid #444;
-      border-radius: 6px;
-      padding: 10px 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-      max-width: calc(100% - 24px);
-      box-sizing: border-box;
-    }
-    #header-overlay h1 {
-      font-size: 16px;
-      color: #ffd700;
-      margin: 0 0 2px 0;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    #header-overlay .puma-icon {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-    #header-overlay .subtitle-divider {
-      color: #666;
-    }
-    #header-overlay h2 {
-      font-size: 13px;
-      color: #ccc;
-      font-weight: normal;
-      margin: 0;
-    }
-    #header-overlay #today-date {
-      color: #ffd700;
-      font-weight: bold;
-      text-transform: capitalize;
-    }
-
     /* Zoom mappa spostato a metà altezza, sul lato sinistro */
     .leaflet-top.leaflet-left {
       top: 50%;
       transform: translateY(-50%);
     }
+
+    /* Header a colonna e pulsanti a tutta larghezza su schermi stretti, per non sovrapporsi */
+    @media (max-width: 700px) {
+      #page-header {
+        flex-direction: column;
+      }
+      #nav-buttons {
+        width: 100%;
+      }
+      .nav-btn {
+        flex: 1;
+        text-align: center;
+      }
+    }
   </style>
 </head>
 <body>
-<div id="header-overlay">
-  <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
-  <h2>Mappa addestramenti odierni <span id="today-date"></span></h2>
-</div>
-<div id="nav-buttons">
-  <a class="nav-btn" href="personaleodierno.html">Riepilogo Presenze Odierne ➡</a>
-  <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page">Homepage P.U.M.A.</a>
-</div>
+<header id="page-header">
+  <div>
+    <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
+    <h2>Mappa addestramenti odierni <span id="today-date"></span></h2>
+  </div>
+  <div id="nav-buttons">
+    <a class="nav-btn" href="personaleodierno.html">Riepilogo Presenze Odierne ➡</a>
+    <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page">Homepage P.U.M.A.</a>
+  </div>
+</header>
 
 <div id="app-container">
   <div id="map"></div>
@@ -252,6 +299,34 @@ function getIconUrl(tipo) {
 const detailsEmpty = document.getElementById('details-empty');
 const detailsContent = document.getElementById('details-content');
 
+// Trasforma il testo grezzo "> Nome   CF: ...   Tel. ..." in un elenco di card leggibili
+// (stessa logica usata nella tabella Riepilogo Presenze Odierne)
+function renderNominativi(raw) {
+  const lines = (raw || '').split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const persone = [];
+  let current = null;
+
+  lines.forEach(line => {
+    if (line.startsWith('>')) {
+      current = { nome: line.replace(/^>\s*/, ''), cf: '', tel: '' };
+      persone.push(current);
+    } else if (current) {
+      const cfMatch = line.match(/^CF:\s*(.+)$/i);
+      const telMatch = line.match(/^Tel\.?\s*(.+)$/i);
+      if (cfMatch) current.cf = cfMatch[1].trim();
+      else if (telMatch) current.tel = telMatch[1].trim();
+    }
+  });
+
+  if (persone.length === 0) return `<div class="persona-item">${raw}</div>`;
+
+  return persone.map(p => {
+    const cfHtml = p.cf ? `<span class="persona-cf">CF: ${p.cf}</span>` : '';
+    const telHtml = p.tel ? `<a class="tel-link" href="tel:+39${p.tel}">📞 ${p.tel}</a>` : '';
+    return `<div class="persona-item"><span class="persona-nome">${p.nome}</span>${cfHtml}${telHtml}</div>`;
+  }).join('');
+}
+
 // Mostra i dati dell'addestramento selezionato nel pannello laterale (invece che in un popup)
 function showDetails(row, headers, lat, lng) {
   let html = `<h3>${row["Tipologia addestramento"] || "Addestramento"}</h3>`;
@@ -259,12 +334,20 @@ function showDetails(row, headers, lat, lng) {
   html += "<table>";
   headers.forEach(key => {
     if (row[key] !== undefined && row[key] !== "") {
-      let val = row[key];
-      // Se la colonna contiene numeri tra parentesi, crea link "chiama" con +39
-      val = val.replace(/\((\d+)\)/g, (match, num) => {
-        return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
-      });
-      html += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
+      const keyLower = key.toLowerCase();
+
+      if (keyLower.includes('nominativi')) {
+        // Elenco nominativi come elenco espandibile di card leggibili
+        const details = `<details class="nominativi-list"><summary>Mostra elenco</summary><div class="nominativi-content">${renderNominativi(row[key])}</div></details>`;
+        html += `<tr><td class="key">${key}</td><td class="value nominativi-cell">${details}</td></tr>`;
+      } else {
+        let val = row[key];
+        // Se la colonna contiene numeri tra parentesi, crea link "chiama" con +39
+        val = val.replace(/\((\d+)\)/g, (match, num) => {
+          return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
+        });
+        html += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
+      }
     }
   });
   html += "</table>";
