@@ -88,10 +88,17 @@
 // CSV del foglio Real_Time_Map
 const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3asr7iNREmon_px3MLiLhbU78DDi-MucJx8sds6yX1e303P23wjR0IitnaNhFRNzDkzd/pub?gid=744101024&single=true&output=csv";
 
+// Parametri opzionali dall'URL: ?lat=..&lng=..&zoom=.. per centrare la mappa su un punto specifico
+const urlParams = new URLSearchParams(window.location.search);
+const targetLat = parseFloat(urlParams.get('lat'));
+const targetLng = parseFloat(urlParams.get('lng'));
+const targetZoom = parseFloat(urlParams.get('zoom')) || 15;
+const hasTarget = !isNaN(targetLat) && !isNaN(targetLng);
+
 const map = L.map('map', {
     tap: true,
     touchZoom: true
-}).setView([41.9, 12.5], 6);
+}).setView(hasTarget ? [targetLat, targetLng] : [41.9, 12.5], hasTarget ? targetZoom : 6);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
@@ -117,6 +124,8 @@ Papa.parse(sheetUrl, {
 
     const markers = L.featureGroup();
     const headers = Object.keys(data[0]);
+    let targetMarker = null;
+    let targetMarkerDist = Infinity;
 
     data.forEach(row => {
       const coordStr = row["Coordinate"];
@@ -159,11 +168,26 @@ Papa.parse(sheetUrl, {
           marker.on('mouseout', function() { this.setZIndexOffset(0); });
 
           markers.addLayer(marker);
+
+          // Se è stato passato un punto target via URL, individua il marker più vicino
+          if (hasTarget) {
+            const dist = Math.hypot(lat - targetLat, lng - targetLng);
+            if (dist < targetMarkerDist) {
+              targetMarkerDist = dist;
+              targetMarker = marker;
+            }
+          }
         }
       }
     });
 
-    if(markers.getLayers().length>0){
+    if (hasTarget) {
+      // Centrato sul punto richiesto: non adattare la vista a tutti i marker
+      map.setView([targetLat, targetLng], targetZoom);
+      if (targetMarker && targetMarkerDist < 0.01) { // ~1km di tolleranza
+        targetMarker.openPopup();
+      }
+    } else if (markers.getLayers().length > 0) {
       map.fitBounds(markers.getBounds().pad(0.2));
     }
 
