@@ -21,14 +21,61 @@
       background-color: #1e1e1e;
       color: #f0f0f0;
     }
-    #map {
-      position: absolute;
+
+    /* Layout principale: mappa + pannello dettagli */
+    #app-container {
+      position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
+      display: flex;
+      flex-direction: row;
+    }
+    #map {
+      flex: 1 1 auto;
       height: 100%;
-      width: 100%;
+      min-width: 0;
+      position: relative;
+    }
+    #details-panel {
+      width: 360px;
+      flex-shrink: 0;
+      height: 100%;
+      overflow-y: auto;
+      background-color: #1e1e1e;
+      border-left: 1px solid #444;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    #details-empty {
+      color: #888;
+      font-size: 13px;
+      padding-top: 8px;
+    }
+    #details-content { display: none; }
+    #details-content h3 {
+      color: #ffd700;
+      font-size: 15px;
+      margin: 0 0 10px 0;
+    }
+
+    /* Su schermi stretti (tablet/mobile): mappa sopra, dettagli sotto */
+    @media (max-width: 900px) {
+      #app-container {
+        flex-direction: column;
+      }
+      #map {
+        height: 55%;
+        width: 100%;
+        flex: none;
+      }
+      #details-panel {
+        width: 100%;
+        height: 45%;
+        border-left: none;
+        border-top: 1px solid #444;
+      }
     }
 
     table {
@@ -45,18 +92,6 @@
     tr:nth-child(odd) { background-color: #1f1f1f; }
     td.value { font-weight: bold; text-align: right; color: #ffd700; }
     td.key { text-align: left; color: #f0f0f0; }
-
-    .leaflet-popup-content-wrapper {
-      max-height: 60vh;
-      min-width: 300px;
-      max-width: 90vw;
-      overflow-y: auto;
-      background-color: #2a2a2a;
-      color: #f0f0f0;
-    }
-    .leaflet-popup-tip {
-      background: #2a2a2a;
-    }
 
     .popup-btn {
       width: 100%;
@@ -148,6 +183,12 @@
       font-weight: bold;
       text-transform: capitalize;
     }
+
+    /* Zoom mappa spostato a metà altezza, sul lato sinistro */
+    .leaflet-top.leaflet-left {
+      top: 50%;
+      transform: translateY(-50%);
+    }
   </style>
 </head>
 <body>
@@ -159,7 +200,14 @@
   <a class="nav-btn" href="personaleodierno.html">Riepilogo Presenze Odierne ➡</a>
   <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page">Homepage P.U.M.A.</a>
 </div>
-<div id="map"></div>
+
+<div id="app-container">
+  <div id="map"></div>
+  <div id="details-panel">
+    <div id="details-empty">Seleziona un addestramento sulla mappa per vederne i dettagli.</div>
+    <div id="details-content"></div>
+  </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -201,6 +249,34 @@ function getIconUrl(tipo) {
   document.getElementById('today-date').textContent = `– ${formatted}`;
 })();
 
+const detailsEmpty = document.getElementById('details-empty');
+const detailsContent = document.getElementById('details-content');
+
+// Mostra i dati dell'addestramento selezionato nel pannello laterale (invece che in un popup)
+function showDetails(row, headers, lat, lng) {
+  let html = `<h3>${row["Tipologia addestramento"] || "Addestramento"}</h3>`;
+  html += `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>`;
+  html += "<table>";
+  headers.forEach(key => {
+    if (row[key] !== undefined && row[key] !== "") {
+      let val = row[key];
+      // Se la colonna contiene numeri tra parentesi, crea link "chiama" con +39
+      val = val.replace(/\((\d+)\)/g, (match, num) => {
+        return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
+      });
+      html += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
+    }
+  });
+  html += "</table>";
+
+  detailsContent.innerHTML = html;
+  detailsEmpty.style.display = 'none';
+  detailsContent.style.display = 'block';
+
+  // Il pannello può aver cambiato dimensione alla mappa (specialmente su mobile): ricalcola
+  setTimeout(function() { map.invalidateSize(); }, 50);
+}
+
 Papa.parse(sheetUrl, {
   download: true,
   header: true,
@@ -213,6 +289,7 @@ Papa.parse(sheetUrl, {
     const headers = Object.keys(data[0]);
     let targetMarker = null;
     let targetMarkerDist = Infinity;
+    let targetRowData = null;
 
     data.forEach(row => {
       const coordStr = row["Coordinate"];
@@ -229,27 +306,9 @@ Papa.parse(sheetUrl, {
 
           const marker = L.marker([lat,lng], {icon: icon}).addTo(map);
 
-          // Pulsante in alto
-          let popupContent = `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>`;
-
-          // Tabella popup
-          popupContent += "<table>";
-          headers.forEach(key => {
-            if(row[key] !== undefined) {
-              let val = row[key];
-
-              // Se la colonna contiene numeri tra parentesi, crea link "chiama" con +39
-              // esempio: "Comando (12345)" diventa <a href="tel:+3912345">
-              val = val.replace(/\((\d+)\)/g, (match, num) => {
-                return `(<a class="tel-link" href="tel:+39${num}">${num}</a>)`;
-              });
-
-              popupContent += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
-            }
+          marker.on('click', function() {
+            showDetails(row, headers, lat, lng);
           });
-          popupContent += "</table>";
-
-          marker.bindPopup(popupContent);
 
           marker.on('mouseover', function() { this.setZIndexOffset(1000); });
           marker.on('mouseout', function() { this.setZIndexOffset(0); });
@@ -262,6 +321,7 @@ Papa.parse(sheetUrl, {
             if (dist < targetMarkerDist) {
               targetMarkerDist = dist;
               targetMarker = marker;
+              targetRowData = row;
             }
           }
         }
@@ -272,7 +332,7 @@ Papa.parse(sheetUrl, {
       // Centrato sul punto richiesto: non adattare la vista a tutti i marker
       map.setView([targetLat, targetLng], targetZoom);
       if (targetMarker && targetMarkerDist < 0.01) { // ~1km di tolleranza
-        targetMarker.openPopup();
+        showDetails(targetRowData, headers, targetLat, targetLng);
       }
     } else if (markers.getLayers().length > 0) {
       map.fitBounds(markers.getBounds().pad(0.2));

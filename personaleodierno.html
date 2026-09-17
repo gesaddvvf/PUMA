@@ -334,8 +334,7 @@
       <h2>Riepilogo presenze odierne <span id="today-date"></span></h2>
     </div>
     <div id="nav-buttons">
-      <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html" id="btn-mappa"
-        target="_blank">Mappa Real Time ➡</a>
+      <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html" id="btn-mappa">Mappa Real Time ➡</a>
       <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page" id="btn-puma">Homepage P.U.M.A.</a>
     </div>
   </div>
@@ -527,7 +526,6 @@
                     const mapLink = document.createElement('a');
                     mapLink.className = 'map-link';
                     mapLink.href = `${MAPPA_URL}?lat=${coords.lat}&lng=${coords.lng}&zoom=15`;
-                    mapLink.target = '_blank';
                     mapLink.textContent = '📍 Apri nella mappa';
                     td.appendChild(document.createElement('br'));
                     td.appendChild(mapLink);
