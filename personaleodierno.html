@@ -375,7 +375,7 @@
 
       lines.forEach(line => {
         if (line.startsWith('>')) {
-          current = {nome: line.replace(/^>\s*/, ''), cf: '', tel: ''};
+          current = { nome: line.replace(/^>\s*/, ''), cf: '', tel: '' };
           persone.push(current);
         } else if (current) {
           const cfMatch = line.match(/^CF:\s*(.+)$/i);
@@ -398,153 +398,158 @@
     function extractLatLng(raw) {
       const match = (raw || '').match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
       if (!match) return null;
-      return {lat: match[1], lng: match[2]};
+      return { lat: match[1], lng: match[2] };
     }
 
     const MAPPA_URL = "https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html";
-    statusEl.style.display = 'block';
-    statusEl.textContent = 'Caricamento dati in corso...';
-    wrapperEl.style.display = 'none';
 
-    Papa.parse(CSV_URL + '&_=' + Date.now(), {
-      download: true,
-      header: false,
-      skipEmptyLines: false,
-      complete: function (results) {
-        const rows = results.data;
-        const headerRow = rows[HEADER_ROW_INDEX] || [];
+    // FIX: questa funzione era stata "scoperchiata" (mancava il wrapping
+    // function loadData() {...}), quindi loadData() risultava non definita
+    // e bloccava tutto lo script subito dopo il primo caricamento.
+    function loadData() {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Caricamento dati in corso...';
+      wrapperEl.style.display = 'none';
 
-        // Trova l'ultima colonna con un'intestazione valida
-        let endCol = START_COL;
-        for (let i = headerRow.length - 1; i >= START_COL; i--) {
-          if (headerRow[i] && headerRow[i].trim() !== '') {endCol = i; break;}
-        }
+      Papa.parse(CSV_URL + '&_=' + Date.now(), {
+        download: true,
+        header: false,
+        skipEmptyLines: false,
+        complete: function (results) {
+          const rows = results.data;
+          const headerRow = rows[HEADER_ROW_INDEX] || [];
 
-        const allHeaders = headerRow.slice(START_COL, endCol + 1);
-        const dataRows = rows.slice(HEADER_ROW_INDEX + 1)
-          .filter(r => r[START_COL] && r[START_COL].trim() !== '');
-
-        // Indici (relativi ad allHeaders) delle colonne da nascondere
-        const hiddenIdx = allHeaders
-          .map((h, idx) => (h && HIDDEN_COL_KEYWORDS.some(k => h.toLowerCase().includes(k))) ? idx : -1)
-          .filter(idx => idx !== -1);
-
-        // Colonne effettivamente visibili, come indici assoluti nella riga CSV
-        const visibleCols = [];
-        for (let i = START_COL; i <= endCol; i++) {
-          if (!hiddenIdx.includes(i - START_COL)) visibleCols.push(i);
-        }
-
-        // Sposta "Piano di sicurezza" subito dopo la prima colonna (Comando Organizzatore)
-        const sicurezzaAbsIdx = findColIndex(allHeaders, 'sicurezza');
-        const sicurezzaColAbs = sicurezzaAbsIdx >= 0 ? START_COL + sicurezzaAbsIdx : -1;
-        if (sicurezzaColAbs !== -1) {
-          const pos = visibleCols.indexOf(sicurezzaColAbs);
-          if (pos > 1) {
-            visibleCols.splice(pos, 1);
-            visibleCols.splice(1, 0, sicurezzaColAbs);
+          // Trova l'ultima colonna con un'intestazione valida
+          let endCol = START_COL;
+          for (let i = headerRow.length - 1; i >= START_COL; i--) {
+            if (headerRow[i] && headerRow[i].trim() !== '') { endCol = i; break; }
           }
-        }
 
-        const headers = visibleCols.map(i => headerRow[i]);
-        const sicurezzaIdx = visibleCols.indexOf(sicurezzaColAbs);
+          const allHeaders = headerRow.slice(START_COL, endCol + 1);
+          const dataRows = rows.slice(HEADER_ROW_INDEX + 1)
+            .filter(r => r[START_COL] && r[START_COL].trim() !== '');
 
-        const nominativiIdx = findColIndex(headers, 'nominativi');
-        // La colonna "Presenti" resta nascosta ma serve comunque il suo indice assoluto
-        // per recuperare il conteggio da mostrare dentro l'elenco nominativi
-        const presentiAbsIdx = findColIndex(allHeaders, 'presenti');
-        const presentiColAbs = presentiAbsIdx >= 0 ? START_COL + presentiAbsIdx : -1;
+          // Indici (relativi ad allHeaders) delle colonne da nascondere
+          const hiddenIdx = allHeaders
+            .map((h, idx) => (h && HIDDEN_COL_KEYWORDS.some(k => h.toLowerCase().includes(k))) ? idx : -1)
+            .filter(idx => idx !== -1);
 
-        // La colonna "Coordinate" resta nascosta ma serve per generare il link alla mappa
-        const coordAbsIdx = findColIndex(allHeaders, 'coord');
-        const coordColAbs = coordAbsIdx >= 0 ? START_COL + coordAbsIdx : -1;
+          // Colonne effettivamente visibili, come indici assoluti nella riga CSV
+          const visibleCols = [];
+          for (let i = START_COL; i <= endCol; i++) {
+            if (!hiddenIdx.includes(i - START_COL)) visibleCols.push(i);
+          }
 
-        // Header
-        theadRow.innerHTML = '';
-        headers.forEach(h => {
-          const th = document.createElement('th');
-          th.textContent = h;
-          theadRow.appendChild(th);
-        });
-
-        // Body
-        tbody.innerHTML = '';
-        if (dataRows.length === 0) {
-          statusEl.textContent = 'Nessuna presenza registrata al momento.';
-          return;
-        }
-
-        dataRows.forEach(row => {
-          const tr = document.createElement('tr');
-          let daEffettuare = false;
-
-          visibleCols.forEach((i, localIdx) => {
-            const td = document.createElement('td');
-            td.setAttribute('data-label', headers[localIdx] || '');
-            let val = (row[i] || '').trim();
-
-            if (localIdx === nominativiIdx) {
-              const count = presentiColAbs >= 0 ? (row[presentiColAbs] || '').trim() : '';
-              const details = document.createElement('details');
-              details.className = 'nominativi-list';
-              const summary = document.createElement('summary');
-              summary.textContent = `${count || '—'} presenti (mostra elenco)`;
-              const content = document.createElement('div');
-              content.className = 'nominativi-content';
-              content.innerHTML = renderNominativi(val);
-              details.appendChild(summary);
-              details.appendChild(content);
-              td.appendChild(details);
-            } else if (localIdx === sicurezzaIdx) {
-              const ok = isTrueValue(val);
-              daEffettuare = !ok;
-              const badge = document.createElement('span');
-              badge.className = 'badge-sicurezza ' + (ok ? 'badge-effettuato' : 'badge-da-effettuare');
-              badge.textContent = ok ? 'EFFETTUATO!!!' : 'DA EFFETTUARE!!!';
-              td.appendChild(badge);
-
-              // Link "Apri nella mappa" solo se il piano di sicurezza è stato effettuato
-              if (ok && coordColAbs >= 0) {
-                const coords = extractLatLng(row[coordColAbs] || '');
-                if (coords) {
-                  const mapLink = document.createElement('a');
-                  mapLink.className = 'map-link';
-                  mapLink.href = `${MAPPA_URL}?lat=${coords.lat}&lng=${coords.lng}&zoom=15`;
-                  mapLink.target = '_blank';
-                  mapLink.textContent = '📍 Apri nella mappa';
-                  td.appendChild(document.createElement('br'));
-                  td.appendChild(mapLink);
-                }
-              }
-            } else if (localIdx === 0) {
-              td.classList.add('comando');
-              td.textContent = val;
-            } else {
-              td.textContent = val;
+          // Sposta "Piano di sicurezza" subito dopo la prima colonna (Comando Organizzatore)
+          const sicurezzaAbsIdx = findColIndex(allHeaders, 'sicurezza');
+          const sicurezzaColAbs = sicurezzaAbsIdx >= 0 ? START_COL + sicurezzaAbsIdx : -1;
+          if (sicurezzaColAbs !== -1) {
+            const pos = visibleCols.indexOf(sicurezzaColAbs);
+            if (pos > 1) {
+              visibleCols.splice(pos, 1);
+              visibleCols.splice(1, 0, sicurezzaColAbs);
             }
-            tr.appendChild(td);
+          }
+
+          const headers = visibleCols.map(i => headerRow[i]);
+          const sicurezzaIdx = visibleCols.indexOf(sicurezzaColAbs);
+
+          const nominativiIdx = findColIndex(headers, 'nominativi');
+          // La colonna "Presenti" resta nascosta ma serve comunque il suo indice assoluto
+          // per recuperare il conteggio da mostrare dentro l'elenco nominativi
+          const presentiAbsIdx = findColIndex(allHeaders, 'presenti');
+          const presentiColAbs = presentiAbsIdx >= 0 ? START_COL + presentiAbsIdx : -1;
+
+          // La colonna "Coordinate" resta nascosta ma serve per generare il link alla mappa
+          const coordAbsIdx = findColIndex(allHeaders, 'coord');
+          const coordColAbs = coordAbsIdx >= 0 ? START_COL + coordAbsIdx : -1;
+
+          // Header
+          theadRow.innerHTML = '';
+          headers.forEach(h => {
+            const th = document.createElement('th');
+            th.textContent = h;
+            theadRow.appendChild(th);
           });
 
-          if (daEffettuare) tr.classList.add('row-da-effettuare');
-          tbody.appendChild(tr);
-        });
+          // Body
+          tbody.innerHTML = '';
+          if (dataRows.length === 0) {
+            statusEl.textContent = 'Nessuna presenza registrata al momento.';
+            return;
+          }
 
-        statusEl.style.display = 'none';
-        wrapperEl.style.display = 'block';
-        lastUpdateEl.textContent = new Date().toLocaleTimeString('it-IT');
-      },
-      error: function (err) {
-        statusEl.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
-        console.error(err);
-      }
-    });
+          dataRows.forEach(row => {
+            const tr = document.createElement('tr');
+            let daEffettuare = false;
 
+            visibleCols.forEach((i, localIdx) => {
+              const td = document.createElement('td');
+              td.setAttribute('data-label', headers[localIdx] || '');
+              let val = (row[i] || '').trim();
+
+              if (localIdx === nominativiIdx) {
+                const count = presentiColAbs >= 0 ? (row[presentiColAbs] || '').trim() : '';
+                const details = document.createElement('details');
+                details.className = 'nominativi-list';
+                const summary = document.createElement('summary');
+                summary.textContent = `${count || '—'} presenti (mostra elenco)`;
+                const content = document.createElement('div');
+                content.className = 'nominativi-content';
+                content.innerHTML = renderNominativi(val);
+                details.appendChild(summary);
+                details.appendChild(content);
+                td.appendChild(details);
+              } else if (localIdx === sicurezzaIdx) {
+                const ok = isTrueValue(val);
+                daEffettuare = !ok;
+                const badge = document.createElement('span');
+                badge.className = 'badge-sicurezza ' + (ok ? 'badge-effettuato' : 'badge-da-effettuare');
+                badge.textContent = ok ? 'EFFETTUATO!!!' : 'DA EFFETTUARE!!!';
+                td.appendChild(badge);
+
+                // Link "Apri nella mappa" solo se il piano di sicurezza è stato effettuato
+                if (ok && coordColAbs >= 0) {
+                  const coords = extractLatLng(row[coordColAbs] || '');
+                  if (coords) {
+                    const mapLink = document.createElement('a');
+                    mapLink.className = 'map-link';
+                    mapLink.href = `${MAPPA_URL}?lat=${coords.lat}&lng=${coords.lng}&zoom=15`;
+                    mapLink.target = '_blank';
+                    mapLink.textContent = '📍 Apri nella mappa';
+                    td.appendChild(document.createElement('br'));
+                    td.appendChild(mapLink);
+                  }
+                }
+              } else if (localIdx === 0) {
+                td.classList.add('comando');
+                td.textContent = val;
+              } else {
+                td.textContent = val;
+              }
+              tr.appendChild(td);
+            });
+
+            if (daEffettuare) tr.classList.add('row-da-effettuare');
+            tbody.appendChild(tr);
+          });
+
+          statusEl.style.display = 'none';
+          wrapperEl.style.display = 'block';
+          lastUpdateEl.textContent = new Date().toLocaleTimeString('it-IT');
+        },
+        error: function (err) {
+          statusEl.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+          console.error(err);
+        }
+      });
+    }
 
     document.getElementById('refresh-btn').addEventListener('click', loadData);
 
     function setTodayDate() {
       const oggi = new Date();
-      const formatted = oggi.toLocaleDateString('it-IT', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
+      const formatted = oggi.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       document.getElementById('today-date').textContent = `– ${formatted}`;
     }
 
