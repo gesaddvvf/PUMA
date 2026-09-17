@@ -99,6 +99,15 @@
     background-color: #ff3b30;
     color: #000;
   }
+  a.map-link {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #ffd700;
+    text-decoration: none;
+    border-bottom: 1px dotted #ffd700;
+  }
+  a.map-link:hover { color: #fff; border-bottom-color: #fff; }
   tbody tr.row-da-effettuare {
     background-color: #4a1210 !important;
   }
@@ -229,8 +238,8 @@
 <h1>PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
 <h2>Riepilogo presenze odierne <span id="today-date"></span></h2>
 <div id="nav-buttons">
-  <a class="nav-btn" href="#" id="btn-puma">PUMA</a>
-  <a class="nav-btn" href="#" id="btn-mappa" target="_blank">Mappa Addestramenti Real Time</a>
+  <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page" id="btn-puma">PUMA</a>
+  <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html" id="btn-mappa" target="_blank">Mappa Odierni</a>
 </div>
 <div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span><button id="refresh-btn">Aggiorna ora</button></div>
 
@@ -296,7 +305,14 @@ function renderNominativi(raw) {
   }).join('');
 }
 
-function loadData() {
+// Estrae la prima coppia di coordinate decimali da un testo (es. "Coordinate Addestramento: 41.397205, 14.048347")
+function extractLatLng(raw) {
+  const match = (raw || '').match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+  if (!match) return null;
+  return { lat: match[1], lng: match[2] };
+}
+
+const MAPPA_URL = "https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html";
   statusEl.style.display = 'block';
   statusEl.textContent = 'Caricamento dati in corso...';
   wrapperEl.style.display = 'none';
@@ -350,6 +366,10 @@ function loadData() {
       const presentiAbsIdx = findColIndex(allHeaders, 'presenti');
       const presentiColAbs = presentiAbsIdx >= 0 ? START_COL + presentiAbsIdx : -1;
 
+      // La colonna "Coordinate" resta nascosta ma serve per generare il link alla mappa
+      const coordAbsIdx = findColIndex(allHeaders, 'coord');
+      const coordColAbs = coordAbsIdx >= 0 ? START_COL + coordAbsIdx : -1;
+
       // Header
       theadRow.innerHTML = '';
       headers.forEach(h => {
@@ -393,6 +413,20 @@ function loadData() {
             badge.className = 'badge-sicurezza ' + (ok ? 'badge-effettuato' : 'badge-da-effettuare');
             badge.textContent = ok ? 'EFFETTUATO!!!' : 'DA EFFETTUARE!!!';
             td.appendChild(badge);
+
+            // Link "Apri nella mappa" solo se il piano di sicurezza è stato effettuato
+            if (ok && coordColAbs >= 0) {
+              const coords = extractLatLng(row[coordColAbs] || '');
+              if (coords) {
+                const mapLink = document.createElement('a');
+                mapLink.className = 'map-link';
+                mapLink.href = `${MAPPA_URL}?lat=${coords.lat}&lng=${coords.lng}&zoom=15`;
+                mapLink.target = '_blank';
+                mapLink.textContent = '📍 Apri nella mappa';
+                td.appendChild(document.createElement('br'));
+                td.appendChild(mapLink);
+              }
+            }
           } else if (localIdx === 0) {
             td.classList.add('comando');
             td.textContent = val;
