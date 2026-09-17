@@ -159,6 +159,30 @@
   }
   #refresh-btn:hover { opacity: 0.85; }
 
+  #nav-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .nav-btn {
+    display: inline-block;
+    background-color: #2a2a2a;
+    color: #ffd700;
+    border: 1px solid #ffd700;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-family: 'Comfortaa', cursive;
+    font-weight: bold;
+    font-size: 13px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .nav-btn:hover {
+    background-color: #ffd700;
+    color: #1e1e1e;
+  }
+
   /* Schermi stretti: niente scroll orizzontale, la tabella diventa un elenco di schede verticali */
   @media (max-width: 700px) {
     .table-wrapper {
@@ -204,6 +228,10 @@
 
 <h1>PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
 <h2>Riepilogo presenze odierne <span id="today-date"></span></h2>
+<div id="nav-buttons">
+  <a class="nav-btn" href="#" id="btn-puma">PUMA</a>
+  <a class="nav-btn" href="#" id="btn-mappa" target="_blank">Mappa Addestramenti Real Time</a>
+</div>
 <div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span><button id="refresh-btn">Aggiorna ora</button></div>
 
 <div id="status">Caricamento dati in corso...</div>
