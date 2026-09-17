@@ -2,20 +2,36 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Mappa Leaflet da Google Sheet - Tema Scuro</title>
   <!-- Google Fonts: Comfortaa -->
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    body, table {
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body {
       font-family: 'Comfortaa', cursive;
       background-color: #1e1e1e;
       color: #f0f0f0;
-      margin: 0;
     }
-    #map { height: 100vh; width: 100%; }
+    #map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 100%;
+      width: 100%;
+    }
 
     table {
+      font-family: 'Comfortaa', cursive;
       border-collapse: collapse;
       width: 100%;
       font-size: 13px;
@@ -78,6 +94,13 @@ const map = L.map('map', {
 }).setView([41.9, 12.5], 6);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+// Forza Leaflet a ricalcolare le dimensioni quando la finestra/iframe cambia size
+window.addEventListener('resize', function() {
+  map.invalidateSize();
+});
+// Ricalcola anche subito dopo il caricamento, utile dentro iframe di Google Sites
+setTimeout(function() { map.invalidateSize(); }, 300);
 
 function getIconUrl(tipo) {
   tipo = tipo?.toLowerCase() || "";
@@ -143,6 +166,9 @@ Papa.parse(sheetUrl, {
     if(markers.getLayers().length>0){
       map.fitBounds(markers.getBounds().pad(0.2));
     }
+
+    // Ricalcolo finale dopo aver caricato i marker (utile se l'iframe si è ridimensionato nel frattempo)
+    setTimeout(function() { map.invalidateSize(); }, 100);
   }
 });
 </script>
