@@ -1,468 +1,558 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PUMA - Riepilogo Presenze Odierne</title>
-<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  body {
-    font-family: 'Comfortaa', cursive;
-    background-color: #1e1e1e;
-    color: #f0f0f0;
-    padding: 16px;
-    box-sizing: border-box;
-  }
-  h1 {
-    font-size: 17px;
-    color: #ffd700;
-    margin: 0 0 2px 0;
-    font-weight: bold;
-  }
-  .subtitle-divider {
-    color: #666;
-  }
-  h2 {
-    font-size: 14px;
-    color: #ccc;
-    font-weight: normal;
-    margin: 0 0 4px 0;
-  }
-  #today-date {
-    color: #ffd700;
-    font-weight: bold;
-    text-transform: capitalize;
-  }
-  #meta-info {
-    font-size: 12px;
-    color: #999;
-    margin-bottom: 16px;
-  }
-  #status {
-    font-size: 13px;
-    color: #999;
-    padding: 20px 0;
-  }
-  .table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-    border-radius: 6px;
-    border: 1px solid #444;
-  }
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: 700px;
-    font-size: 13px;
-  }
-  thead th {
-    background-color: #2a2a2a;
-    color: #ffd700;
-    text-align: left;
-    padding: 10px 8px;
-    border-bottom: 2px solid #ffd700;
-    position: sticky;
-    top: 0;
-    white-space: nowrap;
-  }
-  tbody td {
-    padding: 8px;
-    border-bottom: 1px solid #333;
-    vertical-align: top;
-  }
-  tbody tr:nth-child(even) { background-color: #262626; }
-  tbody tr:nth-child(odd)  { background-color: #1f1f1f; }
-  tbody tr:hover { background-color: #333; }
-
-  td.comando { font-weight: bold; }
-
-  .badge-sicurezza {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 3px;
-    font-weight: bold;
-    font-size: 11px;
-    white-space: nowrap;
-    letter-spacing: 0.5px;
-  }
-  .badge-effettuato {
-    background-color: #000;
-    color: #2ecc40;
-    border: 1px solid #2ecc40;
-  }
-  .badge-da-effettuare {
-    background-color: #ff3b30;
-    color: #000;
-  }
-  a.map-link {
-    display: inline-block;
-    margin-top: 6px;
-    font-size: 11px;
-    color: #ffd700;
-    text-decoration: none;
-    border-bottom: 1px dotted #ffd700;
-  }
-  a.map-link:hover { color: #fff; border-bottom-color: #fff; }
-  tbody tr.row-da-effettuare {
-    background-color: #4a1210 !important;
-  }
-  tbody tr.row-da-effettuare:hover {
-    background-color: #5c1815 !important;
-  }
-
-  details.nominativi-list summary {
-    cursor: pointer;
-    color: #ffd700;
-    outline: none;
-    font-weight: bold;
-  }
-  details.nominativi-list summary:hover { text-decoration: underline; }
-  .nominativi-content {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .persona-item {
-    background-color: #2a2a2a;
-    border-left: 3px solid #ffd700;
-    border-radius: 3px;
-    padding: 6px 10px;
-    font-size: 12px;
-    line-height: 1.6;
-  }
-  .persona-nome {
-    display: block;
-    font-weight: bold;
-    color: #f0f0f0;
-  }
-  .persona-cf {
-    display: inline-block;
-    font-family: monospace;
-    color: #999;
-    margin-right: 12px;
-  }
-  a.tel-link {
-    color: #f0f0f0;
-    text-decoration: none;
-    border-bottom: 1px dotted #999;
-  }
-  a.tel-link:hover { color: #ffd700; border-bottom-color: #ffd700; }
-
-  #refresh-btn {
-    background-color: #ffd700;
-    color: #1e1e1e;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 14px;
-    font-family: 'Comfortaa', cursive;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 12px;
-    margin-left: 8px;
-  }
-  #refresh-btn:hover { opacity: 0.85; }
-
-  #nav-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-  .nav-btn {
-    display: inline-block;
-    background-color: #2a2a2a;
-    color: #ffd700;
-    border: 1px solid #ffd700;
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-family: 'Comfortaa', cursive;
-    font-weight: bold;
-    font-size: 13px;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background-color 0.15s, color 0.15s;
-  }
-  .nav-btn:hover {
-    background-color: #ffd700;
-    color: #1e1e1e;
-  }
-
-  /* Schermi stretti: niente scroll orizzontale, la tabella diventa un elenco di schede verticali */
-  @media (max-width: 700px) {
-    .table-wrapper {
-      overflow-x: visible;
-      border: none;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PUMA - Riepilogo Presenze Odierne</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
     }
-    table {
-      min-width: 0;
-    }
-    thead {
-      display: none;
-    }
-    tbody, tr, td {
-      display: block;
-      width: 100%;
+
+    body {
+      font-family: 'Comfortaa', cursive;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      padding: 16px;
       box-sizing: border-box;
     }
-    tbody tr {
-      margin-bottom: 12px;
-      border: 1px solid #444;
-      border-radius: 6px;
-      padding: 4px 0;
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    tbody td {
-      padding: 6px 12px;
-      border-bottom: 1px solid #333;
-    }
-    tbody td:last-child {
-      border-bottom: none;
-    }
-    tbody td::before {
-      content: attr(data-label);
-      display: block;
-      font-size: 11px;
-      font-weight: bold;
+
+    h1 {
+      font-size: 17px;
       color: #ffd700;
-      margin-bottom: 3px;
+      margin: 0 0 2px 0;
+      font-weight: bold;
     }
-  }
-</style>
+
+    .subtitle-divider {
+      color: #666;
+    }
+
+    h2 {
+      font-size: 14px;
+      color: #ccc;
+      font-weight: normal;
+      margin: 0 0 4px 0;
+    }
+
+    #today-date {
+      color: #ffd700;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    #meta-info {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 16px;
+    }
+
+    #status {
+      font-size: 13px;
+      color: #999;
+      padding: 20px 0;
+    }
+
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 6px;
+      border: 1px solid #444;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 700px;
+      font-size: 13px;
+    }
+
+    thead th {
+      background-color: #2a2a2a;
+      color: #ffd700;
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 2px solid #ffd700;
+      position: sticky;
+      top: 0;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 8px;
+      border-bottom: 1px solid #333;
+      vertical-align: top;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #262626;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: #1f1f1f;
+    }
+
+    tbody tr:hover {
+      background-color: #333;
+    }
+
+    td.comando {
+      font-weight: bold;
+    }
+
+    .badge-sicurezza {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 11px;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-effettuato {
+      background-color: #000;
+      color: #2ecc40;
+      border: 1px solid #2ecc40;
+    }
+
+    .badge-da-effettuare {
+      background-color: #ff3b30;
+      color: #000;
+    }
+
+    a.map-link {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 11px;
+      color: #ffd700;
+      text-decoration: none;
+      border-bottom: 1px dotted #ffd700;
+    }
+
+    a.map-link:hover {
+      color: #fff;
+      border-bottom-color: #fff;
+    }
+
+    tbody tr.row-da-effettuare {
+      background-color: #4a1210 !important;
+    }
+
+    tbody tr.row-da-effettuare:hover {
+      background-color: #5c1815 !important;
+    }
+
+    details.nominativi-list summary {
+      cursor: pointer;
+      color: #ffd700;
+      outline: none;
+      font-weight: bold;
+    }
+
+    details.nominativi-list summary:hover {
+      text-decoration: underline;
+    }
+
+    .nominativi-content {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .persona-item {
+      background-color: #2a2a2a;
+      border-left: 3px solid #ffd700;
+      border-radius: 3px;
+      padding: 6px 10px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .persona-nome {
+      display: block;
+      font-weight: bold;
+      color: #f0f0f0;
+    }
+
+    .persona-cf {
+      display: inline-block;
+      font-family: monospace;
+      color: #999;
+      margin-right: 12px;
+    }
+
+    a.tel-link {
+      color: #f0f0f0;
+      text-decoration: none;
+      border-bottom: 1px dotted #999;
+    }
+
+    a.tel-link:hover {
+      color: #ffd700;
+      border-bottom-color: #ffd700;
+    }
+
+    #refresh-btn {
+      background-color: #ffd700;
+      color: #1e1e1e;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-family: 'Comfortaa', cursive;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 8px;
+    }
+
+    #refresh-btn:hover {
+      opacity: 0.85;
+    }
+
+    #nav-buttons {
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .nav-btn {
+      display: inline-block;
+      background-color: #2a2a2a;
+      color: #ffd700;
+      border: 1px solid #ffd700;
+      border-radius: 4px;
+      padding: 8px 16px;
+      font-family: 'Comfortaa', cursive;
+      font-weight: bold;
+      font-size: 13px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.15s, color 0.15s;
+    }
+
+    .nav-btn:hover {
+      background-color: #ffd700;
+      color: #1e1e1e;
+    }
+
+    /* Schermi stretti: niente scroll orizzontale, la tabella diventa un elenco di schede verticali */
+    @media (max-width: 700px) {
+      .header-top {
+        flex-direction: column;
+      }
+
+      #nav-buttons {
+        width: 100%;
+      }
+
+      .nav-btn {
+        flex: 1;
+        text-align: center;
+      }
+
+      .table-wrapper {
+        overflow-x: visible;
+        border: none;
+      }
+
+      table {
+        min-width: 0;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody,
+      tr,
+      td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      tbody tr {
+        margin-bottom: 12px;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 4px 0;
+      }
+
+      tbody td {
+        padding: 6px 12px;
+        border-bottom: 1px solid #333;
+      }
+
+      tbody td:last-child {
+        border-bottom: none;
+      }
+
+      tbody td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 11px;
+        font-weight: bold;
+        color: #ffd700;
+        margin-bottom: 3px;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<h1>PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
-<h2>Riepilogo presenze odierne <span id="today-date"></span></h2>
-<div id="nav-buttons">
-  <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page" id="btn-puma">PUMA</a>
-  <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html" id="btn-mappa" target="_blank">Mappa Odierni</a>
-</div>
-<div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span><button id="refresh-btn">Aggiorna ora</button></div>
+  <div class="header-top">
+    <div>
+      <h1>PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
+      <h2>Riepilogo presenze odierne <span id="today-date"></span></h2>
+    </div>
+    <div id="nav-buttons">
+      <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page" id="btn-puma">PUMA</a>
+      <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html" id="btn-mappa"
+        target="_blank">Mappa Odierni</a>
+    </div>
+  </div>
+  <div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span><button id="refresh-btn">Aggiorna
+      ora</button></div>
 
-<div id="status">Caricamento dati in corso...</div>
-<div class="table-wrapper" id="table-wrapper" style="display:none;">
-  <table>
-    <thead><tr id="thead-row"></tr></thead>
-    <tbody id="tbody"></tbody>
-  </table>
-</div>
+  <div id="status">Caricamento dati in corso...</div>
+  <div class="table-wrapper" id="table-wrapper" style="display:none;">
+    <table>
+      <thead>
+        <tr id="thead-row"></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script>
-const SHEET_ID = "1WHGKaawomU_jMuO6FnwzYidou-fmpc0ndeE0aiEMYP4";
-const GID = "243050594";
-const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
-const HEADER_ROW_INDEX = 3; // riga 4 del foglio = indice 3 (0-based)
-const START_COL = 1;        // colonna B
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script>
+    const SHEET_ID = "1WHGKaawomU_jMuO6FnwzYidou-fmpc0ndeE0aiEMYP4";
+    const GID = "243050594";
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+    const HEADER_ROW_INDEX = 3; // riga 4 del foglio = indice 3 (0-based)
+    const START_COL = 1;        // colonna B
 
-const statusEl = document.getElementById('status');
-const wrapperEl = document.getElementById('table-wrapper');
-const theadRow = document.getElementById('thead-row');
-const tbody = document.getElementById('tbody');
-const lastUpdateEl = document.getElementById('last-update');
+    const statusEl = document.getElementById('status');
+    const wrapperEl = document.getElementById('table-wrapper');
+    const theadRow = document.getElementById('thead-row');
+    const tbody = document.getElementById('tbody');
+    const lastUpdateEl = document.getElementById('last-update');
 
-function findColIndex(headers, keyword) {
-  return headers.findIndex(h => h && h.toLowerCase().includes(keyword.toLowerCase()));
-}
-
-// Interpreta il valore booleano esportato da Google Sheets (VERO/FALSO, TRUE/FALSE, 1/0)
-function isTrueValue(val) {
-  const v = (val || '').trim().toLowerCase();
-  return v === 'vero' || v === 'true' || v === '1' || v === 'sì' || v === 'si';
-}
-
-// Colonne (per parola chiave nell'intestazione) da non mostrare in tabella
-const HIDDEN_COL_KEYWORDS = ['codice', 'coord', 'presenti'];
-
-// Trasforma il testo grezzo "> Nome   CF: ...   Tel. ..." in un elenco di card leggibili
-function renderNominativi(raw) {
-  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  const persone = [];
-  let current = null;
-
-  lines.forEach(line => {
-    if (line.startsWith('>')) {
-      current = { nome: line.replace(/^>\s*/, ''), cf: '', tel: '' };
-      persone.push(current);
-    } else if (current) {
-      const cfMatch = line.match(/^CF:\s*(.+)$/i);
-      const telMatch = line.match(/^Tel\.?\s*(.+)$/i);
-      if (cfMatch) current.cf = cfMatch[1].trim();
-      else if (telMatch) current.tel = telMatch[1].trim();
+    function findColIndex(headers, keyword) {
+      return headers.findIndex(h => h && h.toLowerCase().includes(keyword.toLowerCase()));
     }
-  });
 
-  if (persone.length === 0) return `<div class="persona-item">${raw}</div>`;
+    // Interpreta il valore booleano esportato da Google Sheets (VERO/FALSO, TRUE/FALSE, 1/0)
+    function isTrueValue(val) {
+      const v = (val || '').trim().toLowerCase();
+      return v === 'vero' || v === 'true' || v === '1' || v === 'sì' || v === 'si';
+    }
 
-  return persone.map(p => {
-    const cfHtml = p.cf ? `<span class="persona-cf">CF: ${p.cf}</span>` : '';
-    const telHtml = p.tel ? `<a class="tel-link" href="tel:+39${p.tel}">📞 ${p.tel}</a>` : '';
-    return `<div class="persona-item"><span class="persona-nome">${p.nome}</span>${cfHtml}${telHtml}</div>`;
-  }).join('');
-}
+    // Colonne (per parola chiave nell'intestazione) da non mostrare in tabella
+    const HIDDEN_COL_KEYWORDS = ['codice', 'coord', 'presenti'];
 
-// Estrae la prima coppia di coordinate decimali da un testo (es. "Coordinate Addestramento: 41.397205, 14.048347")
-function extractLatLng(raw) {
-  const match = (raw || '').match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
-  if (!match) return null;
-  return { lat: match[1], lng: match[2] };
-}
+    // Trasforma il testo grezzo "> Nome   CF: ...   Tel. ..." in un elenco di card leggibili
+    function renderNominativi(raw) {
+      const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const persone = [];
+      let current = null;
 
-const MAPPA_URL = "https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html";
-  statusEl.style.display = 'block';
-  statusEl.textContent = 'Caricamento dati in corso...';
-  wrapperEl.style.display = 'none';
-
-  Papa.parse(CSV_URL + '&_=' + Date.now(), {
-    download: true,
-    header: false,
-    skipEmptyLines: false,
-    complete: function(results) {
-      const rows = results.data;
-      const headerRow = rows[HEADER_ROW_INDEX] || [];
-
-      // Trova l'ultima colonna con un'intestazione valida
-      let endCol = START_COL;
-      for (let i = headerRow.length - 1; i >= START_COL; i--) {
-        if (headerRow[i] && headerRow[i].trim() !== '') { endCol = i; break; }
-      }
-
-      const allHeaders = headerRow.slice(START_COL, endCol + 1);
-      const dataRows = rows.slice(HEADER_ROW_INDEX + 1)
-        .filter(r => r[START_COL] && r[START_COL].trim() !== '');
-
-      // Indici (relativi ad allHeaders) delle colonne da nascondere
-      const hiddenIdx = allHeaders
-        .map((h, idx) => (h && HIDDEN_COL_KEYWORDS.some(k => h.toLowerCase().includes(k))) ? idx : -1)
-        .filter(idx => idx !== -1);
-
-      // Colonne effettivamente visibili, come indici assoluti nella riga CSV
-      const visibleCols = [];
-      for (let i = START_COL; i <= endCol; i++) {
-        if (!hiddenIdx.includes(i - START_COL)) visibleCols.push(i);
-      }
-
-      // Sposta "Piano di sicurezza" subito dopo la prima colonna (Comando Organizzatore)
-      const sicurezzaAbsIdx = findColIndex(allHeaders, 'sicurezza');
-      const sicurezzaColAbs = sicurezzaAbsIdx >= 0 ? START_COL + sicurezzaAbsIdx : -1;
-      if (sicurezzaColAbs !== -1) {
-        const pos = visibleCols.indexOf(sicurezzaColAbs);
-        if (pos > 1) {
-          visibleCols.splice(pos, 1);
-          visibleCols.splice(1, 0, sicurezzaColAbs);
+      lines.forEach(line => {
+        if (line.startsWith('>')) {
+          current = {nome: line.replace(/^>\s*/, ''), cf: '', tel: ''};
+          persone.push(current);
+        } else if (current) {
+          const cfMatch = line.match(/^CF:\s*(.+)$/i);
+          const telMatch = line.match(/^Tel\.?\s*(.+)$/i);
+          if (cfMatch) current.cf = cfMatch[1].trim();
+          else if (telMatch) current.tel = telMatch[1].trim();
         }
-      }
-
-      const headers = visibleCols.map(i => headerRow[i]);
-      const sicurezzaIdx = visibleCols.indexOf(sicurezzaColAbs);
-
-      const nominativiIdx = findColIndex(headers, 'nominativi');
-      // La colonna "Presenti" resta nascosta ma serve comunque il suo indice assoluto
-      // per recuperare il conteggio da mostrare dentro l'elenco nominativi
-      const presentiAbsIdx = findColIndex(allHeaders, 'presenti');
-      const presentiColAbs = presentiAbsIdx >= 0 ? START_COL + presentiAbsIdx : -1;
-
-      // La colonna "Coordinate" resta nascosta ma serve per generare il link alla mappa
-      const coordAbsIdx = findColIndex(allHeaders, 'coord');
-      const coordColAbs = coordAbsIdx >= 0 ? START_COL + coordAbsIdx : -1;
-
-      // Header
-      theadRow.innerHTML = '';
-      headers.forEach(h => {
-        const th = document.createElement('th');
-        th.textContent = h;
-        theadRow.appendChild(th);
       });
 
-      // Body
-      tbody.innerHTML = '';
-      if (dataRows.length === 0) {
-        statusEl.textContent = 'Nessuna presenza registrata al momento.';
-        return;
-      }
+      if (persone.length === 0) return `<div class="persona-item">${raw}</div>`;
 
-      dataRows.forEach(row => {
-        const tr = document.createElement('tr');
-        let daEffettuare = false;
+      return persone.map(p => {
+        const cfHtml = p.cf ? `<span class="persona-cf">CF: ${p.cf}</span>` : '';
+        const telHtml = p.tel ? `<a class="tel-link" href="tel:+39${p.tel}">📞 ${p.tel}</a>` : '';
+        return `<div class="persona-item"><span class="persona-nome">${p.nome}</span>${cfHtml}${telHtml}</div>`;
+      }).join('');
+    }
 
-        visibleCols.forEach((i, localIdx) => {
-          const td = document.createElement('td');
-          td.setAttribute('data-label', headers[localIdx] || '');
-          let val = (row[i] || '').trim();
+    // Estrae la prima coppia di coordinate decimali da un testo (es. "Coordinate Addestramento: 41.397205, 14.048347")
+    function extractLatLng(raw) {
+      const match = (raw || '').match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+      if (!match) return null;
+      return {lat: match[1], lng: match[2]};
+    }
 
-          if (localIdx === nominativiIdx) {
-            const count = presentiColAbs >= 0 ? (row[presentiColAbs] || '').trim() : '';
-            const details = document.createElement('details');
-            details.className = 'nominativi-list';
-            const summary = document.createElement('summary');
-            summary.textContent = `${count || '—'} presenti (mostra elenco)`;
-            const content = document.createElement('div');
-            content.className = 'nominativi-content';
-            content.innerHTML = renderNominativi(val);
-            details.appendChild(summary);
-            details.appendChild(content);
-            td.appendChild(details);
-          } else if (localIdx === sicurezzaIdx) {
-            const ok = isTrueValue(val);
-            daEffettuare = !ok;
-            const badge = document.createElement('span');
-            badge.className = 'badge-sicurezza ' + (ok ? 'badge-effettuato' : 'badge-da-effettuare');
-            badge.textContent = ok ? 'EFFETTUATO!!!' : 'DA EFFETTUARE!!!';
-            td.appendChild(badge);
+    const MAPPA_URL = "https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html";
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Caricamento dati in corso...';
+    wrapperEl.style.display = 'none';
 
-            // Link "Apri nella mappa" solo se il piano di sicurezza è stato effettuato
-            if (ok && coordColAbs >= 0) {
-              const coords = extractLatLng(row[coordColAbs] || '');
-              if (coords) {
-                const mapLink = document.createElement('a');
-                mapLink.className = 'map-link';
-                mapLink.href = `${MAPPA_URL}?lat=${coords.lat}&lng=${coords.lng}&zoom=15`;
-                mapLink.target = '_blank';
-                mapLink.textContent = '📍 Apri nella mappa';
-                td.appendChild(document.createElement('br'));
-                td.appendChild(mapLink);
-              }
-            }
-          } else if (localIdx === 0) {
-            td.classList.add('comando');
-            td.textContent = val;
-          } else {
-            td.textContent = val;
+    Papa.parse(CSV_URL + '&_=' + Date.now(), {
+      download: true,
+      header: false,
+      skipEmptyLines: false,
+      complete: function (results) {
+        const rows = results.data;
+        const headerRow = rows[HEADER_ROW_INDEX] || [];
+
+        // Trova l'ultima colonna con un'intestazione valida
+        let endCol = START_COL;
+        for (let i = headerRow.length - 1; i >= START_COL; i--) {
+          if (headerRow[i] && headerRow[i].trim() !== '') {endCol = i; break;}
+        }
+
+        const allHeaders = headerRow.slice(START_COL, endCol + 1);
+        const dataRows = rows.slice(HEADER_ROW_INDEX + 1)
+          .filter(r => r[START_COL] && r[START_COL].trim() !== '');
+
+        // Indici (relativi ad allHeaders) delle colonne da nascondere
+        const hiddenIdx = allHeaders
+          .map((h, idx) => (h && HIDDEN_COL_KEYWORDS.some(k => h.toLowerCase().includes(k))) ? idx : -1)
+          .filter(idx => idx !== -1);
+
+        // Colonne effettivamente visibili, come indici assoluti nella riga CSV
+        const visibleCols = [];
+        for (let i = START_COL; i <= endCol; i++) {
+          if (!hiddenIdx.includes(i - START_COL)) visibleCols.push(i);
+        }
+
+        // Sposta "Piano di sicurezza" subito dopo la prima colonna (Comando Organizzatore)
+        const sicurezzaAbsIdx = findColIndex(allHeaders, 'sicurezza');
+        const sicurezzaColAbs = sicurezzaAbsIdx >= 0 ? START_COL + sicurezzaAbsIdx : -1;
+        if (sicurezzaColAbs !== -1) {
+          const pos = visibleCols.indexOf(sicurezzaColAbs);
+          if (pos > 1) {
+            visibleCols.splice(pos, 1);
+            visibleCols.splice(1, 0, sicurezzaColAbs);
           }
-          tr.appendChild(td);
+        }
+
+        const headers = visibleCols.map(i => headerRow[i]);
+        const sicurezzaIdx = visibleCols.indexOf(sicurezzaColAbs);
+
+        const nominativiIdx = findColIndex(headers, 'nominativi');
+        // La colonna "Presenti" resta nascosta ma serve comunque il suo indice assoluto
+        // per recuperare il conteggio da mostrare dentro l'elenco nominativi
+        const presentiAbsIdx = findColIndex(allHeaders, 'presenti');
+        const presentiColAbs = presentiAbsIdx >= 0 ? START_COL + presentiAbsIdx : -1;
+
+        // La colonna "Coordinate" resta nascosta ma serve per generare il link alla mappa
+        const coordAbsIdx = findColIndex(allHeaders, 'coord');
+        const coordColAbs = coordAbsIdx >= 0 ? START_COL + coordAbsIdx : -1;
+
+        // Header
+        theadRow.innerHTML = '';
+        headers.forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          theadRow.appendChild(th);
         });
 
-        if (daEffettuare) tr.classList.add('row-da-effettuare');
-        tbody.appendChild(tr);
-      });
+        // Body
+        tbody.innerHTML = '';
+        if (dataRows.length === 0) {
+          statusEl.textContent = 'Nessuna presenza registrata al momento.';
+          return;
+        }
 
-      statusEl.style.display = 'none';
-      wrapperEl.style.display = 'block';
-      lastUpdateEl.textContent = new Date().toLocaleTimeString('it-IT');
-    },
-    error: function(err) {
-      statusEl.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
-      console.error(err);
+        dataRows.forEach(row => {
+          const tr = document.createElement('tr');
+          let daEffettuare = false;
+
+          visibleCols.forEach((i, localIdx) => {
+            const td = document.createElement('td');
+            td.setAttribute('data-label', headers[localIdx] || '');
+            let val = (row[i] || '').trim();
+
+            if (localIdx === nominativiIdx) {
+              const count = presentiColAbs >= 0 ? (row[presentiColAbs] || '').trim() : '';
+              const details = document.createElement('details');
+              details.className = 'nominativi-list';
+              const summary = document.createElement('summary');
+              summary.textContent = `${count || '—'} presenti (mostra elenco)`;
+              const content = document.createElement('div');
+              content.className = 'nominativi-content';
+              content.innerHTML = renderNominativi(val);
+              details.appendChild(summary);
+              details.appendChild(content);
+              td.appendChild(details);
+            } else if (localIdx === sicurezzaIdx) {
+              const ok = isTrueValue(val);
+              daEffettuare = !ok;
+              const badge = document.createElement('span');
+              badge.className = 'badge-sicurezza ' + (ok ? 'badge-effettuato' : 'badge-da-effettuare');
+              badge.textContent = ok ? 'EFFETTUATO!!!' : 'DA EFFETTUARE!!!';
+              td.appendChild(badge);
+
+              // Link "Apri nella mappa" solo se il piano di sicurezza è stato effettuato
+              if (ok && coordColAbs >= 0) {
+                const coords = extractLatLng(row[coordColAbs] || '');
+                if (coords) {
+                  const mapLink = document.createElement('a');
+                  mapLink.className = 'map-link';
+                  mapLink.href = `${MAPPA_URL}?lat=${coords.lat}&lng=${coords.lng}&zoom=15`;
+                  mapLink.target = '_blank';
+                  mapLink.textContent = '📍 Apri nella mappa';
+                  td.appendChild(document.createElement('br'));
+                  td.appendChild(mapLink);
+                }
+              }
+            } else if (localIdx === 0) {
+              td.classList.add('comando');
+              td.textContent = val;
+            } else {
+              td.textContent = val;
+            }
+            tr.appendChild(td);
+          });
+
+          if (daEffettuare) tr.classList.add('row-da-effettuare');
+          tbody.appendChild(tr);
+        });
+
+        statusEl.style.display = 'none';
+        wrapperEl.style.display = 'block';
+        lastUpdateEl.textContent = new Date().toLocaleTimeString('it-IT');
+      },
+      error: function (err) {
+        statusEl.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+        console.error(err);
+      }
+    });
+
+
+    document.getElementById('refresh-btn').addEventListener('click', loadData);
+
+    function setTodayDate() {
+      const oggi = new Date();
+      const formatted = oggi.toLocaleDateString('it-IT', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
+      document.getElementById('today-date').textContent = `– ${formatted}`;
     }
-  });
-}
 
-document.getElementById('refresh-btn').addEventListener('click', loadData);
-
-function setTodayDate() {
-  const oggi = new Date();
-  const formatted = oggi.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  document.getElementById('today-date').textContent = `– ${formatted}`;
-}
-
-setTodayDate();
-loadData();
-// Auto-refresh ogni 60 secondi
-setInterval(loadData, 60000);
-</script>
+    setTodayDate();
+    loadData();
+    // Auto-refresh ogni 60 secondi
+    setInterval(loadData, 60000);
+  </script>
 </body>
+
 </html>
