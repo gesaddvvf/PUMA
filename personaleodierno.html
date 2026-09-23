@@ -142,6 +142,35 @@
       color: #777;
     }
 
+    /* Loghi tipologia addestramento */
+    .tipologia-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .tipologia-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-att {
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
+    }
+
+    .logo-att svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .logo-att.muted {
+      opacity: 0.85;
+    }
+
     .badge-sicurezza {
       display: inline-block;
       padding: 4px 10px;
@@ -381,6 +410,9 @@
     const HEADER_ROW_INDEX = 3; // riga 4 del foglio = indice 3 (0-based)
     const START_COL = 1;        // colonna B
 
+    // Loghi delle tipologie di addestramento (loghi.json nel repo PUMA)
+    const LOGHI_URL = "https://gesaddvvf.github.io/PUMA/images/loghi/loghi.json";
+
     const statusEl = document.getElementById('status');
     const wrapperEl = document.getElementById('table-wrapper');
     const theadRow = document.getElementById('thead-row');
@@ -389,6 +421,71 @@
 
     // true solo al primo caricamento: nei refresh successivi la tabella resta visibile
     let firstLoad = true;
+
+    // ---------- LOGHI ----------
+    // Indice di ricerca: per ogni logo, più chiavi normalizzate (nome completo, nome senza parentesi, sigla)
+    let loghiIndex = [];
+
+    function normKey(s) {
+      return (s || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+    }
+
+    const loghiReady = fetch(LOGHI_URL, { cache: 'no-cache' })
+      .then(r => r.ok ? r.json() : {})
+      .then(data => {
+        Object.values(data).forEach(l => {
+          const keys = new Set([
+            normKey(l.nome),
+            normKey((l.nome || '').replace(/\(.*?\)/g, ' ')),
+            normKey(l.sigla)
+          ]);
+          keys.forEach(k => { if (k) loghiIndex.push({ k, svg: l.svg, nome: l.nome }); });
+        });
+      })
+      .catch(err => console.warn('Loghi non caricati:', err));
+
+    // Cerca il logo per un testo: prima corrispondenza esatta, poi la chiave più lunga contenuta nel testo
+    function findLogo(text) {
+      const t = normKey(text);
+      if (!t || loghiIndex.length === 0) return null;
+      const exact = loghiIndex.find(e => e.k === t);
+      if (exact) return exact;
+      let best = null;
+      loghiIndex.forEach(e => {
+        if (e.k.length >= 5 && t.includes(e.k) && (!best || e.k.length > best.k.length)) best = e;
+      });
+      return best;
+    }
+
+    function logoEl(entry, extraClass) {
+      const span = document.createElement('span');
+      span.className = 'logo-att' + (extraClass ? ' ' + extraClass : '');
+      span.title = entry.nome;
+      span.innerHTML = entry.svg;
+      return span;
+    }
+
+    // Cella Tipologia: una riga per voce, ciascuna con il suo logo (se trovato)
+    function renderTipologia(td, raw) {
+      const voci = raw.split(/\n|;/).map(v => v.trim()).filter(Boolean);
+      const wrap = document.createElement('div');
+      wrap.className = 'tipologia-wrap';
+      voci.forEach(v => {
+        const item = document.createElement('div');
+        item.className = 'tipologia-item';
+        const logo = findLogo(v);
+        if (logo) item.appendChild(logoEl(logo));
+        const txt = document.createElement('span');
+        txt.textContent = v;
+        item.appendChild(txt);
+        wrap.appendChild(item);
+      });
+      td.appendChild(wrap);
+    }
+    // ---------- FINE LOGHI ----------
 
     function findColIndex(headers, keyword) {
       return headers.findIndex(h => h && h.toLowerCase().includes(keyword.toLowerCase()));
@@ -617,12 +714,24 @@
                   td.classList.add('cell-multiline');
                   td.textContent = val;
                 }
-              } else if (c.kind === 'tipologia' || c.kind === 'orari') {
-                // Valorizzate solo se il piano di sicurezza è stato effettuato
+              } else if (c.kind === 'tipologia') {
+                // Valorizzata solo se il piano di sicurezza è stato effettuato, con il logo di ogni voce
+                const val = ok && tipologiaColAbs >= 0 ? (row[tipologiaColAbs] || '').trim() : '';
+                if (val) {
+                  renderTipologia(td, val);
+                } else if (daEffettuare) {
+                  // Piano di sicurezza mancante: mostro il relativo logo al posto della tipologia
+                  const psm = findLogo('Piano di Sicurezza Mancante');
+                  if (psm) td.appendChild(logoEl(psm, 'muted'));
+                  else { td.classList.add('cell-vuota'); td.textContent = '—'; }
+                } else {
+                  td.classList.add('cell-vuota');
+                  td.textContent = '—';
+                }
+              } else if (c.kind === 'orari') {
+                // Valorizzata solo se il piano di sicurezza è stato effettuato
                 let val = '';
-                if (ok && c.kind === 'tipologia') {
-                  val = tipologiaColAbs >= 0 ? (row[tipologiaColAbs] || '').trim() : '';
-                } else if (ok) {
+                if (ok) {
                   const inizio = inizioColAbs >= 0 ? (row[inizioColAbs] || '').trim() : '';
                   const fine = fineColAbs >= 0 ? (row[fineColAbs] || '').trim() : '';
                   const parti = [];
@@ -705,7 +814,8 @@
     }
 
     setTodayDate();
-    loadData();
+    // Primo caricamento dopo i loghi (se loghi.json non risponde, la tabella parte comunque senza loghi)
+    loghiReady.then(loadData);
     // Auto-refresh ogni 60 secondi
     setInterval(loadData, 60000);
   </script>
