@@ -407,6 +407,14 @@
     const TIPOLOGIA_KEYWORD = 'tipologia addestramento';
     const INIZIO_KEYWORD = 'ora inizio';   // "Giorno ed Ora Inizio"
     const FINE_KEYWORD = 'ora fine';       // "Giorno ed Ora Fine"
+    // "⚪Funzione Comando (Responsabile Addestramento - IC)" e "⚪Funzione Comando (Responsabile Tecnico Manovre)"
+    const RESP_ADD_KEYWORD = 'responsabile addestramento';
+    const RESP_TEC_KEYWORD = 'responsabile tecnico';
+
+    // Pulisce l'intestazione da emoji/pallini iniziali (es. "⚪Funzione Comando ...")
+    function cleanHeader(h) {
+      return (h || '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
+    }
 
     // Copia un numero di telefono negli appunti al click, con un piccolo feedback visivo
     function copyPhone(el, number) {
@@ -521,13 +529,15 @@
           const tipologiaColAbs = absIdx(TIPOLOGIA_KEYWORD);
           const inizioColAbs = absIdx(INIZIO_KEYWORD);
           const fineColAbs = absIdx(FINE_KEYWORD);
+          const respAddColAbs = absIdx(RESP_ADD_KEYWORD);
+          const respTecColAbs = absIdx(RESP_TEC_KEYWORD);
 
           // Colonne visibili "del foglio" (escluse nascoste e quelle che spostiamo accanto al piano di sicurezza)
           const visibleCols = [];
           for (let i = START_COL; i <= endCol; i++) {
             const h = (headerRow[i] || '').toLowerCase();
             if (HIDDEN_COL_KEYWORDS.some(k => h.includes(k))) continue;
-            if (i === tipologiaColAbs || i === inizioColAbs || i === fineColAbs) continue;
+            if ([tipologiaColAbs, inizioColAbs, fineColAbs, respAddColAbs, respTecColAbs].includes(i)) continue;
             visibleCols.push(i);
           }
 
@@ -544,9 +554,12 @@
           const cols = visibleCols.map(i => ({ kind: 'sheet', abs: i, header: headerRow[i] }));
           const tipologiaCol = { kind: 'tipologia', header: tipologiaColAbs >= 0 ? headerRow[tipologiaColAbs] : 'Tipologia' };
           const orariCol = { kind: 'orari', header: 'Orari' };
+          const extraCols = [tipologiaCol, orariCol];
+          if (respAddColAbs >= 0) extraCols.push({ kind: 'resp', abs: respAddColAbs, header: cleanHeader(headerRow[respAddColAbs]) });
+          if (respTecColAbs >= 0) extraCols.push({ kind: 'resp', abs: respTecColAbs, header: cleanHeader(headerRow[respTecColAbs]) });
           const sicPos = cols.findIndex(c => c.abs === sicurezzaColAbs);
-          if (sicPos >= 0) cols.splice(sicPos + 1, 0, tipologiaCol, orariCol);
-          else cols.push(tipologiaCol, orariCol);
+          if (sicPos >= 0) cols.splice(sicPos + 1, 0, ...extraCols);
+          else cols.push(...extraCols);
 
           // Header
           theadRow.innerHTML = '';
@@ -587,7 +600,24 @@
               const td = document.createElement('td');
               td.setAttribute('data-label', c.header || '');
 
-              if (c.kind === 'tipologia' || c.kind === 'orari') {
+              if (c.kind === 'resp') {
+                // Responsabili: valorizzati solo se il piano di sicurezza è stato effettuato
+                const val = ok ? (row[c.abs] || '').trim() : '';
+                if (!val) {
+                  td.classList.add('cell-vuota');
+                  td.textContent = '—';
+                } else if (/^\s*>/m.test(val)) {
+                  // Stesso formato dei nominativi ("> Nome / CF: / Tel.") → card con telefono copiabile
+                  const content = document.createElement('div');
+                  content.className = 'nominativi-content';
+                  content.style.marginTop = '0';
+                  content.innerHTML = renderNominativi(val);
+                  td.appendChild(content);
+                } else {
+                  td.classList.add('cell-multiline');
+                  td.textContent = val;
+                }
+              } else if (c.kind === 'tipologia' || c.kind === 'orari') {
                 // Valorizzate solo se il piano di sicurezza è stato effettuato
                 let val = '';
                 if (ok && c.kind === 'tipologia') {
