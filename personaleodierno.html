@@ -133,6 +133,15 @@
       font-weight: bold;
     }
 
+    /* Tipologia / Orari: rispetta gli a capo presenti nel foglio */
+    td.cell-multiline {
+      white-space: pre-line;
+    }
+
+    td.cell-vuota {
+      color: #777;
+    }
+
     .badge-sicurezza {
       display: inline-block;
       padding: 4px 10px;
@@ -330,6 +339,7 @@
         font-weight: bold;
         color: #ffd700;
         margin-bottom: 3px;
+        white-space: normal;
       }
     }
   </style>
@@ -377,6 +387,9 @@
     const tbody = document.getElementById('tbody');
     const lastUpdateEl = document.getElementById('last-update');
 
+    // true solo al primo caricamento: nei refresh successivi la tabella resta visibile
+    let firstLoad = true;
+
     function findColIndex(headers, keyword) {
       return headers.findIndex(h => h && h.toLowerCase().includes(keyword.toLowerCase()));
     }
@@ -389,6 +402,10 @@
 
     // Colonne (per parola chiave nell'intestazione) da non mostrare in tabella
     const HIDDEN_COL_KEYWORDS = ['codice', 'coord', 'presenti'];
+
+    // Parole chiave per le colonne Tipologia e Orari (cercate nell'intestazione del foglio)
+    const TIPOLOGIA_KEYWORD = 'tipolog';
+    const ORARI_KEYWORD = 'orar'; // copre "Orario" e "Orari"
 
     // Copia un numero di telefono negli appunti al click, con un piccolo feedback visivo
     function copyPhone(el, number) {
@@ -455,15 +472,21 @@
       return { lat: match[1], lng: match[2] };
     }
 
+    // Fallback: estrae "Tipologia: ..." / "Orario: ..." da un testo multiriga (es. la cella coordinate)
+    function extractLabeledField(raw, keyword) {
+      const re = new RegExp(keyword + '[^:\\n]*:\\s*([^\\n]+)', 'i');
+      const m = (raw || '').match(re);
+      return m ? m[1].trim() : '';
+    }
+
     const MAPPA_URL = "https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html";
 
-    // FIX: questa funzione era stata "scoperchiata" (mancava il wrapping
-    // function loadData() {...}), quindi loadData() risultava non definita
-    // e bloccava tutto lo script subito dopo il primo caricamento.
     function loadData() {
-      statusEl.style.display = 'block';
-      statusEl.textContent = 'Caricamento dati in corso...';
-      wrapperEl.style.display = 'none';
+      if (firstLoad) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Caricamento dati in corso...';
+        wrapperEl.style.display = 'none';
+      }
 
       Papa.parse(CSV_URL + '&_=' + Date.now(), {
         download: true,
@@ -472,6 +495,15 @@
         complete: function (results) {
           const rows = results.data;
           const headerRow = rows[HEADER_ROW_INDEX] || [];
+
+          // --- Salva lo stato prima di ricostruire la tabella ---
+          // Chiavi delle schede "nominativi" aperte, per riaprirle dopo il refresh
+          const openKeys = new Set(
+            Array.from(tbody.querySelectorAll('details.nominativi-list[open]')).map(d => d.dataset.key)
+          );
+          const scrollX = window.scrollX;
+          const scrollY = window.scrollY;
+          const tableScrollLeft = wrapperEl.scrollLeft;
 
           // Trova l'ultima colonna con un'intestazione valida
           let endCol = START_COL;
@@ -483,20 +515,28 @@
           const dataRows = rows.slice(HEADER_ROW_INDEX + 1)
             .filter(r => r[START_COL] && r[START_COL].trim() !== '');
 
-          // Indici (relativi ad allHeaders) delle colonne da nascondere
-          const hiddenIdx = allHeaders
-            .map((h, idx) => (h && HIDDEN_COL_KEYWORDS.some(k => h.toLowerCase().includes(k))) ? idx : -1)
-            .filter(idx => idx !== -1);
+          const absIdx = (keyword) => {
+            const rel = findColIndex(allHeaders, keyword);
+            return rel >= 0 ? START_COL + rel : -1;
+          };
 
-          // Colonne effettivamente visibili, come indici assoluti nella riga CSV
+          const sicurezzaColAbs = absIdx('sicurezza');
+          const nominativiColAbs = absIdx('nominativi');
+          const presentiColAbs = absIdx('presenti');   // nascosta, serve per il conteggio
+          const coordColAbs = absIdx('coord');         // nascosta, serve per mappa e fallback
+          const tipologiaColAbs = absIdx(TIPOLOGIA_KEYWORD);
+          const orariColAbs = absIdx(ORARI_KEYWORD);
+
+          // Colonne visibili "del foglio" (escluse nascoste e quelle che spostiamo accanto al piano di sicurezza)
           const visibleCols = [];
           for (let i = START_COL; i <= endCol; i++) {
-            if (!hiddenIdx.includes(i - START_COL)) visibleCols.push(i);
+            const h = (headerRow[i] || '').toLowerCase();
+            if (HIDDEN_COL_KEYWORDS.some(k => h.includes(k))) continue;
+            if (i === tipologiaColAbs || i === orariColAbs) continue;
+            visibleCols.push(i);
           }
 
           // Sposta "Piano di sicurezza" subito dopo la prima colonna (Comando Organizzatore)
-          const sicurezzaAbsIdx = findColIndex(allHeaders, 'sicurezza');
-          const sicurezzaColAbs = sicurezzaAbsIdx >= 0 ? START_COL + sicurezzaAbsIdx : -1;
           if (sicurezzaColAbs !== -1) {
             const pos = visibleCols.indexOf(sicurezzaColAbs);
             if (pos > 1) {
@@ -505,47 +545,71 @@
             }
           }
 
-          const headers = visibleCols.map(i => headerRow[i]);
-          const sicurezzaIdx = visibleCols.indexOf(sicurezzaColAbs);
-
-          const nominativiIdx = findColIndex(headers, 'nominativi');
-          // La colonna "Presenti" resta nascosta ma serve comunque il suo indice assoluto
-          // per recuperare il conteggio da mostrare dentro l'elenco nominativi
-          const presentiAbsIdx = findColIndex(allHeaders, 'presenti');
-          const presentiColAbs = presentiAbsIdx >= 0 ? START_COL + presentiAbsIdx : -1;
-
-          // La colonna "Coordinate" resta nascosta ma serve per generare il link alla mappa
-          const coordAbsIdx = findColIndex(allHeaders, 'coord');
-          const coordColAbs = coordAbsIdx >= 0 ? START_COL + coordAbsIdx : -1;
+          // Definizione colonne: quelle del foglio + Tipologia e Orari subito dopo il piano di sicurezza
+          const cols = visibleCols.map(i => ({ kind: 'sheet', abs: i, header: headerRow[i] }));
+          const tipologiaCol = { kind: 'tipologia', header: tipologiaColAbs >= 0 ? headerRow[tipologiaColAbs] : 'Tipologia' };
+          const orariCol = { kind: 'orari', header: orariColAbs >= 0 ? headerRow[orariColAbs] : 'Orari' };
+          const sicPos = cols.findIndex(c => c.abs === sicurezzaColAbs);
+          if (sicPos >= 0) cols.splice(sicPos + 1, 0, tipologiaCol, orariCol);
+          else cols.push(tipologiaCol, orariCol);
 
           // Header
           theadRow.innerHTML = '';
-          headers.forEach(h => {
+          cols.forEach(c => {
             const th = document.createElement('th');
-            th.textContent = h;
+            th.textContent = c.header;
             theadRow.appendChild(th);
           });
+
+          lastUpdateEl.textContent = new Date().toLocaleTimeString('it-IT');
+          firstLoad = false;
 
           // Body
           tbody.innerHTML = '';
           if (dataRows.length === 0) {
+            wrapperEl.style.display = 'none';
+            statusEl.style.display = 'block';
             statusEl.textContent = 'Nessuna presenza registrata al momento.';
             return;
           }
 
+          // Contatore per rendere univoca la chiave se lo stesso comando compare più volte
+          const keyCount = {};
+
           dataRows.forEach(row => {
             const tr = document.createElement('tr');
-            let daEffettuare = false;
+            const hasSicurezza = sicurezzaColAbs >= 0;
+            const ok = hasSicurezza && isTrueValue(row[sicurezzaColAbs]);
+            const daEffettuare = hasSicurezza && !ok;
 
-            visibleCols.forEach((i, localIdx) => {
+            const comando = (row[START_COL] || '').trim();
+            keyCount[comando] = (keyCount[comando] || 0) + 1;
+            const rowKey = `${comando}|${keyCount[comando]}`;
+
+            const coordRaw = coordColAbs >= 0 ? (row[coordColAbs] || '') : '';
+
+            cols.forEach((c, localIdx) => {
               const td = document.createElement('td');
-              td.setAttribute('data-label', headers[localIdx] || '');
-              let val = (row[i] || '').trim();
+              td.setAttribute('data-label', c.header || '');
 
-              if (localIdx === nominativiIdx) {
+              if (c.kind === 'tipologia' || c.kind === 'orari') {
+                // Valorizzate solo se il piano di sicurezza è stato effettuato
+                let val = '';
+                if (ok) {
+                  const colAbs = c.kind === 'tipologia' ? tipologiaColAbs : orariColAbs;
+                  const kw = c.kind === 'tipologia' ? TIPOLOGIA_KEYWORD : ORARI_KEYWORD;
+                  val = colAbs >= 0 ? (row[colAbs] || '').trim() : extractLabeledField(coordRaw, kw);
+                }
+                td.classList.add('cell-multiline');
+                if (!val) td.classList.add('cell-vuota');
+                td.textContent = val || '—';
+              } else if (c.abs === nominativiColAbs) {
+                const val = (row[c.abs] || '').trim();
                 const count = presentiColAbs >= 0 ? (row[presentiColAbs] || '').trim() : '';
                 const details = document.createElement('details');
                 details.className = 'nominativi-list';
+                details.dataset.key = rowKey;
+                if (openKeys.has(rowKey)) details.open = true; // mantiene aperte le schede già aperte
                 const summary = document.createElement('summary');
                 summary.textContent = `${count || '—'} presenti (mostra elenco)`;
                 const content = document.createElement('div');
@@ -554,17 +618,15 @@
                 details.appendChild(summary);
                 details.appendChild(content);
                 td.appendChild(details);
-              } else if (localIdx === sicurezzaIdx) {
-                const ok = isTrueValue(val);
-                daEffettuare = !ok;
+              } else if (c.abs === sicurezzaColAbs) {
                 const badge = document.createElement('span');
                 badge.className = 'badge-sicurezza ' + (ok ? 'badge-effettuato' : 'badge-da-effettuare');
                 badge.textContent = ok ? 'EFFETTUATO!!!' : 'DA EFFETTUARE!!!';
                 td.appendChild(badge);
 
                 // Link "Apri nella mappa" solo se il piano di sicurezza è stato effettuato
-                if (ok && coordColAbs >= 0) {
-                  const coords = extractLatLng(row[coordColAbs] || '');
+                if (ok) {
+                  const coords = extractLatLng(coordRaw);
                   if (coords) {
                     const mapLink = document.createElement('a');
                     mapLink.className = 'map-link';
@@ -574,11 +636,9 @@
                     td.appendChild(mapLink);
                   }
                 }
-              } else if (localIdx === 0) {
-                td.classList.add('comando');
-                td.textContent = val;
               } else {
-                td.textContent = val;
+                if (localIdx === 0) td.classList.add('comando');
+                td.textContent = (row[c.abs] || '').trim();
               }
               tr.appendChild(td);
             });
@@ -589,11 +649,19 @@
 
           statusEl.style.display = 'none';
           wrapperEl.style.display = 'block';
-          lastUpdateEl.textContent = new Date().toLocaleTimeString('it-IT');
+
+          // Ripristina la posizione di scorrimento (pagina e tabella)
+          wrapperEl.scrollLeft = tableScrollLeft;
+          window.scrollTo(scrollX, scrollY);
         },
         error: function (err) {
-          statusEl.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
           console.error(err);
+          if (firstLoad) {
+            statusEl.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+          } else {
+            // Nei refresh successivi la tabella resta com'è: segnalo solo l'errore
+            lastUpdateEl.textContent += ' (ultimo aggiornamento fallito)';
+          }
         }
       });
     }
