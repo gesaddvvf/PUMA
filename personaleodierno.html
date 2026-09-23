@@ -356,7 +356,35 @@
       color: #1e1e1e;
     }
 
-    /* Schermi stretti: la tabella diventa un elenco di schede verticali */
+    /* Pulsante espandi/comprimi: esiste solo su telefono */
+    th.toggle-col,
+    td.toggle-cell {
+      display: none;
+    }
+
+    .toggle-btn {
+      width: 100%;
+      background-color: #262626;
+      color: #ffd700;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      padding: 8px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .toggle-btn:focus-visible {
+      outline: 2px solid #ffd700;
+      outline-offset: 2px;
+    }
+
+    td.squadra-cell {
+      color: #ddd;
+    }
+
+    /* Schermi stretti: scheda compatta (logo, comando, squadra, piano) + dettagli espandibili */
     @media (max-width: 700px) {
       .header-top {
         flex-direction: column;
@@ -369,6 +397,10 @@
       .nav-btn {
         flex: 1;
         text-align: center;
+      }
+
+      .page-content {
+        padding: 12px;
       }
 
       .table-wrapper {
@@ -384,57 +416,109 @@
         display: none;
       }
 
-      tbody,
-      tr,
-      td {
+      tbody {
         display: block;
-        width: 100%;
-        box-sizing: border-box;
       }
 
       tbody tr {
-        margin-bottom: 12px;
+        display: grid;
+        grid-template-columns: 48px 1fr auto;
+        column-gap: 12px;
+        row-gap: 2px;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px 12px;
         border: 1px solid #3a3a3a;
-        border-radius: 6px;
-        padding: 4px 0;
-        overflow: hidden;
+        border-radius: 8px;
+      }
+
+      tbody tr.row-da-effettuare {
+        border-left: 4px solid #ff3b30;
+      }
+
+      tbody tr.row-da-effettuare td:first-child {
+        box-shadow: none;
       }
 
       tbody td {
-        padding: 6px 12px;
-        border-bottom: 1px solid #2f2f2f;
+        display: block;
+        padding: 0;
+        border: none;
+        min-width: 0;
       }
 
-      tbody td:last-child {
-        border-bottom: none;
+      td.sum::before {
+        display: none;
       }
 
-      tbody td::before {
+      /* Riepilogo */
+      td.logo-cell {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        align-self: start;
+        width: 48px;
+        padding: 0;
+      }
+
+      .logo-stack {
+        flex-direction: column;
+      }
+
+      td.comando {
+        grid-column: 2;
+        grid-row: 1;
+        font-size: 15px;
+      }
+
+      td.sicurezza-cell {
+        grid-column: 3;
+        grid-row: 1;
+        text-align: right;
+      }
+
+      td.squadra-cell {
+        grid-column: 2 / span 2;
+        grid-row: 2;
+        font-size: 13px;
+        color: #aaa;
+      }
+
+      td.toggle-cell {
+        display: block;
+        grid-column: 1 / -1;
+        grid-row: 3;
+        margin-top: 10px;
+      }
+
+      /* Dettagli: nascosti finché la scheda non è espansa */
+      td.extra {
+        display: none;
+        grid-column: 1 / -1;
+        padding: 8px 0;
+        border-top: 1px solid #2f2f2f;
+      }
+
+      tr.expanded td.extra {
+        display: block;
+      }
+
+      td.extra::before {
         content: attr(data-label);
         display: block;
         font-size: 11px;
         font-weight: 600;
         color: #ffd700;
         margin-bottom: 3px;
-        white-space: normal;
-      }
-
-      /* Loghi in riga in cima alla scheda */
-      td.logo-cell {
-        width: 100%;
-        padding: 8px 12px;
-      }
-
-      td.logo-cell::before {
-        display: none;
-      }
-
-      .logo-stack {
-        flex-direction: row;
       }
 
       td.tipologia-cell {
         max-width: none;
+      }
+
+      td.orario .dt-ora,
+      td.orario .dt-data {
+        display: inline;
+        margin-right: 6px;
       }
     }
   </style>
@@ -624,6 +708,10 @@
     const FINE_KEYWORD = 'ora fine';       // "Giorno ed Ora Fine"
     const RESP_ADD_KEYWORD = 'responsabile addestramento';
     const RESP_TEC_KEYWORD = 'responsabile tecnico';
+    const SQUADRA_KEYWORD = 'squadra';
+
+    // Layout a schede compatte su telefono
+    const MOBILE_MQ = window.matchMedia('(max-width: 700px)');
 
     // Intestazioni brevi per le colonne gestite dalla pagina
     const LABELS = {
@@ -730,6 +818,10 @@
           const openKeys = new Set(
             Array.from(tbody.querySelectorAll('details.nominativi-list[open]')).map(d => d.dataset.key)
           );
+          // Schede espanse su telefono, per mantenerle aperte dopo il refresh
+          const expandedKeys = new Set(
+            Array.from(tbody.querySelectorAll('tr.expanded')).map(t => t.dataset.key)
+          );
           const scrollX = window.scrollX;
           const scrollY = window.scrollY;
           const tableScrollLeft = wrapperEl.scrollLeft;
@@ -758,6 +850,8 @@
           const fineColAbs = absIdx(FINE_KEYWORD);
           const respAddColAbs = absIdx(RESP_ADD_KEYWORD);
           const respTecColAbs = absIdx(RESP_TEC_KEYWORD);
+          let squadraColAbs = absIdx(SQUADRA_KEYWORD);
+          if ([respAddColAbs, respTecColAbs, tipologiaColAbs, START_COL].includes(squadraColAbs)) squadraColAbs = -1;
 
           // Colonne visibili "del foglio" (escluse nascoste e quelle gestite a parte)
           const visibleCols = [];
@@ -768,16 +862,15 @@
             visibleCols.push(i);
           }
 
-          // Sposta "Piano di sicurezza" subito dopo la prima colonna (Comando Organizzatore)
-          if (sicurezzaColAbs !== -1) {
-            const pos = visibleCols.indexOf(sicurezzaColAbs);
-            if (pos > 1) {
-              visibleCols.splice(pos, 1);
-              visibleCols.splice(1, 0, sicurezzaColAbs);
-            }
-          }
+          // Ordine fisso in testa: Comando | Squadra | Piano di sicurezza
+          const headCols = [visibleCols.shift()];
+          [squadraColAbs, sicurezzaColAbs].forEach(i => {
+            const p = visibleCols.indexOf(i);
+            if (i >= 0 && p >= 0) { visibleCols.splice(p, 1); headCols.push(i); }
+          });
+          visibleCols.unshift(...headCols);
 
-          // Ordine: Logo | Comando | Piano sicurezza | Tipologia | Inizio | Fine | Responsabili | resto del foglio
+          // Ordine: Logo | Comando | Squadra | Piano sicurezza | Tipologia | Inizio | Fine | Responsabili | resto del foglio
           const cols = visibleCols.map(i => ({ kind: 'sheet', abs: i, header: cleanHeader(headerRow[i]) }));
           const extraCols = [{ kind: 'tipologia', header: LABELS.tipologia }];
           if (inizioColAbs >= 0) extraCols.push({ kind: 'dt', abs: inizioColAbs, header: LABELS.inizio });
@@ -788,6 +881,7 @@
           if (sicPos >= 0) cols.splice(sicPos + 1, 0, ...extraCols);
           else cols.push(...extraCols);
           cols.unshift({ kind: 'logo', header: LABELS.logo });
+          cols.push({ kind: 'toggle', header: '' }); // pulsante dettagli (solo telefono)
 
           // Header
           theadRow.innerHTML = '';
@@ -795,6 +889,7 @@
             const th = document.createElement('th');
             th.textContent = c.header;
             if (c.kind === 'logo') th.className = 'logo-col';
+            if (c.kind === 'toggle') th.className = 'toggle-col';
             theadRow.appendChild(th);
           });
 
@@ -822,6 +917,8 @@
             const comando = (row[START_COL] || '').trim();
             keyCount[comando] = (keyCount[comando] || 0) + 1;
             const rowKey = `${comando}|${keyCount[comando]}`;
+            tr.dataset.key = rowKey;
+            if (expandedKeys.has(rowKey)) tr.classList.add('expanded');
 
             const coordRaw = coordColAbs >= 0 ? (row[coordColAbs] || '') : '';
             const tipologiaRaw = ok && tipologiaColAbs >= 0 ? (row[tipologiaColAbs] || '').trim() : '';
@@ -832,7 +929,20 @@
               const td = document.createElement('td');
               td.setAttribute('data-label', c.header || '');
 
-              if (c.kind === 'logo') {
+              if (c.kind === 'toggle') {
+                td.classList.add('toggle-cell');
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'toggle-btn';
+                const setLabel = open => {
+                  btn.textContent = open ? 'Nascondi dettagli ▴' : 'Mostra dettagli ▾';
+                  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                };
+                setLabel(tr.classList.contains('expanded'));
+                btn.addEventListener('click', () => setLabel(tr.classList.toggle('expanded')));
+                td.appendChild(btn);
+
+              } else if (c.kind === 'logo') {
                 td.classList.add('logo-cell');
                 renderLogoCell(td, tipologiaRaw, ok, daEffettuare);
 
@@ -905,11 +1015,28 @@
                 td.textContent = (row[c.abs] || '').trim();
               }
 
+              // Riepilogo (sempre visibile) vs dettagli (espandibili su telefono)
+              if (c.kind === 'sheet' && c.abs === squadraColAbs) td.classList.add('squadra-cell', 'cell-multiline');
+              if (c.kind === 'sheet' && c.abs === sicurezzaColAbs) td.classList.add('sicurezza-cell');
+              if (c.kind !== 'toggle') {
+                const isSum = c.kind === 'logo' || td.classList.contains('comando') ||
+                  td.classList.contains('squadra-cell') || td.classList.contains('sicurezza-cell');
+                td.classList.add(isSum ? 'sum' : 'extra');
+              }
+
               if (c.kind === 'sheet') firstSheetCol = false;
               tr.appendChild(td);
             });
 
             if (daEffettuare) tr.classList.add('row-da-effettuare');
+
+            // Su telefono anche un tocco su logo/comando/squadra apre o chiude la scheda
+            tr.addEventListener('click', e => {
+              if (!MOBILE_MQ.matches) return;
+              if (!e.target.closest('td.sum') || e.target.closest('a, .tel-link, details, button')) return;
+              const btn = tr.querySelector('.toggle-btn');
+              if (btn) btn.click();
+            });
             tbody.appendChild(tr);
           });
 
