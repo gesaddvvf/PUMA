@@ -86,79 +86,91 @@
       padding: 20px 0;
     }
 
+    /* ---------- TABELLA ---------- */
     .table-wrapper {
       width: 100%;
       overflow-x: auto;
       border-radius: 6px;
-      border: 1px solid #444;
+      border: 1px solid #3a3a3a;
     }
 
     table {
       border-collapse: collapse;
       width: 100%;
-      min-width: 700px;
-      font-size: 13px;
+      min-width: 900px;
+      /* Font di sistema per i dati: più leggibile del Comfortaa a corpo piccolo */
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 13.5px;
+      line-height: 1.4;
     }
 
     thead th {
-      background-color: #2a2a2a;
+      background-color: #262626;
       color: #ffd700;
       text-align: left;
-      padding: 10px 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 10px;
       border-bottom: 2px solid #ffd700;
       position: sticky;
       top: 0;
-      white-space: nowrap;
+      vertical-align: bottom;
     }
 
     tbody td {
-      padding: 8px;
-      border-bottom: 1px solid #333;
-      vertical-align: top;
+      padding: 10px;
+      border-bottom: 1px solid #2f2f2f;
+      vertical-align: middle;
     }
 
     tbody tr:nth-child(even) {
-      background-color: #262626;
+      background-color: #222;
     }
 
     tbody tr:nth-child(odd) {
-      background-color: #1f1f1f;
+      background-color: #1c1c1c;
     }
 
     tbody tr:hover {
-      background-color: #333;
+      background-color: #2c2c2c;
     }
 
     td.comando {
-      font-weight: bold;
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
     }
 
-    /* Tipologia / Orari: rispetta gli a capo presenti nel foglio */
     td.cell-multiline {
       white-space: pre-line;
     }
 
     td.cell-vuota {
-      color: #777;
+      color: #666;
     }
 
-    /* Loghi tipologia addestramento */
-    .tipologia-wrap {
+    td.tipologia-cell {
+      max-width: 240px;
+    }
+
+    /* Colonna logo a inizio riga: dimensione fissa */
+    th.logo-col,
+    td.logo-cell {
+      width: 52px;
+      padding: 8px 6px 8px 12px;
+    }
+
+    .logo-stack {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-    }
-
-    .tipologia-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      gap: 4px;
     }
 
     .logo-att {
-      width: 38px;
-      height: 38px;
+      width: 48px;
+      height: 48px;
       flex-shrink: 0;
+      display: block;
     }
 
     .logo-att svg {
@@ -167,18 +179,33 @@
       display: block;
     }
 
-    .logo-att.muted {
-      opacity: 0.85;
+    /* Orari: ora in evidenza, data piccola sotto */
+    td.orario {
+      white-space: nowrap;
+    }
+
+    .dt-ora {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: #fff;
+    }
+
+    .dt-data {
+      display: block;
+      font-size: 11px;
+      color: #999;
     }
 
     .badge-sicurezza {
       display: inline-block;
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 3px;
-      font-weight: bold;
-      font-size: 11px;
+      font-weight: 700;
+      font-size: 10.5px;
       white-space: nowrap;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
     }
 
     .badge-effettuato {
@@ -195,7 +222,7 @@
     a.map-link {
       display: inline-block;
       margin-top: 6px;
-      font-size: 11px;
+      font-size: 11.5px;
       color: #ffd700;
       text-decoration: none;
       border-bottom: 1px dotted #ffd700;
@@ -206,19 +233,25 @@
       border-bottom-color: #fff;
     }
 
+    /* Piano da effettuare: tinta leggera + barra rossa a sinistra */
     tbody tr.row-da-effettuare {
-      background-color: #4a1210 !important;
+      background-color: #2e1513 !important;
     }
 
     tbody tr.row-da-effettuare:hover {
-      background-color: #5c1815 !important;
+      background-color: #3a1a17 !important;
+    }
+
+    tbody tr.row-da-effettuare td:first-child {
+      box-shadow: inset 4px 0 0 #ff3b30;
     }
 
     details.nominativi-list summary {
       cursor: pointer;
       color: #ffd700;
       outline: none;
-      font-weight: bold;
+      font-weight: 600;
+      white-space: nowrap;
     }
 
     details.nominativi-list summary:hover {
@@ -237,21 +270,34 @@
       border-left: 3px solid #ffd700;
       border-radius: 3px;
       padding: 6px 10px;
-      font-size: 12px;
-      line-height: 1.6;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    /* Versione compatta per i responsabili: niente riquadro */
+    .persona-item.compact {
+      background: none;
+      border-left: none;
+      padding: 0;
     }
 
     .persona-nome {
       display: block;
-      font-weight: bold;
+      font-weight: 600;
       color: #f0f0f0;
     }
 
     .persona-cf {
       display: inline-block;
-      font-family: monospace;
-      color: #999;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 11px;
+      color: #888;
       margin-right: 12px;
+    }
+
+    .persona-item.compact .persona-cf {
+      display: block;
+      margin: 1px 0 0 0;
     }
 
     .tel-link {
@@ -259,6 +305,7 @@
       text-decoration: none;
       border-bottom: 1px dotted #999;
       cursor: pointer;
+      white-space: nowrap;
     }
 
     .tel-link:hover {
@@ -309,7 +356,7 @@
       color: #1e1e1e;
     }
 
-    /* Schermi stretti: niente scroll orizzontale, la tabella diventa un elenco di schede verticali */
+    /* Schermi stretti: la tabella diventa un elenco di schede verticali */
     @media (max-width: 700px) {
       .header-top {
         flex-direction: column;
@@ -347,14 +394,15 @@
 
       tbody tr {
         margin-bottom: 12px;
-        border: 1px solid #444;
+        border: 1px solid #3a3a3a;
         border-radius: 6px;
         padding: 4px 0;
+        overflow: hidden;
       }
 
       tbody td {
         padding: 6px 12px;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid #2f2f2f;
       }
 
       tbody td:last-child {
@@ -365,10 +413,28 @@
         content: attr(data-label);
         display: block;
         font-size: 11px;
-        font-weight: bold;
+        font-weight: 600;
         color: #ffd700;
         margin-bottom: 3px;
         white-space: normal;
+      }
+
+      /* Loghi in riga in cima alla scheda */
+      td.logo-cell {
+        width: 100%;
+        padding: 8px 12px;
+      }
+
+      td.logo-cell::before {
+        display: none;
+      }
+
+      .logo-stack {
+        flex-direction: row;
+      }
+
+      td.tipologia-cell {
+        max-width: none;
       }
     }
   </style>
@@ -460,32 +526,84 @@
       return best;
     }
 
-    function logoEl(entry, extraClass) {
+    function logoEl(entry) {
       const span = document.createElement('span');
-      span.className = 'logo-att' + (extraClass ? ' ' + extraClass : '');
+      span.className = 'logo-att';
       span.title = entry.nome;
       span.innerHTML = entry.svg;
       return span;
     }
 
-    // Cella Tipologia: una riga per voce, ciascuna con il suo logo (se trovato)
-    function renderTipologia(td, raw) {
-      const voci = raw.split(/\n|;/).map(v => v.trim()).filter(Boolean);
-      const wrap = document.createElement('div');
-      wrap.className = 'tipologia-wrap';
-      voci.forEach(v => {
-        const item = document.createElement('div');
-        item.className = 'tipologia-item';
-        const logo = findLogo(v);
-        if (logo) item.appendChild(logoEl(logo));
-        const txt = document.createElement('span');
-        txt.textContent = v;
-        item.appendChild(txt);
-        wrap.appendChild(item);
-      });
-      td.appendChild(wrap);
+    // Separa le voci di tipologia (una per riga o separate da ;)
+    function splitVoci(raw) {
+      return (raw || '').split(/\n|;/).map(v => v.trim()).filter(Boolean);
+    }
+
+    // Cella logo: un logo per ogni tipologia, "Altro" se non riconosciuta, PSM se piano mancante
+    function renderLogoCell(td, tipologiaRaw, ok, daEffettuare) {
+      const stack = document.createElement('div');
+      stack.className = 'logo-stack';
+      let entries = [];
+      if (daEffettuare) {
+        const psm = findLogo('Piano di Sicurezza Mancante');
+        if (psm) entries.push(psm);
+      } else {
+        const seen = new Set();
+        splitVoci(tipologiaRaw).forEach(v => {
+          const l = findLogo(v) || findLogo('Altro');
+          if (l && !seen.has(l.nome)) { seen.add(l.nome); entries.push(l); }
+        });
+        if (entries.length === 0 && ok) {
+          const altro = findLogo('Altro');
+          if (altro) entries.push(altro);
+        }
+      }
+      entries.forEach(e => stack.appendChild(logoEl(e)));
+      td.appendChild(stack);
     }
     // ---------- FINE LOGHI ----------
+
+    // ---------- ORARI ----------
+    // "24/09/2026 08:30:00" → ora grande + data piccola ("oggi" se è la data odierna)
+    function renderDateTime(td, raw) {
+      const val = (raw || '').trim();
+      if (!val) {
+        td.classList.add('cell-vuota');
+        td.textContent = '—';
+        return;
+      }
+      const m = val.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:\s+(\d{1,2})[:.](\d{2}))?/);
+      const t = val.match(/(\d{1,2})[:.](\d{2})/);
+      let ora = '', data = '';
+      if (m) {
+        const oggi = new Date();
+        const anno = m[3].length === 2 ? 2000 + parseInt(m[3], 10) : parseInt(m[3], 10);
+        const isOggi = parseInt(m[1], 10) === oggi.getDate() &&
+          parseInt(m[2], 10) === oggi.getMonth() + 1 &&
+          anno === oggi.getFullYear();
+        data = isOggi ? 'oggi' : `${m[1].padStart(2, '0')}/${m[2].padStart(2, '0')}/${anno}`;
+        if (m[4]) ora = `${m[4].padStart(2, '0')}:${m[5]}`;
+      } else if (t) {
+        ora = `${t[1].padStart(2, '0')}:${t[2]}`;
+      }
+      if (!ora && !data) {
+        td.textContent = val;
+        return;
+      }
+      if (ora) {
+        const o = document.createElement('span');
+        o.className = 'dt-ora';
+        o.textContent = ora;
+        td.appendChild(o);
+      }
+      if (data) {
+        const d = document.createElement('span');
+        d.className = ora ? 'dt-data' : 'dt-ora';
+        d.textContent = data;
+        td.appendChild(d);
+      }
+    }
+    // ---------- FINE ORARI ----------
 
     function findColIndex(headers, keyword) {
       return headers.findIndex(h => h && h.toLowerCase().includes(keyword.toLowerCase()));
@@ -500,13 +618,22 @@
     // Colonne (per parola chiave nell'intestazione) da non mostrare in tabella
     const HIDDEN_COL_KEYWORDS = ['codice', 'coord', 'presenti'];
 
-    // Parole chiave per le colonne Tipologia e Orari (cercate nell'intestazione del foglio)
+    // Parole chiave per le colonne (cercate nell'intestazione del foglio)
     const TIPOLOGIA_KEYWORD = 'tipologia addestramento';
     const INIZIO_KEYWORD = 'ora inizio';   // "Giorno ed Ora Inizio"
     const FINE_KEYWORD = 'ora fine';       // "Giorno ed Ora Fine"
-    // "⚪Funzione Comando (Responsabile Addestramento - IC)" e "⚪Funzione Comando (Responsabile Tecnico Manovre)"
     const RESP_ADD_KEYWORD = 'responsabile addestramento';
     const RESP_TEC_KEYWORD = 'responsabile tecnico';
+
+    // Intestazioni brevi per le colonne gestite dalla pagina
+    const LABELS = {
+      logo: '',
+      tipologia: 'Tipologia addestramento',
+      inizio: 'Inizio',
+      fine: 'Fine',
+      respAdd: 'Resp. addestramento (IC)',
+      respTec: 'Resp. tecnico manovre'
+    };
 
     // Pulisce l'intestazione da emoji/pallini iniziali (es. "⚪Funzione Comando ...")
     function cleanHeader(h) {
@@ -545,7 +672,8 @@
     }
 
     // Trasforma il testo grezzo "> Nome   CF: ...   Tel. ..." in un elenco di card leggibili
-    function renderNominativi(raw) {
+    // compact = true per i responsabili: nome, telefono e CF senza riquadro
+    function renderNominativi(raw, compact) {
       const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
       const persone = [];
       let current = null;
@@ -562,11 +690,14 @@
         }
       });
 
-      if (persone.length === 0) return `<div class="persona-item">${raw}</div>`;
+      if (persone.length === 0) return `<div class="persona-item${compact ? ' compact' : ''}">${raw}</div>`;
 
       return persone.map(p => {
         const cfHtml = p.cf ? `<span class="persona-cf">CF: ${p.cf}</span>` : '';
         const telHtml = p.tel ? telSpan(p.tel) : '';
+        if (compact) {
+          return `<div class="persona-item compact"><span class="persona-nome">${p.nome}</span>${telHtml}${cfHtml}</div>`;
+        }
         return `<div class="persona-item"><span class="persona-nome">${p.nome}</span>${cfHtml}${telHtml}</div>`;
       }).join('');
     }
@@ -596,7 +727,6 @@
           const headerRow = rows[HEADER_ROW_INDEX] || [];
 
           // --- Salva lo stato prima di ricostruire la tabella ---
-          // Chiavi delle schede "nominativi" aperte, per riaprirle dopo il refresh
           const openKeys = new Set(
             Array.from(tbody.querySelectorAll('details.nominativi-list[open]')).map(d => d.dataset.key)
           );
@@ -622,14 +752,14 @@
           const sicurezzaColAbs = absIdx('sicurezza');
           const nominativiColAbs = absIdx('nominativi');
           const presentiColAbs = absIdx('presenti');   // nascosta, serve per il conteggio
-          const coordColAbs = absIdx('coord');         // nascosta, serve per mappa e fallback
+          const coordColAbs = absIdx('coord');         // nascosta, serve per la mappa
           const tipologiaColAbs = absIdx(TIPOLOGIA_KEYWORD);
           const inizioColAbs = absIdx(INIZIO_KEYWORD);
           const fineColAbs = absIdx(FINE_KEYWORD);
           const respAddColAbs = absIdx(RESP_ADD_KEYWORD);
           const respTecColAbs = absIdx(RESP_TEC_KEYWORD);
 
-          // Colonne visibili "del foglio" (escluse nascoste e quelle che spostiamo accanto al piano di sicurezza)
+          // Colonne visibili "del foglio" (escluse nascoste e quelle gestite a parte)
           const visibleCols = [];
           for (let i = START_COL; i <= endCol; i++) {
             const h = (headerRow[i] || '').toLowerCase();
@@ -647,22 +777,24 @@
             }
           }
 
-          // Definizione colonne: quelle del foglio + Tipologia e Orari subito dopo il piano di sicurezza
-          const cols = visibleCols.map(i => ({ kind: 'sheet', abs: i, header: headerRow[i] }));
-          const tipologiaCol = { kind: 'tipologia', header: tipologiaColAbs >= 0 ? headerRow[tipologiaColAbs] : 'Tipologia' };
-          const orariCol = { kind: 'orari', header: 'Orari' };
-          const extraCols = [tipologiaCol, orariCol];
-          if (respAddColAbs >= 0) extraCols.push({ kind: 'resp', abs: respAddColAbs, header: cleanHeader(headerRow[respAddColAbs]) });
-          if (respTecColAbs >= 0) extraCols.push({ kind: 'resp', abs: respTecColAbs, header: cleanHeader(headerRow[respTecColAbs]) });
+          // Ordine: Logo | Comando | Piano sicurezza | Tipologia | Inizio | Fine | Responsabili | resto del foglio
+          const cols = visibleCols.map(i => ({ kind: 'sheet', abs: i, header: cleanHeader(headerRow[i]) }));
+          const extraCols = [{ kind: 'tipologia', header: LABELS.tipologia }];
+          if (inizioColAbs >= 0) extraCols.push({ kind: 'dt', abs: inizioColAbs, header: LABELS.inizio });
+          if (fineColAbs >= 0) extraCols.push({ kind: 'dt', abs: fineColAbs, header: LABELS.fine });
+          if (respAddColAbs >= 0) extraCols.push({ kind: 'resp', abs: respAddColAbs, header: LABELS.respAdd });
+          if (respTecColAbs >= 0) extraCols.push({ kind: 'resp', abs: respTecColAbs, header: LABELS.respTec });
           const sicPos = cols.findIndex(c => c.abs === sicurezzaColAbs);
           if (sicPos >= 0) cols.splice(sicPos + 1, 0, ...extraCols);
           else cols.push(...extraCols);
+          cols.unshift({ kind: 'logo', header: LABELS.logo });
 
           // Header
           theadRow.innerHTML = '';
           cols.forEach(c => {
             const th = document.createElement('th');
             th.textContent = c.header;
+            if (c.kind === 'logo') th.className = 'logo-col';
             theadRow.appendChild(th);
           });
 
@@ -692,56 +824,47 @@
             const rowKey = `${comando}|${keyCount[comando]}`;
 
             const coordRaw = coordColAbs >= 0 ? (row[coordColAbs] || '') : '';
+            const tipologiaRaw = ok && tipologiaColAbs >= 0 ? (row[tipologiaColAbs] || '').trim() : '';
 
-            cols.forEach((c, localIdx) => {
+            let firstSheetCol = true;
+
+            cols.forEach(c => {
               const td = document.createElement('td');
               td.setAttribute('data-label', c.header || '');
 
-              if (c.kind === 'resp') {
+              if (c.kind === 'logo') {
+                td.classList.add('logo-cell');
+                renderLogoCell(td, tipologiaRaw, ok, daEffettuare);
+
+              } else if (c.kind === 'tipologia') {
+                // Solo testo, una voce per riga (valorizzata solo con piano effettuato)
+                td.classList.add('tipologia-cell', 'cell-multiline');
+                const voci = splitVoci(tipologiaRaw);
+                if (voci.length === 0) { td.classList.add('cell-vuota'); td.textContent = '—'; }
+                else td.textContent = voci.join('\n');
+
+              } else if (c.kind === 'dt') {
+                // Inizio / Fine in colonne separate (valorizzate solo con piano effettuato)
+                td.classList.add('orario');
+                renderDateTime(td, ok ? row[c.abs] : '');
+
+              } else if (c.kind === 'resp') {
                 // Responsabili: valorizzati solo se il piano di sicurezza è stato effettuato
                 const val = ok ? (row[c.abs] || '').trim() : '';
                 if (!val) {
                   td.classList.add('cell-vuota');
                   td.textContent = '—';
                 } else if (/^\s*>/m.test(val)) {
-                  // Stesso formato dei nominativi ("> Nome / CF: / Tel.") → card con telefono copiabile
                   const content = document.createElement('div');
                   content.className = 'nominativi-content';
                   content.style.marginTop = '0';
-                  content.innerHTML = renderNominativi(val);
+                  content.innerHTML = renderNominativi(val, true);
                   td.appendChild(content);
                 } else {
                   td.classList.add('cell-multiline');
                   td.textContent = val;
                 }
-              } else if (c.kind === 'tipologia') {
-                // Valorizzata solo se il piano di sicurezza è stato effettuato, con il logo di ogni voce
-                const val = ok && tipologiaColAbs >= 0 ? (row[tipologiaColAbs] || '').trim() : '';
-                if (val) {
-                  renderTipologia(td, val);
-                } else if (daEffettuare) {
-                  // Piano di sicurezza mancante: mostro il relativo logo al posto della tipologia
-                  const psm = findLogo('Piano di Sicurezza Mancante');
-                  if (psm) td.appendChild(logoEl(psm, 'muted'));
-                  else { td.classList.add('cell-vuota'); td.textContent = '—'; }
-                } else {
-                  td.classList.add('cell-vuota');
-                  td.textContent = '—';
-                }
-              } else if (c.kind === 'orari') {
-                // Valorizzata solo se il piano di sicurezza è stato effettuato
-                let val = '';
-                if (ok) {
-                  const inizio = inizioColAbs >= 0 ? (row[inizioColAbs] || '').trim() : '';
-                  const fine = fineColAbs >= 0 ? (row[fineColAbs] || '').trim() : '';
-                  const parti = [];
-                  if (inizio) parti.push(`Inizio: ${inizio}`);
-                  if (fine) parti.push(`Fine: ${fine}`);
-                  val = parti.join('\n');
-                }
-                td.classList.add('cell-multiline');
-                if (!val) td.classList.add('cell-vuota');
-                td.textContent = val || '—';
+
               } else if (c.abs === nominativiColAbs) {
                 const val = (row[c.abs] || '').trim();
                 const count = presentiColAbs >= 0 ? (row[presentiColAbs] || '').trim() : '';
@@ -750,17 +873,18 @@
                 details.dataset.key = rowKey;
                 if (openKeys.has(rowKey)) details.open = true; // mantiene aperte le schede già aperte
                 const summary = document.createElement('summary');
-                summary.textContent = `${count || '—'} presenti (mostra elenco)`;
+                summary.textContent = `${count || '—'} presenti`;
                 const content = document.createElement('div');
                 content.className = 'nominativi-content';
-                content.innerHTML = renderNominativi(val);
+                content.innerHTML = renderNominativi(val, false);
                 details.appendChild(summary);
                 details.appendChild(content);
                 td.appendChild(details);
+
               } else if (c.abs === sicurezzaColAbs) {
                 const badge = document.createElement('span');
                 badge.className = 'badge-sicurezza ' + (ok ? 'badge-effettuato' : 'badge-da-effettuare');
-                badge.textContent = ok ? 'EFFETTUATO!!!' : 'DA EFFETTUARE!!!';
+                badge.textContent = ok ? 'EFFETTUATO' : 'DA EFFETTUARE';
                 td.appendChild(badge);
 
                 // Link "Apri nella mappa" solo se il piano di sicurezza è stato effettuato
@@ -770,15 +894,18 @@
                     const mapLink = document.createElement('a');
                     mapLink.className = 'map-link';
                     mapLink.href = `${MAPPA_URL}?lat=${coords.lat}&lng=${coords.lng}&zoom=15`;
-                    mapLink.textContent = '📍 Apri nella mappa';
+                    mapLink.textContent = '📍 Mappa';
                     td.appendChild(document.createElement('br'));
                     td.appendChild(mapLink);
                   }
                 }
+
               } else {
-                if (localIdx === 0) td.classList.add('comando');
+                if (firstSheetCol) td.classList.add('comando');
                 td.textContent = (row[c.abs] || '').trim();
               }
+
+              if (c.kind === 'sheet') firstSheetCol = false;
               tr.appendChild(td);
             });
 
@@ -798,7 +925,6 @@
           if (firstLoad) {
             statusEl.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
           } else {
-            // Nei refresh successivi la tabella resta com'è: segnalo solo l'errore
             lastUpdateEl.textContent += ' (ultimo aggiornamento fallito)';
           }
         }
