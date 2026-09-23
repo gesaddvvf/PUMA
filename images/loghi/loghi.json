@@ -1,0 +1,182 @@
+{
+ "saf-speleo-alpino-fluviale-competenze-primarie": {
+  "nome": "SAF (Speleo Alpino Fluviale) Competenze primarie",
+  "sigla": "SAF PRI",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"SAF (Speleo Alpino Fluviale) Competenze primarie\"><title>SAF (Speleo Alpino Fluviale) Competenze primarie</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#A4471F\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 64L38 28L48 42L61 20L86 64Z\"/><path d=\"M55 30L61 20L67 30\"/><path stroke-dasharray=\"4 5\" d=\"M61 20C74 34 56 46 70 60\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"13\" letter-spacing=\"0.5\" fill=\"#ffffff\">SAF PRI</text></svg>"
+ },
+ "saf-speleo-alpino-fluviale-basico": {
+  "nome": "SAF (Speleo Alpino Fluviale) BASICO",
+  "sigla": "SAF BAS",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"SAF (Speleo Alpino Fluviale) BASICO\"><title>SAF (Speleo Alpino Fluviale) BASICO</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#A4471F\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 64L38 28L48 42L61 20L86 64Z\"/><path d=\"M55 30L61 20L67 30\"/><path stroke-dasharray=\"4 5\" d=\"M61 20C74 34 56 46 70 60\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">SAF BAS</text></svg>"
+ },
+ "saf-speleo-alpino-fluviale-avanzato": {
+  "nome": "SAF (Speleo Alpino Fluviale) AVANZATO",
+  "sigla": "SAF AVA",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"SAF (Speleo Alpino Fluviale) AVANZATO\"><title>SAF (Speleo Alpino Fluviale) AVANZATO</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#A4471F\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 64L38 28L48 42L61 20L86 64Z\"/><path d=\"M55 30L61 20L67 30\"/><path stroke-dasharray=\"4 5\" d=\"M61 20C74 34 56 46 70 60\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">SAF AVA</text></svg>"
+ },
+ "saf-speleo-alpino-fluviale-saf1a": {
+  "nome": "SAF (Speleo Alpino Fluviale) SAF1A",
+  "sigla": "SAF 1A",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"SAF (Speleo Alpino Fluviale) SAF1A\"><title>SAF (Speleo Alpino Fluviale) SAF1A</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#A4471F\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 64L38 28L48 42L61 20L86 64Z\"/><path d=\"M55 30L61 20L67 30\"/><path stroke-dasharray=\"4 5\" d=\"M61 20C74 34 56 46 70 60\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"13\" letter-spacing=\"0.5\" fill=\"#ffffff\">SAF 1A</text></svg>"
+ },
+ "negh": {
+  "nome": "NEGH (NEveGHiaccio)",
+  "sigla": "NEGH",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"NEGH (NEveGHiaccio)\"><title>NEGH (NEveGHiaccio)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#3E86B0\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M50.0 16.0L50.0 64.0\"/><path d=\"M70.8 28.0L29.2 52.0\"/><path d=\"M70.8 52.0L29.2 28.0\"/><path d=\"M50.0 25.0L44.9 18.9\"/><path d=\"M50.0 25.0L55.1 18.9\"/><path d=\"M63.0 32.5L65.7 25.0\"/><path d=\"M63.0 32.5L70.9 33.9\"/><path d=\"M63.0 47.5L70.9 46.1\"/><path d=\"M63.0 47.5L65.7 55.0\"/><path d=\"M50.0 55.0L55.1 61.1\"/><path d=\"M50.0 55.0L44.9 61.1\"/><path d=\"M37.0 47.5L34.3 55.0\"/><path d=\"M37.0 47.5L29.1 46.1\"/><path d=\"M37.0 32.5L29.1 33.9\"/><path d=\"M37.0 32.5L34.3 25.0\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">NEGH</text></svg>"
+ },
+ "evac-evacuazione-impianti-a-fune": {
+  "nome": "EVAC Evacuazione impianti a fune",
+  "sigla": "EVAC",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"EVAC Evacuazione impianti a fune\"><title>EVAC Evacuazione impianti a fune</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#5E4B8B\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 22L88 12\"/><path d=\"M50 17V30\"/><rect x=\"33\" y=\"30\" width=\"34\" height=\"28\" rx=\"5\"/><path d=\"M33 42H67\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">EVAC</text></svg>"
+ },
+ "atp": {
+  "nome": "ATP (Autoprotezione in ambiente acquatico)",
+  "sigla": "ATP",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"ATP (Autoprotezione in ambiente acquatico)\"><title>ATP (Autoprotezione in ambiente acquatico)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#2A7FC0\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M50 12L76 20V38C76 52 65 61 50 67C35 61 24 52 24 38V20Z\"/><path d=\"M32 42q6-7 12 0t12 0t12 0\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">ATP</text></svg>"
+ },
+ "sfa": {
+  "nome": "SFA (Soccorritore Fluviale Alluvionale)",
+  "sigla": "SFA",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"SFA (Soccorritore Fluviale Alluvionale)\"><title>SFA (Soccorritore Fluviale Alluvionale)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#1C5F96\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M24 38L50 16L76 38\"/><path d=\"M32 32V48M68 32V48\"/><path d=\"M16 54q8-7 17 0t17 0t17 0t17 0M16 65q8-7 17 0t17 0t17 0t17 0\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">SFA</text></svg>"
+ },
+ "sa": {
+  "nome": "SA (Soccorritore Acquatico)",
+  "sigla": "SA",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"SA (Soccorritore Acquatico)\"><title>SA (Soccorritore Acquatico)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#1A8FB8\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"40\" r=\"22\"/><circle cx=\"50\" cy=\"40\" r=\"9\"/><path stroke-width=\"9\" d=\"M58.5 48.5L63.4 53.4\"/><path stroke-width=\"9\" d=\"M41.5 48.5L36.6 53.4\"/><path stroke-width=\"9\" d=\"M41.5 31.5L36.6 26.6\"/><path stroke-width=\"9\" d=\"M58.5 31.5L63.4 26.6\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">SA</text></svg>"
+ },
+ "smzt": {
+  "nome": "SMZT (Sommozzatore)",
+  "sigla": "SMZT",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"SMZT (Sommozzatore)\"><title>SMZT (Sommozzatore)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#0D3B63\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"20\" y=\"28\" width=\"60\" height=\"26\" rx=\"12\"/><path d=\"M50 28V40\"/><path d=\"M20 40H12M80 40H88\"/><circle cx=\"72\" cy=\"17\" r=\"3\"/><circle cx=\"80\" cy=\"10\" r=\"2\"/><circle cx=\"64\" cy=\"10\" r=\"2\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">SMZT</text></svg>"
+ },
+ "usar-l": {
+  "nome": "USAR L (Urban Search And Rescue)",
+  "sigla": "USAR L",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"USAR L (Urban Search And Rescue)\"><title>USAR L (Urban Search And Rescue)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#C07A00\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 64V20H44V64\"/><path d=\"M28 30h8M28 42h8\"/><path d=\"M52 64V40L63 30L66 42L80 36V64\"/><path d=\"M14 64H86\"/><path d=\"M56 56l6-4M68 58l6 2\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"13\" letter-spacing=\"0.5\" fill=\"#ffffff\">USAR L</text></svg>"
+ },
+ "usar-m": {
+  "nome": "USAR M (Urban Search And Rescue)",
+  "sigla": "USAR M",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"USAR M (Urban Search And Rescue)\"><title>USAR M (Urban Search And Rescue)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#C07A00\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 64V20H44V64\"/><path d=\"M28 30h8M28 42h8\"/><path d=\"M52 64V40L63 30L66 42L80 36V64\"/><path d=\"M14 64H86\"/><path d=\"M56 56l6-4M68 58l6 2\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"13\" letter-spacing=\"0.5\" fill=\"#ffffff\">USAR M</text></svg>"
+ },
+ "tpss": {
+  "nome": "TPSS (Tecniche di Primo Soccorso Sanitario)",
+  "sigla": "TPSS",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"TPSS (Tecniche di Primo Soccorso Sanitario)\"><title>TPSS (Tecniche di Primo Soccorso Sanitario)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#23864F\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M42 16H58V32H74V48H58V64H42V48H26V32H42Z\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">TPSS</text></svg>"
+ },
+ "oso": {
+  "nome": "OSO (Operatore Sala Operativa)",
+  "sigla": "OSO",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"OSO (Operatore Sala Operativa)\"><title>OSO (Operatore Sala Operativa)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#8C1D1D\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M28 44V38A22 22 0 0 1 72 38V44\"/><rect x=\"21\" y=\"40\" width=\"12\" height=\"18\" rx=\"4\"/><rect x=\"67\" y=\"40\" width=\"12\" height=\"18\" rx=\"4\"/><path d=\"M73 58Q73 66 58 66\"/><circle cx=\"55\" cy=\"66\" r=\"2.5\" fill=\"currentColor\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">OSO</text></svg>"
+ },
+ "tas1": {
+  "nome": "TAS1 (Topografia Applicata al Soccorso)",
+  "sigla": "TAS 1",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"TAS1 (Topografia Applicata al Soccorso)\"><title>TAS1 (Topografia Applicata al Soccorso)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#56733A\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"40\" r=\"25\"/><path fill=\"#ffffff\" d=\"M50 21L57 40L50 59L43 40Z\"/><path d=\"M50 8V13M50 67V72M18 40H23M77 40H82\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">TAS 1</text></svg>"
+ },
+ "tas2": {
+  "nome": "TAS2 (Topografia Applicata al Soccorso)",
+  "sigla": "TAS 2",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"TAS2 (Topografia Applicata al Soccorso)\"><title>TAS2 (Topografia Applicata al Soccorso)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#56733A\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"40\" r=\"25\"/><path fill=\"#ffffff\" d=\"M50 21L57 40L50 59L43 40Z\"/><path d=\"M50 8V13M50 67V72M18 40H23M77 40H82\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">TAS 2</text></svg>"
+ },
+ "cfbt": {
+  "nome": "CFBT (Compartment Fire Behaviour Training)",
+  "sigla": "CFBT",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"CFBT (Compartment Fire Behaviour Training)\"><title>CFBT (Compartment Fire Behaviour Training)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#C8102E\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 64V30L50 13L82 30V64Z\"/><path stroke-dasharray=\"5 5\" d=\"M26 33H74\"/><path d=\"M50 60C39 60 37 49 44 42C44 47 48 49 48 49C46 40 52 34 56 30C56 39 63 43 62 52C61 57 56 60 50 60Z\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">CFBT</text></svg>"
+ },
+ "nbcr-0": {
+  "nome": "NBCR 0 (Nucleare Biologico Chimico Radiologico)",
+  "sigla": "NBCR 0",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"NBCR 0 (Nucleare Biologico Chimico Radiologico)\"><title>NBCR 0 (Nucleare Biologico Chimico Radiologico)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#F2C200\"/><g fill=\"none\" stroke=\"#1c1c1c\" color=\"#1c1c1c\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"40\" r=\"5\" fill=\"#1c1c1c\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M45.5 32.2L37.5 18.3A25 25 0 0 1 62.5 18.3L54.5 32.2A9 9 0 0 0 45.5 32.2Z\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M59.0 40.0L75.0 40.0A25 25 0 0 1 62.5 61.7L54.5 47.8A9 9 0 0 0 59.0 40.0Z\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M45.5 47.8L37.5 61.7A25 25 0 0 1 25.0 40.0L41.0 40.0A9 9 0 0 0 45.5 47.8Z\"/><circle cx=\"50\" cy=\"40\" r=\"30\" stroke-width=\"3\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"13\" letter-spacing=\"0.5\" fill=\"#1c1c1c\">NBCR 0</text></svg>"
+ },
+ "nbcr-1": {
+  "nome": "NBCR 1 (Nucleare Biologico Chimico Radiologico)",
+  "sigla": "NBCR 1",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"NBCR 1 (Nucleare Biologico Chimico Radiologico)\"><title>NBCR 1 (Nucleare Biologico Chimico Radiologico)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#F2C200\"/><g fill=\"none\" stroke=\"#1c1c1c\" color=\"#1c1c1c\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"40\" r=\"5\" fill=\"#1c1c1c\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M45.5 32.2L37.5 18.3A25 25 0 0 1 62.5 18.3L54.5 32.2A9 9 0 0 0 45.5 32.2Z\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M59.0 40.0L75.0 40.0A25 25 0 0 1 62.5 61.7L54.5 47.8A9 9 0 0 0 59.0 40.0Z\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M45.5 47.8L37.5 61.7A25 25 0 0 1 25.0 40.0L41.0 40.0A9 9 0 0 0 45.5 47.8Z\"/><circle cx=\"50\" cy=\"40\" r=\"30\" stroke-width=\"3\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"13\" letter-spacing=\"0.5\" fill=\"#1c1c1c\">NBCR 1</text></svg>"
+ },
+ "nbcr-2": {
+  "nome": "NBCR 2 (Nucleare Biologico Chimico Radiologico)",
+  "sigla": "NBCR 2",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"NBCR 2 (Nucleare Biologico Chimico Radiologico)\"><title>NBCR 2 (Nucleare Biologico Chimico Radiologico)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#F2C200\"/><g fill=\"none\" stroke=\"#1c1c1c\" color=\"#1c1c1c\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"40\" r=\"5\" fill=\"#1c1c1c\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M45.5 32.2L37.5 18.3A25 25 0 0 1 62.5 18.3L54.5 32.2A9 9 0 0 0 45.5 32.2Z\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M59.0 40.0L75.0 40.0A25 25 0 0 1 62.5 61.7L54.5 47.8A9 9 0 0 0 59.0 40.0Z\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M45.5 47.8L37.5 61.7A25 25 0 0 1 25.0 40.0L41.0 40.0A9 9 0 0 0 45.5 47.8Z\"/><circle cx=\"50\" cy=\"40\" r=\"30\" stroke-width=\"3\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"13\" letter-spacing=\"0.5\" fill=\"#1c1c1c\">NBCR 2</text></svg>"
+ },
+ "nbcr-3": {
+  "nome": "NBCR 3 (Nucleare Biologico Chimico Radiologico)",
+  "sigla": "NBCR 3",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"NBCR 3 (Nucleare Biologico Chimico Radiologico)\"><title>NBCR 3 (Nucleare Biologico Chimico Radiologico)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#F2C200\"/><g fill=\"none\" stroke=\"#1c1c1c\" color=\"#1c1c1c\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"40\" r=\"5\" fill=\"#1c1c1c\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M45.5 32.2L37.5 18.3A25 25 0 0 1 62.5 18.3L54.5 32.2A9 9 0 0 0 45.5 32.2Z\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M59.0 40.0L75.0 40.0A25 25 0 0 1 62.5 61.7L54.5 47.8A9 9 0 0 0 59.0 40.0Z\"/><path fill=\"#1c1c1c\" stroke=\"none\" d=\"M45.5 47.8L37.5 61.7A25 25 0 0 1 25.0 40.0L41.0 40.0A9 9 0 0 0 45.5 47.8Z\"/><circle cx=\"50\" cy=\"40\" r=\"30\" stroke-width=\"3\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"13\" letter-spacing=\"0.5\" fill=\"#1c1c1c\">NBCR 3</text></svg>"
+ },
+ "apr": {
+  "nome": "APR (Aeromobili Pilotaggio Remoto)",
+  "sigla": "APR",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"APR (Aeromobili Pilotaggio Remoto)\"><title>APR (Aeromobili Pilotaggio Remoto)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#37474F\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M30 24L70 56M70 24L30 56\"/><rect x=\"41\" y=\"33\" width=\"18\" height=\"14\" rx=\"4\"/><circle cx=\"28\" cy=\"22\" r=\"9\"/><circle cx=\"72\" cy=\"22\" r=\"9\"/><circle cx=\"28\" cy=\"58\" r=\"9\"/><circle cx=\"72\" cy=\"58\" r=\"9\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">APR</text></svg>"
+ },
+ "cinofilo-k9": {
+  "nome": "Cinofilo - K9",
+  "sigla": "K9",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Cinofilo - K9\"><title>Cinofilo - K9</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#7A4A26\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><g fill=\"#ffffff\" stroke=\"none\"><path d=\"M50 40C60 40 68 50 68 57C68 64 60 64 50 62C40 64 32 64 32 57C32 50 40 40 50 40Z\"/><ellipse cx=\"30\" cy=\"36\" rx=\"6\" ry=\"8\" transform=\"rotate(-20 30 36)\"/><ellipse cx=\"43\" cy=\"24\" rx=\"6\" ry=\"8.5\"/><ellipse cx=\"57\" cy=\"24\" rx=\"6\" ry=\"8.5\"/><ellipse cx=\"70\" cy=\"36\" rx=\"6\" ry=\"8\" transform=\"rotate(20 70 36)\"/></g></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">K9</text></svg>"
+ },
+ "patente-terrestre-i-cat": {
+  "nome": "Patente Terrestre I cat.",
+  "sigla": "PT I",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Patente Terrestre I cat.\"><title>Patente Terrestre I cat.</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#455A64\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"12\" y=\"28\" width=\"48\" height=\"24\" rx=\"3\"/><path d=\"M60 32H74L86 44V52H60\"/><path d=\"M32 28V22H42V28\"/><circle cx=\"28\" cy=\"56\" r=\"6\"/><circle cx=\"72\" cy=\"56\" r=\"6\"/><path d=\"M20 38H52\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">PT I</text></svg>"
+ },
+ "patente-terrestre-ii-cat": {
+  "nome": "Patente Terrestre II cat.",
+  "sigla": "PT II",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Patente Terrestre II cat.\"><title>Patente Terrestre II cat.</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#455A64\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"12\" y=\"28\" width=\"48\" height=\"24\" rx=\"3\"/><path d=\"M60 32H74L86 44V52H60\"/><path d=\"M32 28V22H42V28\"/><circle cx=\"28\" cy=\"56\" r=\"6\"/><circle cx=\"72\" cy=\"56\" r=\"6\"/><path d=\"M20 38H52\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">PT II</text></svg>"
+ },
+ "patente-terrestre-iii-cat": {
+  "nome": "Patente Terrestre III cat.",
+  "sigla": "PT III",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Patente Terrestre III cat.\"><title>Patente Terrestre III cat.</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#455A64\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"12\" y=\"28\" width=\"48\" height=\"24\" rx=\"3\"/><path d=\"M60 32H74L86 44V52H60\"/><path d=\"M32 28V22H42V28\"/><circle cx=\"28\" cy=\"56\" r=\"6\"/><circle cx=\"72\" cy=\"56\" r=\"6\"/><path d=\"M20 38H52\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"13\" letter-spacing=\"0.5\" fill=\"#ffffff\">PT III</text></svg>"
+ },
+ "patente-terrestre-iv-cat": {
+  "nome": "Patente Terrestre IV cat.",
+  "sigla": "PT IV",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Patente Terrestre IV cat.\"><title>Patente Terrestre IV cat.</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#455A64\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"12\" y=\"28\" width=\"48\" height=\"24\" rx=\"3\"/><path d=\"M60 32H74L86 44V52H60\"/><path d=\"M32 28V22H42V28\"/><circle cx=\"28\" cy=\"56\" r=\"6\"/><circle cx=\"72\" cy=\"56\" r=\"6\"/><path d=\"M20 38H52\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">PT IV</text></svg>"
+ },
+ "mmt": {
+  "nome": "MMT (Movimento Terra)",
+  "sigla": "MMT",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"MMT (Movimento Terra)\"><title>MMT (Movimento Terra)</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#F2A900\"/><g fill=\"none\" stroke=\"#1c1c1c\" color=\"#1c1c1c\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"12\" y=\"54\" width=\"46\" height=\"11\" rx=\"5.5\"/><rect x=\"18\" y=\"34\" width=\"26\" height=\"20\" rx=\"2\"/><path d=\"M44 44L64 22L80 34\"/><path d=\"M80 34L86 50H72Z\"/><path d=\"M24 34V42H36\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#1c1c1c\">MMT</text></svg>"
+ },
+ "patente-nautica-i-cat": {
+  "nome": "Patente Nautica I cat.",
+  "sigla": "PN I",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Patente Nautica I cat.\"><title>Patente Nautica I cat.</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#16466B\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"16\" r=\"5\"/><path d=\"M50 21V64M38 30H62\"/><path d=\"M24 46Q26 64 50 64Q74 64 76 46\"/><path d=\"M18 52L24 46L30 52M70 52L76 46L82 52\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">PN I</text></svg>"
+ },
+ "patente-nautica-ii-cat": {
+  "nome": "Patente Nautica II cat.",
+  "sigla": "PN II",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Patente Nautica II cat.\"><title>Patente Nautica II cat.</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#16466B\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"16\" r=\"5\"/><path d=\"M50 21V64M38 30H62\"/><path d=\"M24 46Q26 64 50 64Q74 64 76 46\"/><path d=\"M18 52L24 46L30 52M70 52L76 46L82 52\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">PN II</text></svg>"
+ },
+ "intervento": {
+  "nome": "Intervento",
+  "sigla": "INT",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Intervento\"><title>Intervento</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#D32F2F\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M34 54V42A16 16 0 0 1 66 42V54\"/><rect x=\"26\" y=\"54\" width=\"48\" height=\"10\" rx=\"2\"/><path d=\"M50 8V16M25 18L30 24M75 18L70 24M14 38H21M86 38H79\"/><path d=\"M44 42A6 6 0 0 1 50 36\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">INT</text></svg>"
+ },
+ "altro": {
+  "nome": "Altro",
+  "sigla": "ALTRO",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Altro\"><title>Altro</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#6E6E6E\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><g fill=\"#ffffff\" stroke=\"none\"><circle cx=\"28\" cy=\"40\" r=\"7\"/><circle cx=\"50\" cy=\"40\" r=\"7\"/><circle cx=\"72\" cy=\"40\" r=\"7\"/></g></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">ALTRO</text></svg>"
+ },
+ "corso-di-formazione": {
+  "nome": "Corso di Formazione",
+  "sigla": "FORM",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Corso di Formazione\"><title>Corso di Formazione</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#3949AB\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 32L50 17L88 32L50 47Z\"/><path d=\"M28 39V53C28 60 72 60 72 53V39\"/><path d=\"M84 34V52\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">FORM</text></svg>"
+ },
+ "corso-di-aggiornamento": {
+  "nome": "Corso di Aggiornamento",
+  "sigla": "AGG",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Corso di Aggiornamento\"><title>Corso di Aggiornamento</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#00806F\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M69 29A22 22 0 1 0 71 48\"/><path d=\"M71 15L69 29L55 26\"/><path d=\"M50 30V41L58 46\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">AGG</text></svg>"
+ },
+ "esercitazione": {
+  "nome": "Esercitazione",
+  "sigla": "ESERC",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Esercitazione\"><title>Esercitazione</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#E86A00\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"40\" r=\"25\"/><circle cx=\"50\" cy=\"40\" r=\"14\"/><circle cx=\"50\" cy=\"40\" r=\"4\" fill=\"#ffffff\"/><path d=\"M50 8V20M50 60V72M18 40H30M70 40H82\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">ESERC</text></svg>"
+ },
+ "piano-di-sicurezza-mancante": {
+  "nome": "Piano di Sicurezza Mancante",
+  "sigla": "PSM",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" role=\"img\" aria-label=\"Piano di Sicurezza Mancante\"><title>Piano di Sicurezza Mancante</title><rect width=\"100\" height=\"100\" rx=\"20\" fill=\"#9E1111\"/><g fill=\"none\" stroke=\"#ffffff\" color=\"#ffffff\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M28 12H60L74 26V68H28Z\"/><path d=\"M60 12V26H74\"/><path d=\"M51 32V50\"/><circle cx=\"51\" cy=\"59\" r=\"3.5\" fill=\"#ffffff\" stroke=\"none\"/></g><text x=\"50\" y=\"90\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-weight=\"700\" font-size=\"15\" letter-spacing=\"0.5\" fill=\"#ffffff\">PSM</text></svg>"
+ }
+}
