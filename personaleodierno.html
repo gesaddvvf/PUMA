@@ -404,8 +404,9 @@
     const HIDDEN_COL_KEYWORDS = ['codice', 'coord', 'presenti'];
 
     // Parole chiave per le colonne Tipologia e Orari (cercate nell'intestazione del foglio)
-    const TIPOLOGIA_KEYWORD = 'Tipologia addestramento';
-    const ORARI_KEYWORD = 'orar'; // copre "Orario" e "Orari"
+    const TIPOLOGIA_KEYWORD = 'tipologia addestramento';
+    const INIZIO_KEYWORD = 'ora inizio';   // "Giorno ed Ora Inizio"
+    const FINE_KEYWORD = 'ora fine';       // "Giorno ed Ora Fine"
 
     // Copia un numero di telefono negli appunti al click, con un piccolo feedback visivo
     function copyPhone(el, number) {
@@ -472,13 +473,6 @@
       return { lat: match[1], lng: match[2] };
     }
 
-    // Fallback: estrae "Tipologia: ..." / "Orario: ..." da un testo multiriga (es. la cella coordinate)
-    function extractLabeledField(raw, keyword) {
-      const re = new RegExp(keyword + '[^:\\n]*:\\s*([^\\n]+)', 'i');
-      const m = (raw || '').match(re);
-      return m ? m[1].trim() : '';
-    }
-
     const MAPPA_URL = "https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html";
 
     function loadData() {
@@ -525,14 +519,15 @@
           const presentiColAbs = absIdx('presenti');   // nascosta, serve per il conteggio
           const coordColAbs = absIdx('coord');         // nascosta, serve per mappa e fallback
           const tipologiaColAbs = absIdx(TIPOLOGIA_KEYWORD);
-          const orariColAbs = absIdx(ORARI_KEYWORD);
+          const inizioColAbs = absIdx(INIZIO_KEYWORD);
+          const fineColAbs = absIdx(FINE_KEYWORD);
 
           // Colonne visibili "del foglio" (escluse nascoste e quelle che spostiamo accanto al piano di sicurezza)
           const visibleCols = [];
           for (let i = START_COL; i <= endCol; i++) {
             const h = (headerRow[i] || '').toLowerCase();
             if (HIDDEN_COL_KEYWORDS.some(k => h.includes(k))) continue;
-            if (i === tipologiaColAbs || i === orariColAbs) continue;
+            if (i === tipologiaColAbs || i === inizioColAbs || i === fineColAbs) continue;
             visibleCols.push(i);
           }
 
@@ -548,7 +543,7 @@
           // Definizione colonne: quelle del foglio + Tipologia e Orari subito dopo il piano di sicurezza
           const cols = visibleCols.map(i => ({ kind: 'sheet', abs: i, header: headerRow[i] }));
           const tipologiaCol = { kind: 'tipologia', header: tipologiaColAbs >= 0 ? headerRow[tipologiaColAbs] : 'Tipologia' };
-          const orariCol = { kind: 'orari', header: orariColAbs >= 0 ? headerRow[orariColAbs] : 'Orari' };
+          const orariCol = { kind: 'orari', header: 'Orari' };
           const sicPos = cols.findIndex(c => c.abs === sicurezzaColAbs);
           if (sicPos >= 0) cols.splice(sicPos + 1, 0, tipologiaCol, orariCol);
           else cols.push(tipologiaCol, orariCol);
@@ -595,10 +590,15 @@
               if (c.kind === 'tipologia' || c.kind === 'orari') {
                 // Valorizzate solo se il piano di sicurezza è stato effettuato
                 let val = '';
-                if (ok) {
-                  const colAbs = c.kind === 'tipologia' ? tipologiaColAbs : orariColAbs;
-                  const kw = c.kind === 'tipologia' ? TIPOLOGIA_KEYWORD : ORARI_KEYWORD;
-                  val = colAbs >= 0 ? (row[colAbs] || '').trim() : extractLabeledField(coordRaw, kw);
+                if (ok && c.kind === 'tipologia') {
+                  val = tipologiaColAbs >= 0 ? (row[tipologiaColAbs] || '').trim() : '';
+                } else if (ok) {
+                  const inizio = inizioColAbs >= 0 ? (row[inizioColAbs] || '').trim() : '';
+                  const fine = fineColAbs >= 0 ? (row[fineColAbs] || '').trim() : '';
+                  const parti = [];
+                  if (inizio) parti.push(`Inizio: ${inizio}`);
+                  if (fine) parti.push(`Fine: ${fine}`);
+                  val = parti.join('\n');
                 }
                 td.classList.add('cell-multiline');
                 if (!val) td.classList.add('cell-vuota');
