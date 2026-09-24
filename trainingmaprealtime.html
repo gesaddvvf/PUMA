@@ -279,54 +279,55 @@
     }
 
     /* ---------- MARKER A GOCCIA CON LOGO ---------- */
+    /* Goccia inclinata di 45° verso destra: punta in basso a sinistra, sulle coordinate */
     .pin-wrapper.leaflet-div-icon {
       background: transparent;
       border: none;
+      overflow: visible;
     }
     .pin {
       position: relative;
-      width: 48px;
-      height: 62px;
-      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+      width: 32px;
+      height: 32px;
       cursor: pointer;
     }
-    .pin-shape {
+    .pin-drop {
       position: absolute;
       inset: 0;
-      width: 48px;
-      height: 62px;
+      box-sizing: border-box;
+      border: 2px solid #fff;
+      border-radius: 50% 50% 50% 0;
+      box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .pin-logo {
-      position: absolute;
-      left: 9px;
-      top: 8px;
-      width: 30px;
-      height: 30px;
-      border-radius: 7px;
-      overflow: hidden;
-    }
-    .pin-logo svg {
-      width: 100%;
-      height: 100%;
+    /* Pittogramma del logo dentro la goccia (resta dritto) */
+    .pin-drop svg {
+      width: 22px;
+      height: 22px;
       display: block;
     }
-    /* Contatore addestramenti sovrapposti */
+    /* Contatore: sempre sopra la goccia */
     .pin-count {
       position: absolute;
-      top: -6px;
-      right: -8px;
-      min-width: 20px;
-      height: 20px;
+      left: 50%;
+      bottom: calc(100% + 3px);
+      transform: translateX(-50%);
+      z-index: 2;
+      min-width: 18px;
+      height: 18px;
       padding: 0 5px;
       box-sizing: border-box;
-      border-radius: 10px;
+      border-radius: 9px;
       background-color: #ff3b30;
       color: #fff;
       border: 2px solid #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
-      line-height: 16px;
+      line-height: 14px;
       text-align: center;
       white-space: nowrap;
     }
@@ -452,7 +453,13 @@ const loghiReady = fetch(LOGHI_URL, { cache: 'no-cache' })
       // Colore di sfondo del logo, usato per la goccia del marker
       const colorMatch = (l.svg || '').match(/<rect[^>]*fill="(#[0-9a-fA-F]{3,8})"/);
       const color = colorMatch ? colorMatch[1] : '#6E6E6E';
-      keys.forEach(k => { if (k) loghiIndex.push({ k, svg: l.svg, nome: l.nome, color }); });
+      // Solo il pittogramma (senza riquadro e sigla), per metterlo dentro la goccia
+      const gStart = (l.svg || '').indexOf('<g');
+      const gEnd = (l.svg || '').lastIndexOf('</g>');
+      const pict = gStart >= 0 && gEnd > gStart
+        ? `<svg viewBox="12 4 76 72" xmlns="http://www.w3.org/2000/svg">${l.svg.slice(gStart, gEnd + 4)}</svg>`
+        : '';
+      keys.forEach(k => { if (k) loghiIndex.push({ k, svg: l.svg, nome: l.nome, color, pict }); });
     });
   })
   .catch(err => console.warn('Loghi non caricati:', err));
@@ -480,11 +487,11 @@ function logoForRow(row) {
   return findLogo('Altro');
 }
 
-// Marker a goccia: colore della famiglia del logo, logo nella testa, contatore se ci sono più addestramenti
+// Marker a goccia inclinata: colore della famiglia, pittogramma dentro, contatore sopra
 function pinIcon(row, count, currentIdx) {
   const logo = logoForRow(row);
   const color = logo ? logo.color : '#6E6E6E';
-  const inner = logo ? logo.svg : '';
+  const inner = logo ? logo.pict : '';
   let badge = '';
   if (count > 1) {
     const txt = currentIdx !== null ? `${currentIdx + 1}/${count}` : `${count}`;
@@ -492,15 +499,9 @@ function pinIcon(row, count, currentIdx) {
   }
   return L.divIcon({
     className: 'pin-wrapper',
-    html: `<div class="pin">
-             <svg class="pin-shape" viewBox="0 0 48 62" xmlns="http://www.w3.org/2000/svg">
-               <path d="M24 60C24 60 3 37 3 23A21 21 0 0 1 45 23C45 37 24 60 24 60Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
-             </svg>
-             <span class="pin-logo">${inner}</span>
-             ${badge}
-           </div>`,
-    iconSize: [48, 62],
-    iconAnchor: [24, 60]
+    html: `<div class="pin"><div class="pin-drop" style="background-color:${color}">${inner}</div>${badge}</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [1, 31]   // punta in basso a sinistra
   });
 }
 // ---------- FINE LOGHI ----------
@@ -710,7 +711,8 @@ loghiReady.then(function() {
         const count = g.rows.length;
         const marker = L.marker([g.lat, g.lng], {
           icon: pinIcon(g.rows[0], count, null),
-          title: count > 1 ? `${count} addestramenti su questo punto` : (g.rows[0][TIPOLOGIA_COL] || 'Addestramento')
+          title: count > 1 ? `${count} addestramenti su questo punto` : (g.rows[0][TIPOLOGIA_COL] || 'Addestramento'),
+          zIndexOffset: count > 1 ? 500 : 0   // i gruppi stanno sopra agli altri marker
         }).addTo(map);
         g.marker = marker;
 
@@ -721,7 +723,7 @@ loghiReady.then(function() {
         });
 
         marker.on('mouseover', function() { this.setZIndexOffset(1000); });
-        marker.on('mouseout', function() { this.setZIndexOffset(0); });
+        marker.on('mouseout', function() { this.setZIndexOffset(count > 1 ? 500 : 0); });
 
         markers.addLayer(marker);
 
