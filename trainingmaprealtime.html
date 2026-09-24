@@ -24,7 +24,7 @@
       flex-direction: column;
     }
 
-    /* Header a barra: titolo + pulsanti, in flusso normale (non più overlay fisso) */
+    /* Header a barra: titolo + pulsanti */
     #page-header {
       display: flex;
       justify-content: space-between;
@@ -68,7 +68,7 @@
       text-transform: capitalize;
     }
 
-    /* Layout principale: mappa + pannello dettagli, sotto l'header */
+    /* Layout principale: mappa + pannello dettagli */
     #app-container {
       flex: 1 1 auto;
       min-height: 0;
@@ -97,10 +97,66 @@
       padding-top: 8px;
     }
     #details-content { display: none; }
-    #details-content h3 {
+
+    /* Titolo pannello con logo della tipologia */
+    .details-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 12px 0;
+    }
+    .details-title .logo-att {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+    .details-title .logo-att svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .details-title h3 {
       color: #ffd700;
       font-size: 15px;
-      margin: 0 0 10px 0;
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    /* Selettore quando più addestramenti sono sulle stesse coordinate */
+    .group-switch {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      background-color: #262626;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      padding: 6px;
+    }
+    .group-switch button {
+      flex-shrink: 0;
+      width: 38px;
+      height: 34px;
+      background-color: #1e1e1e;
+      color: #ffd700;
+      border: 1px solid #ffd700;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .group-switch button:hover {
+      background-color: #ffd700;
+      color: #1e1e1e;
+    }
+    .group-switch span {
+      flex: 1;
+      text-align: center;
+      font-size: 12.5px;
+      color: #ccc;
+    }
+    .group-switch b {
+      color: #ffd700;
     }
 
     /* Su schermi stretti (tablet/mobile): mappa sopra, dettagli sotto */
@@ -143,7 +199,7 @@
       margin-bottom: 5px;
       padding: 10px 0;
       font-size: 16px;
-      background-color: #ffd700; 
+      background-color: #ffd700;
       color: #1e1e1e;
       border: none;
       border-radius: 3px;
@@ -216,15 +272,66 @@
       color: #1e1e1e;
     }
 
-    /* Zoom mappa spostato a metà altezza, sul lato sinistro */
+    /* Zoom mappa a metà altezza, sul lato sinistro */
     .leaflet-top.leaflet-left {
       top: 50%;
       transform: translateY(-50%);
     }
 
-    /* Alone pulsante attorno al marker dell'addestramento selezionato.
-       L'animazione è su un div INTERNO, non sul wrapper che Leaflet posiziona,
-       per non entrare in conflitto con il transform usato per il posizionamento. */
+    /* ---------- MARKER A GOCCIA CON LOGO ---------- */
+    .pin-wrapper.leaflet-div-icon {
+      background: transparent;
+      border: none;
+    }
+    .pin {
+      position: relative;
+      width: 48px;
+      height: 62px;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+      cursor: pointer;
+    }
+    .pin-shape {
+      position: absolute;
+      inset: 0;
+      width: 48px;
+      height: 62px;
+    }
+    .pin-logo {
+      position: absolute;
+      left: 9px;
+      top: 8px;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .pin-logo svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    /* Contatore addestramenti sovrapposti */
+    .pin-count {
+      position: absolute;
+      top: -6px;
+      right: -8px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      box-sizing: border-box;
+      border-radius: 10px;
+      background-color: #ff3b30;
+      color: #fff;
+      border: 2px solid #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 16px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* Alone pulsante alla base del marker selezionato */
     .marker-highlight-wrapper.leaflet-div-icon {
       background: transparent;
       border: none;
@@ -242,8 +349,11 @@
       50%  { transform: scale(1.2); opacity: 0.45; }
       100% { transform: scale(0.8); opacity: 0.9; }
     }
+    @media (prefers-reduced-motion: reduce) {
+      .marker-highlight-pulse { animation: none; }
+    }
 
-    /* Header a colonna e pulsanti a tutta larghezza su schermi stretti, per non sovrapporsi */
+    /* Header a colonna e pulsanti a tutta larghezza su schermi stretti */
     @media (max-width: 700px) {
       #page-header {
         flex-direction: column;
@@ -285,6 +395,10 @@
 // CSV del foglio Real_Time_Map
 const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRKFf6aHC3asr7iNREmon_px3MLiLhbU78DDi-MucJx8sds6yX1e303P23wjR0IitnaNhFRNzDkzd/pub?gid=744101024&single=true&output=csv";
 
+// Loghi delle tipologie di addestramento (stesso file usato in Presenze Odierne)
+const LOGHI_URL = "https://gesaddvvf.github.io/PUMA/images/loghi/loghi.json";
+const TIPOLOGIA_COL = "Tipologia addestramento";
+
 // Parametri opzionali dall'URL: ?lat=..&lng=..&zoom=.. per centrare la mappa su un punto specifico
 const urlParams = new URLSearchParams(window.location.search);
 const targetLat = parseFloat(urlParams.get('lat'));
@@ -306,11 +420,6 @@ window.addEventListener('resize', function() {
 // Ricalcola anche subito dopo il caricamento, utile dentro iframe di Google Sites
 setTimeout(function() { map.invalidateSize(); }, 300);
 
-function getIconUrl(tipo) {
-  tipo = tipo?.toLowerCase() || "";
-  return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
-}
-
 // Data odierna nell'intestazione
 (function setTodayDate() {
   const oggi = new Date();
@@ -321,7 +430,82 @@ function getIconUrl(tipo) {
 const detailsEmpty = document.getElementById('details-empty');
 const detailsContent = document.getElementById('details-content');
 
-// Alone pulsante attorno al marker dell'addestramento selezionato
+// ---------- LOGHI ----------
+let loghiIndex = [];
+
+function normKey(s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+const loghiReady = fetch(LOGHI_URL, { cache: 'no-cache' })
+  .then(r => r.ok ? r.json() : {})
+  .then(data => {
+    Object.values(data).forEach(l => {
+      const keys = new Set([
+        normKey(l.nome),
+        normKey((l.nome || '').replace(/\(.*?\)/g, ' ')),
+        normKey(l.sigla)
+      ]);
+      // Colore di sfondo del logo, usato per la goccia del marker
+      const colorMatch = (l.svg || '').match(/<rect[^>]*fill="(#[0-9a-fA-F]{3,8})"/);
+      const color = colorMatch ? colorMatch[1] : '#6E6E6E';
+      keys.forEach(k => { if (k) loghiIndex.push({ k, svg: l.svg, nome: l.nome, color }); });
+    });
+  })
+  .catch(err => console.warn('Loghi non caricati:', err));
+
+// Prima corrispondenza esatta, poi la chiave più lunga contenuta nel testo
+function findLogo(text) {
+  const t = normKey(text);
+  if (!t || loghiIndex.length === 0) return null;
+  const exact = loghiIndex.find(e => e.k === t);
+  if (exact) return exact;
+  let best = null;
+  loghiIndex.forEach(e => {
+    if (e.k.length >= 5 && t.includes(e.k) && (!best || e.k.length > best.k.length)) best = e;
+  });
+  return best;
+}
+
+// Logo dell'addestramento: prima tipologia riconosciuta, altrimenti "Altro"
+function logoForRow(row) {
+  const voci = (row[TIPOLOGIA_COL] || '').split(/\n|;/).map(v => v.trim()).filter(Boolean);
+  for (const v of voci) {
+    const l = findLogo(v);
+    if (l) return l;
+  }
+  return findLogo('Altro');
+}
+
+// Marker a goccia: colore della famiglia del logo, logo nella testa, contatore se ci sono più addestramenti
+function pinIcon(row, count, currentIdx) {
+  const logo = logoForRow(row);
+  const color = logo ? logo.color : '#6E6E6E';
+  const inner = logo ? logo.svg : '';
+  let badge = '';
+  if (count > 1) {
+    const txt = currentIdx !== null ? `${currentIdx + 1}/${count}` : `${count}`;
+    badge = `<span class="pin-count">${txt}</span>`;
+  }
+  return L.divIcon({
+    className: 'pin-wrapper',
+    html: `<div class="pin">
+             <svg class="pin-shape" viewBox="0 0 48 62" xmlns="http://www.w3.org/2000/svg">
+               <path d="M24 60C24 60 3 37 3 23A21 21 0 0 1 45 23C45 37 24 60 24 60Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+             </svg>
+             <span class="pin-logo">${inner}</span>
+             ${badge}
+           </div>`,
+    iconSize: [48, 62],
+    iconAnchor: [24, 60]
+  });
+}
+// ---------- FINE LOGHI ----------
+
+// Alone pulsante alla base del marker selezionato
 let highlightMarker = null;
 const highlightIcon = L.divIcon({
   className: 'marker-highlight-wrapper',
@@ -342,19 +526,46 @@ function highlightSelected(lat, lng) {
   }).addTo(map);
 }
 
-// Cliccando un punto vuoto della mappa (non un marker) si deseleziona:
-// toglie l'alone e riporta il pannello dettagli allo stato vuoto
+// ---------- GRUPPI (addestramenti sulle stesse coordinate) ----------
+let selectedGroup = null;
+let tableHeaders = [];
+
+// Chiave di raggruppamento: coordinate arrotondate a 5 decimali (~1 m)
+function coordKey(lat, lng) {
+  return `${lat.toFixed(5)},${lng.toFixed(5)}`;
+}
+
+function refreshGroupIcon(g) {
+  const isSel = selectedGroup === g;
+  g.marker.setIcon(pinIcon(g.rows[g.idx], g.rows.length, isSel ? g.idx : null));
+}
+
+function selectGroup(g, idx) {
+  const prev = selectedGroup;
+  selectedGroup = g;
+  g.idx = ((idx % g.rows.length) + g.rows.length) % g.rows.length;
+  if (prev && prev !== g) refreshGroupIcon(prev);
+  refreshGroupIcon(g);
+  showDetails(g);
+  highlightSelected(g.lat, g.lng);
+}
+
+// Cliccando un punto vuoto della mappa si deseleziona
 function clearSelection() {
   if (highlightMarker) {
     map.removeLayer(highlightMarker);
     highlightMarker = null;
   }
+  const prev = selectedGroup;
+  selectedGroup = null;
+  if (prev) refreshGroupIcon(prev);
   detailsContent.style.display = 'none';
   detailsContent.innerHTML = '';
   detailsEmpty.style.display = 'block';
   setTimeout(function() { map.invalidateSize(); }, 50);
 }
 map.on('click', clearSelection);
+// ---------- FINE GRUPPI ----------
 
 // Copia un numero di telefono negli appunti al click, con un piccolo feedback visivo
 function copyPhone(el, number) {
@@ -388,7 +599,6 @@ function telSpan(num) {
 }
 
 // Trasforma il testo grezzo "> Nome   CF: ...   Tel. ..." in un elenco di card leggibili
-// (stessa logica usata nella tabella Riepilogo Presenze Odierne)
 function renderNominativi(raw) {
   const lines = (raw || '').split('\n').map(l => l.trim()).filter(l => l.length > 0);
   const persone = [];
@@ -415,28 +625,39 @@ function renderNominativi(raw) {
   }).join('');
 }
 
-// Mostra i dati dell'addestramento selezionato nel pannello laterale (invece che in un popup)
-function showDetails(row, headers, lat, lng) {
-  let html = `<h3>${row["Tipologia addestramento"] || "Addestramento"}</h3>`;
+// Mostra nel pannello laterale l'addestramento corrente del gruppo selezionato
+function showDetails(g) {
+  const row = g.rows[g.idx];
+  const lat = g.lat, lng = g.lng;
+  const logo = logoForRow(row);
+  const titolo = row[TIPOLOGIA_COL] || "Addestramento";
+
+  let html = `<div class="details-title">${logo ? `<span class="logo-att" title="${logo.nome}">${logo.svg}</span>` : ''}<h3>${titolo.replace(/\n/g, '<br>')}</h3></div>`;
+
+  // Più addestramenti sullo stesso punto: selettore ◀ n di N ▶
+  if (g.rows.length > 1) {
+    html += `<div class="group-switch">
+               <button type="button" id="grp-prev" aria-label="Addestramento precedente">◀</button>
+               <span>Addestramento <b>${g.idx + 1}</b> di <b>${g.rows.length}</b> su questo punto</span>
+               <button type="button" id="grp-next" aria-label="Addestramento successivo">▶</button>
+             </div>`;
+  }
+
   html += `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')">🚒 Naviga a</button>`;
   html += "<table>";
-  headers.forEach(key => {
+  tableHeaders.forEach(key => {
     if (row[key] !== undefined && row[key] !== "") {
       const keyLower = key.toLowerCase();
 
       if (keyLower.includes('nominativi')) {
-        // Elenco nominativi come elenco espandibile di card leggibili
         const details = `<details class="nominativi-list"><summary>Mostra elenco</summary><div class="nominativi-content">${renderNominativi(row[key])}</div></details>`;
         html += `<tr><td class="key">${key}</td><td class="value nominativi-cell">${details}</td></tr>`;
       } else if (keyLower.includes('funzione comando')) {
-        // Referente singolo (IC / Responsabile Tecnico Manovre): stessa card, sempre visibile
         html += `<tr><td class="key">${key}</td><td class="value nominativi-cell">${renderNominativi(row[key])}</td></tr>`;
       } else {
         let val = row[key];
-        // Se la colonna contiene numeri tra parentesi, li rende cliccabili per copiarli
-        val = val.replace(/\((\d+)\)/g, (match, num) => {
-          return `(${telSpan(num)})`;
-        });
+        // Numeri tra parentesi resi cliccabili per copiarli
+        val = val.replace(/\((\d+)\)/g, (match, num) => `(${telSpan(num)})`);
         html += `<tr><td class="key">${key}</td><td class="value">${val}</td></tr>`;
       }
     }
@@ -446,78 +667,86 @@ function showDetails(row, headers, lat, lng) {
   detailsContent.innerHTML = html;
   detailsEmpty.style.display = 'none';
   detailsContent.style.display = 'block';
+  document.getElementById('details-panel').scrollTop = 0;
+
+  if (g.rows.length > 1) {
+    document.getElementById('grp-prev').addEventListener('click', () => selectGroup(g, g.idx - 1));
+    document.getElementById('grp-next').addEventListener('click', () => selectGroup(g, g.idx + 1));
+  }
 
   // Il pannello può aver cambiato dimensione alla mappa (specialmente su mobile): ricalcola
   setTimeout(function() { map.invalidateSize(); }, 50);
 }
 
+// Carica prima i loghi (se non rispondono si parte comunque, con marker grigi)
+loghiReady.then(function() {
+  Papa.parse(sheetUrl, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      const data = results.data;
+      if (data.length === 0) return;
 
-Papa.parse(sheetUrl, {
-  download: true,
-  header: true,
-  skipEmptyLines: true,
-  complete: function(results) {
-    const data = results.data;
-    if(data.length === 0) return;
+      tableHeaders = Object.keys(data[0]);
+      const markers = L.featureGroup();
 
-    const markers = L.featureGroup();
-    const headers = Object.keys(data[0]);
-    let targetMarker = null;
-    let targetMarkerDist = Infinity;
-    let targetRowData = null;
-
-    data.forEach(row => {
-      const coordStr = row["Coordinate"];
-      if(coordStr) {
+      // Raggruppa le righe per coordinate
+      const groups = new Map();
+      data.forEach(row => {
+        const coordStr = row["Coordinate"];
+        if (!coordStr) return;
         const [lat, lng] = coordStr.split(',').map(x => parseFloat(x.trim()));
-        if(!isNaN(lat) && !isNaN(lng)) {
+        if (isNaN(lat) || isNaN(lng)) return;
+        const key = coordKey(lat, lng);
+        if (!groups.has(key)) groups.set(key, { lat, lng, rows: [], idx: 0, marker: null });
+        groups.get(key).rows.push(row);
+      });
 
-          const icon = L.icon({
-            iconUrl: getIconUrl(row["Tipologia addestramento"]),
-            iconSize: [32,32],
-            iconAnchor: [16,32],
-            popupAnchor: [0,-32]
-          });
+      let targetGroup = null;
+      let targetDist = Infinity;
 
-          const marker = L.marker([lat,lng], {icon: icon}).addTo(map);
+      groups.forEach(g => {
+        const count = g.rows.length;
+        const marker = L.marker([g.lat, g.lng], {
+          icon: pinIcon(g.rows[0], count, null),
+          title: count > 1 ? `${count} addestramenti su questo punto` : (g.rows[0][TIPOLOGIA_COL] || 'Addestramento')
+        }).addTo(map);
+        g.marker = marker;
 
-          marker.on('click', function() {
-            showDetails(row, headers, lat, lng);
-            highlightSelected(lat, lng);
-          });
+        // Primo clic: seleziona. Clic successivi sullo stesso punto: passa all'addestramento seguente
+        marker.on('click', function() {
+          if (selectedGroup === g && count > 1) selectGroup(g, g.idx + 1);
+          else selectGroup(g, g.idx);
+        });
 
-          marker.on('mouseover', function() { this.setZIndexOffset(1000); });
-          marker.on('mouseout', function() { this.setZIndexOffset(0); });
+        marker.on('mouseover', function() { this.setZIndexOffset(1000); });
+        marker.on('mouseout', function() { this.setZIndexOffset(0); });
 
-          markers.addLayer(marker);
+        markers.addLayer(marker);
 
-          // Se è stato passato un punto target via URL, individua il marker più vicino
-          if (hasTarget) {
-            const dist = Math.hypot(lat - targetLat, lng - targetLng);
-            if (dist < targetMarkerDist) {
-              targetMarkerDist = dist;
-              targetMarker = marker;
-              targetRowData = row;
-            }
+        // Punto target passato via URL: individua il gruppo più vicino
+        if (hasTarget) {
+          const dist = Math.hypot(g.lat - targetLat, g.lng - targetLng);
+          if (dist < targetDist) {
+            targetDist = dist;
+            targetGroup = g;
           }
         }
-      }
-    });
+      });
 
-    if (hasTarget) {
-      // Centrato sul punto richiesto: non adattare la vista a tutti i marker
-      map.setView([targetLat, targetLng], targetZoom);
-      if (targetMarker && targetMarkerDist < 0.01) { // ~1km di tolleranza
-        showDetails(targetRowData, headers, targetLat, targetLng);
-        highlightSelected(targetLat, targetLng);
+      if (hasTarget) {
+        map.setView([targetLat, targetLng], targetZoom);
+        if (targetGroup && targetDist < 0.01) { // ~1 km di tolleranza
+          selectGroup(targetGroup, 0);
+        }
+      } else if (markers.getLayers().length > 0) {
+        map.fitBounds(markers.getBounds().pad(0.2));
       }
-    } else if (markers.getLayers().length > 0) {
-      map.fitBounds(markers.getBounds().pad(0.2));
+
+      setTimeout(function() { map.invalidateSize(); }, 100);
     }
-
-    // Ricalcolo finale dopo aver caricato i marker (utile se l'iframe si è ridimensionato nel frattempo)
-    setTimeout(function() { map.invalidateSize(); }, 100);
-  }
+  });
 });
 </script>
 </body>
