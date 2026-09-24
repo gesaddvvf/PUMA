@@ -883,8 +883,10 @@
           }
 
           const allHeaders = headerRow.slice(START_COL, endCol + 1);
+          // Righe valide: scarta vuote e quelle con errori/assenza dati del foglio (#N/A, #N/D, N/A...)
+          const isNA = v => /^#?N\/[AD]$/i.test((v || '').trim());
           const dataRows = rows.slice(HEADER_ROW_INDEX + 1)
-            .filter(r => r[START_COL] && r[START_COL].trim() !== '');
+            .filter(r => r[START_COL] && r[START_COL].trim() !== '' && !isNA(r[START_COL]));
 
           const absIdx = (keyword) => {
             const rel = findColIndex(allHeaders, keyword);
@@ -951,7 +953,7 @@
           if (dataRows.length === 0) {
             wrapperEl.style.display = 'none';
             statusEl.style.display = 'block';
-            statusEl.textContent = 'Nessuna presenza registrata al momento.';
+            statusEl.textContent = 'Nessun addestramento in corso nella giornata odierna.';
             return;
           }
 
