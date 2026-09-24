@@ -426,8 +426,9 @@
       tbody tr {
         display: grid;
         grid-template-columns: 48px 1fr auto;
+        grid-template-rows: minmax(24px, auto) minmax(24px, auto);
         column-gap: 12px;
-        row-gap: 2px;
+        row-gap: 0;
         align-items: center;
         margin-bottom: 10px;
         padding: 10px 12px;
@@ -458,7 +459,7 @@
       td.logo-cell {
         grid-column: 1;
         grid-row: 1 / span 2;
-        align-self: start;
+        align-self: center;
         width: 48px;
         padding: 0;
       }
@@ -470,18 +471,36 @@
       td.comando {
         grid-column: 2;
         grid-row: 1;
+        align-self: end;
         font-size: 15px;
+        line-height: 1.25;
       }
 
+      /* Badge + mappa: colonna a destra centrata sull'altezza del logo */
       td.sicurezza-cell {
         grid-column: 3;
-        grid-row: 1;
-        text-align: right;
+        grid-row: 1 / span 2;
+        align-self: center;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+      }
+
+      td.sicurezza-cell br {
+        display: none;
+      }
+
+      td.sicurezza-cell a.map-link {
+        margin-top: 0;
       }
 
       td.squadra-cell {
-        grid-column: 2 / span 2;
+        grid-column: 2;
         grid-row: 2;
+        align-self: start;
+        line-height: 1.25;
+        margin-top: 3px;
         font-size: 14px;
         color: #ffd700;
         font-weight: 700;
