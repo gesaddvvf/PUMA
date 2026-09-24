@@ -298,6 +298,18 @@
       background-color: #ffd700;
       color: #1e1e1e;
     }
+    button.nav-btn {
+      cursor: pointer;
+    }
+    button.nav-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+    #meta-info {
+      font-size: 11.5px;
+      color: #999;
+      margin-top: 4px;
+    }
 
     /* Zoom mappa a metà altezza, sul lato sinistro */
     .leaflet-top.leaflet-left {
@@ -421,8 +433,10 @@
   <div>
     <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
     <h2>Mappa addestramenti odierni <span id="today-date"></span></h2>
+    <div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span></div>
   </div>
   <div id="nav-buttons">
+    <button class="nav-btn" id="refresh-btn" type="button">⟳ Aggiorna</button>
     <a class="nav-btn" href="personaleodierno.html">Presenze Odierne ➡</a>
     <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page">Homepage P.U.M.A.</a>
   </div>
@@ -479,7 +493,18 @@ const detailsEmpty = document.getElementById('details-empty');
 const NO_DATA_MSG = 'Nessun addestramento in corso nella giornata odierna.';
 
 // Nessun addestramento: avviso al centro della mappa e nel pannello
+const DEFAULT_EMPTY_MSG = 'Seleziona un addestramento sulla mappa per vederne i dettagli.';
+
+function hideNoData() {
+  const el = document.getElementById('map-empty');
+  if (el) el.style.display = 'none';
+  detailsEmpty.textContent = DEFAULT_EMPTY_MSG;
+}
+
 function showNoData() {
+  detailsContent.style.display = 'none';
+  detailsContent.innerHTML = '';
+  detailsEmpty.style.display = 'block';
   let el = document.getElementById('map-empty');
   if (!el) {
     el = document.createElement('div');
@@ -643,13 +668,13 @@ function refreshGroupIcon(g) {
   g.marker.setZIndexOffset(baseZ(g));
 }
 
-function selectGroup(g, idx) {
+function selectGroup(g, idx, keepScroll) {
   const prev = selectedGroup;
   selectedGroup = g;
   g.idx = ((idx % g.rows.length) + g.rows.length) % g.rows.length;
   if (prev && prev !== g) refreshGroupIcon(prev);
   refreshGroupIcon(g);
-  showDetails(g);
+  showDetails(g, keepScroll);
   highlightSelected(g.lat, g.lng);
 }
 
@@ -729,7 +754,7 @@ function renderNominativi(raw) {
 }
 
 // Mostra nel pannello laterale l'addestramento corrente del gruppo selezionato
-function showDetails(g) {
+function showDetails(g, keepScroll) {
   const row = g.rows[g.idx];
   const lat = g.lat, lng = g.lng;
   const logo = logoForRow(row);
@@ -770,7 +795,7 @@ function showDetails(g) {
   detailsContent.innerHTML = html;
   detailsEmpty.style.display = 'none';
   detailsContent.style.display = 'block';
-  document.getElementById('details-panel').scrollTop = 0;
+  if (!keepScroll) document.getElementById('details-panel').scrollTop = 0;
 
   if (g.rows.length > 1) {
     document.getElementById('grp-prev').addEventListener('click', () => selectGroup(g, g.idx - 1));
@@ -781,21 +806,55 @@ function showDetails(g) {
   setTimeout(function() { map.invalidateSize(); }, 50);
 }
 
-// Carica prima i loghi (se non rispondono si parte comunque, con marker grigi)
-loghiReady.then(function() {
-  Papa.parse(sheetUrl, {
+// ---------- CARICAMENTO / AGGIORNAMENTO DATI ----------
+const markersLayer = L.featureGroup().addTo(map);
+const refreshBtn = document.getElementById('refresh-btn');
+const lastUpdateEl = document.getElementById('last-update');
+const detailsPanel = document.getElementById('details-panel');
+let firstLoad = true;
+let loading = false;
+
+// Identità di un addestramento, per ritrovarlo dopo l'aggiornamento
+function rowId(row) {
+  return `${row[TIPOLOGIA_COL] || ''}|${startCol ? (row[startCol] || '') : ''}`;
+}
+
+function setLoading(on) {
+  loading = on;
+  refreshBtn.disabled = on;
+  refreshBtn.textContent = on ? '⟳ Aggiornamento…' : '⟳ Aggiorna';
+}
+
+function loadData() {
+  if (loading) return;
+  setLoading(true);
+
+  // Stato da mantenere: addestramento selezionato e scorrimento del pannello
+  const selKey = selectedGroup ? coordKey(selectedGroup.lat, selectedGroup.lng) : null;
+  const selId = selectedGroup ? rowId(selectedGroup.rows[selectedGroup.idx]) : null;
+  const panelScroll = detailsPanel.scrollTop;
+
+  Papa.parse(sheetUrl + '&_=' + Date.now(), {
     download: true,
     header: true,
     skipEmptyLines: true,
     complete: function(results) {
+      setLoading(false);
+      lastUpdateEl.textContent = new Date().toLocaleTimeString('it-IT');
+
+      // Ripulisce la mappa prima di ridisegnare
+      markersLayer.clearLayers();
+      if (highlightMarker) { map.removeLayer(highlightMarker); highlightMarker = null; }
+      selectedGroup = null;
+      hideNoData();
+
       // Scarta le righe con errori del foglio in coordinate o tipologia
       const data = results.data.filter(r => !isNA(r["Coordinate"]) && !isNA(r[TIPOLOGIA_COL]));
-      if (data.length === 0) { showNoData(); return; }
+      if (data.length === 0) { showNoData(); firstLoad = false; return; }
 
       tableHeaders = Object.keys(data[0]);
       startCol = tableHeaders.find(h => /inizio/i.test(h)) ||
                  tableHeaders.find(h => /\bora\b|orario/i.test(h)) || null;
-      const markers = L.featureGroup();
 
       // Raggruppa le righe per coordinate
       const groups = new Map();
@@ -809,10 +868,10 @@ loghiReady.then(function() {
         groups.get(key).rows.push(row);
       });
 
+      if (groups.size === 0) { showNoData(); firstLoad = false; return; }
+
       // Ordina ogni gruppo: il primo è quello che appare sul marker
       groups.forEach(g => sortGroupRows(g.rows));
-
-      if (groups.size === 0) { showNoData(); return; }
 
       let targetGroup = null;
       let targetDist = Infinity;
@@ -823,7 +882,8 @@ loghiReady.then(function() {
           icon: pinIcon(g.rows[0], count, null),
           title: count > 1 ? `${count} addestramenti su questo punto` : (g.rows[0][TIPOLOGIA_COL] || 'Addestramento'),
           zIndexOffset: baseZ(g)   // i gruppi stanno sopra agli altri marker
-        }).addTo(map);
+        });
+        markersLayer.addLayer(marker);
         g.marker = marker;
 
         // Primo clic: seleziona. Clic successivi sullo stesso punto: passa all'addestramento seguente
@@ -835,10 +895,8 @@ loghiReady.then(function() {
         marker.on('mouseover', function() { this.setZIndexOffset(Math.max(1000, baseZ(g))); });
         marker.on('mouseout', function() { this.setZIndexOffset(baseZ(g)); });
 
-        markers.addLayer(marker);
-
         // Punto target passato via URL: individua il gruppo più vicino
-        if (hasTarget) {
+        if (firstLoad && hasTarget) {
           const dist = Math.hypot(g.lat - targetLat, g.lng - targetLng);
           if (dist < targetDist) {
             targetDist = dist;
@@ -847,23 +905,50 @@ loghiReady.then(function() {
         }
       });
 
-      if (hasTarget) {
-        map.setView([targetLat, targetLng], targetZoom);
-        if (targetGroup && targetDist < 0.01) { // ~1 km di tolleranza
-          selectGroup(targetGroup, 0);
+      if (firstLoad) {
+        // Primo caricamento: centra sul punto richiesto o su tutti i marker
+        if (hasTarget) {
+          map.setView([targetLat, targetLng], targetZoom);
+          if (targetGroup && targetDist < 0.01) { // ~1 km di tolleranza
+            selectGroup(targetGroup, 0);
+          }
+        } else {
+          map.fitBounds(markersLayer.getBounds().pad(0.2));
         }
-      } else if (markers.getLayers().length > 0) {
-        map.fitBounds(markers.getBounds().pad(0.2));
+      } else if (selKey && groups.has(selKey)) {
+        // Aggiornamento: la vista resta com'è e si riseleziona lo stesso addestramento
+        const g = groups.get(selKey);
+        const i = g.rows.findIndex(r => rowId(r) === selId);
+        selectGroup(g, i >= 0 ? i : 0, true);
+        detailsPanel.scrollTop = panelScroll;
+      } else {
+        // L'addestramento selezionato non c'è più
+        detailsContent.style.display = 'none';
+        detailsContent.innerHTML = '';
+        detailsEmpty.style.display = 'block';
       }
 
+      firstLoad = false;
       setTimeout(function() { map.invalidateSize(); }, 100);
     },
     error: function(err) {
       console.error(err);
-      detailsEmpty.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+      setLoading(false);
+      if (firstLoad) {
+        detailsEmpty.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+      } else {
+        lastUpdateEl.textContent += ' (ultimo aggiornamento fallito)';
+      }
     }
   });
-});
+}
+
+refreshBtn.addEventListener('click', loadData);
+
+// Carica prima i loghi (se non rispondono si parte comunque, con marker grigi)
+loghiReady.then(loadData);
+// Auto-refresh ogni 60 secondi, come in Presenze Odierne
+setInterval(loadData, 60000);
 </script>
 </body>
 </html>
