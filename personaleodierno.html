@@ -1047,8 +1047,8 @@
                 badge.textContent = ok ? 'EFFETTUATO' : 'DA EFFETTUARE';
                 td.appendChild(badge);
 
-                // Link "Apri nella mappa" solo se il piano di sicurezza è stato effettuato
-                if (ok) {
+                // Link alla mappa sempre, sia con piano effettuato che da effettuare
+                {
                   const coords = extractLatLng(coordRaw);
                   if (coords) {
                     const mapLink = document.createElement('a');
