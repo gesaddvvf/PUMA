@@ -388,6 +388,70 @@
       50%  { transform: scale(1.2); opacity: 0.45; }
       100% { transform: scale(0.8); opacity: 0.9; }
     }
+    /* ---------- LOCALIZZATORE ---------- */
+    .locate-btn {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 34px !important;
+      height: 34px !important;
+      background-color: #fff;
+      color: #333;
+      cursor: pointer;
+    }
+    .locate-btn svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
+    .locate-btn.locating svg {
+      animation: locate-spin 1s linear infinite;
+    }
+    .locate-btn.active {
+      color: #1a73e8;
+    }
+    @keyframes locate-spin {
+      to { transform: rotate(360deg); }
+    }
+    /* Punto "tu sei qui" */
+    .user-dot.leaflet-div-icon {
+      background: transparent;
+      border: none;
+    }
+    .user-dot span {
+      display: block;
+      width: 16px;
+      height: 16px;
+      box-sizing: border-box;
+      border-radius: 50%;
+      background-color: #1a73e8;
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+    /* Messaggio breve in basso sulla mappa */
+    #map-toast {
+      position: absolute;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      z-index: 1000;
+      max-width: 85%;
+      box-sizing: border-box;
+      padding: 9px 14px;
+      background-color: rgba(30, 30, 30, 0.92);
+      color: #f0f0f0;
+      border: 1px solid #555;
+      border-radius: 6px;
+      font-size: 12.5px;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    #map-toast.show {
+      opacity: 1;
+    }
+
     /* Avviso mappa vuota, al centro della mappa */
     #map-empty {
       display: none;
@@ -411,6 +475,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       .marker-highlight-pulse { animation: none; }
+      .locate-btn.locating svg { animation: none; }
     }
 
     /* Header a colonna e pulsanti a tutta larghezza su schermi stretti */
@@ -806,6 +871,104 @@ function showDetails(g, keepScroll) {
   setTimeout(function() { map.invalidateSize(); }, 50);
 }
 
+// ---------- LOCALIZZATORE ----------
+const NEAR_KM = 25;          // raggio entro cui un addestramento è "vicino"
+const PROVINCE_ZOOM = 10;    // zoom a livello provincia se non c'è nulla di vicino
+let currentGroups = new Map();
+let userMarker = null;
+let userAccuracy = null;
+let toastTimer = null;
+let locateBtn = null;
+
+function showToast(msg) {
+  let el = document.getElementById('map-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'map-toast';
+    document.getElementById('map').appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+const LocateControl = L.Control.extend({
+  options: { position: 'topleft' },
+  onAdd: function() {
+    const bar = L.DomUtil.create('div', 'leaflet-bar');
+    const btn = L.DomUtil.create('a', 'locate-btn', bar);
+    locateBtn = btn;
+    btn.href = '#';
+    btn.title = 'Mostra la mia posizione';
+    btn.setAttribute('role', 'button');
+    btn.setAttribute('aria-label', 'Mostra la mia posizione');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>';
+    L.DomEvent.disableClickPropagation(bar);
+    L.DomEvent.on(btn, 'click', function(e) {
+      L.DomEvent.preventDefault(e);
+      locateUser(btn);
+    });
+    return bar;
+  }
+});
+map.addControl(new LocateControl());
+
+// silent = true all'avvio: se la posizione non è disponibile resta la vista generale senza avvisi
+function locateUser(btn, silent) {
+  if (!navigator.geolocation) {
+    if (!silent) showToast('Geolocalizzazione non supportata da questo browser.');
+    return;
+  }
+  btn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    btn.classList.remove('locating');
+    btn.classList.add('active');
+    const here = L.latLng(pos.coords.latitude, pos.coords.longitude);
+
+    // Punto "tu sei qui" + cerchio di precisione
+    if (userMarker) map.removeLayer(userMarker);
+    if (userAccuracy) map.removeLayer(userAccuracy);
+    userAccuracy = L.circle(here, {
+      radius: pos.coords.accuracy,
+      color: '#1a73e8', weight: 1, fillColor: '#1a73e8', fillOpacity: 0.12, interactive: false
+    }).addTo(map);
+    userMarker = L.marker(here, {
+      icon: L.divIcon({ className: 'user-dot', html: '<span></span>', iconSize: [16, 16], iconAnchor: [8, 8] }),
+      interactive: false, keyboard: false, zIndexOffset: 3000
+    }).addTo(map);
+
+    // Addestramenti entro NEAR_KM
+    const vicini = [];
+    currentGroups.forEach(g => {
+      const km = map.distance(here, [g.lat, g.lng]) / 1000;
+      if (km <= NEAR_KM) vicini.push({ g, km });
+    });
+
+    if (vicini.length > 0) {
+      // Zoom su di te + gli addestramenti vicini
+      const bounds = L.latLngBounds([here]);
+      vicini.forEach(v => bounds.extend([v.g.lat, v.g.lng]));
+      map.fitBounds(bounds.pad(0.25), { maxZoom: 14 });
+      const n = vicini.reduce((t, v) => t + v.g.rows.length, 0);
+      const minKm = Math.min(...vicini.map(v => v.km));
+      showToast(`${n} ${n === 1 ? 'addestramento' : 'addestramenti'} entro ${NEAR_KM} km · il più vicino a ${minKm < 1 ? Math.round(minKm * 1000) + ' m' : minKm.toFixed(1).replace('.', ',') + ' km'}`);
+    } else {
+      // Niente di vicino: vista sulla provincia
+      map.setView(here, PROVINCE_ZOOM);
+      showToast(`Nessun addestramento entro ${NEAR_KM} km: vista sulla tua zona.`);
+    }
+  }, function(err) {
+    btn.classList.remove('locating');
+    if (silent) return;
+    const msg = err.code === 1
+      ? 'Posizione non autorizzata: abilita la localizzazione nel browser.'
+      : 'Posizione non disponibile. Riprova.';
+    showToast(msg);
+  }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+}
+// ---------- FINE LOCALIZZATORE ----------
+
 // ---------- CARICAMENTO / AGGIORNAMENTO DATI ----------
 const markersLayer = L.featureGroup().addTo(map);
 const refreshBtn = document.getElementById('refresh-btn');
@@ -813,6 +976,8 @@ const lastUpdateEl = document.getElementById('last-update');
 const detailsPanel = document.getElementById('details-panel');
 let firstLoad = true;
 let loading = false;
+let resolveFirstLoad;
+const firstLoadDone = new Promise(r => { resolveFirstLoad = r; });
 
 // Identità di un addestramento, per ritrovarlo dopo l'aggiornamento
 function rowId(row) {
@@ -839,6 +1004,7 @@ function loadData() {
     header: true,
     skipEmptyLines: true,
     complete: function(results) {
+      resolveFirstLoad();   // eseguito dopo questo blocco, quando i marker sono già sulla mappa
       setLoading(false);
       lastUpdateEl.textContent = new Date().toLocaleTimeString('it-IT');
 
@@ -850,7 +1016,7 @@ function loadData() {
 
       // Scarta le righe con errori del foglio in coordinate o tipologia
       const data = results.data.filter(r => !isNA(r["Coordinate"]) && !isNA(r[TIPOLOGIA_COL]));
-      if (data.length === 0) { showNoData(); firstLoad = false; return; }
+      if (data.length === 0) { currentGroups = new Map(); showNoData(); firstLoad = false; return; }
 
       tableHeaders = Object.keys(data[0]);
       startCol = tableHeaders.find(h => /inizio/i.test(h)) ||
@@ -868,6 +1034,7 @@ function loadData() {
         groups.get(key).rows.push(row);
       });
 
+      currentGroups = groups;
       if (groups.size === 0) { showNoData(); firstLoad = false; return; }
 
       // Ordina ogni gruppo: il primo è quello che appare sul marker
@@ -932,6 +1099,7 @@ function loadData() {
       setTimeout(function() { map.invalidateSize(); }, 100);
     },
     error: function(err) {
+      resolveFirstLoad();
       console.error(err);
       setLoading(false);
       if (firstLoad) {
@@ -947,6 +1115,10 @@ refreshBtn.addEventListener('click', loadData);
 
 // Carica prima i loghi (se non rispondono si parte comunque, con marker grigi)
 loghiReady.then(loadData);
+// Posizione automatica all'avvio (non se la mappa è stata aperta su un punto preciso, es. da Presenze Odierne)
+firstLoadDone.then(() => {
+  if (!hasTarget && locateBtn) locateUser(locateBtn, true);
+});
 // Auto-refresh ogni 60 secondi, come in Presenze Odierne
 setInterval(loadData, 60000);
 </script>
