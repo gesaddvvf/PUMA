@@ -388,6 +388,22 @@
       50%  { transform: scale(1.2); opacity: 0.45; }
       100% { transform: scale(0.8); opacity: 0.9; }
     }
+    /* ---------- SELETTORE MAPPE ---------- */
+    .leaflet-control-layers {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 13px;
+    }
+    .leaflet-control-layers-expanded {
+      padding: 8px 12px 8px 8px;
+    }
+    .leaflet-control-layers-base label {
+      padding: 3px 0;
+      cursor: pointer;
+    }
+    .leaflet-control-attribution {
+      font-size: 10px;
+    }
+
     /* ---------- LOCALIZZATORE ---------- */
     .locate-btn {
       display: flex !important;
@@ -538,7 +554,41 @@ const map = L.map('map', {
     touchZoom: true
 }).setView(hasTarget ? [targetLat, targetLng] : [41.9, 12.5], hasTarget ? targetZoom : 6);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+// ---------- MAPPE DI BASE ----------
+const baseLayers = {
+  'Stradale': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }),
+  'Topografica': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    maxZoom: 17,
+    attribution: '&copy; OpenStreetMap, SRTM | &copy; OpenTopoMap (CC-BY-SA)'
+  }),
+  // Satellitare con nomi di luoghi e confini sopra le immagini
+  'Satellitare': L.layerGroup([
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Immagini &copy; Esri, Maxar, Earthstar Geographics'
+    }),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19
+    })
+  ])
+};
+
+// Ricorda l'ultima mappa scelta su questo dispositivo
+const BASE_KEY = 'puma-map-base';
+let savedBase = 'Stradale';
+try { savedBase = localStorage.getItem(BASE_KEY) || 'Stradale'; } catch (e) {}
+(baseLayers[savedBase] || baseLayers['Stradale']).addTo(map);
+
+L.control.layers(baseLayers, null, { position: 'topright', collapsed: true }).addTo(map);
+map.attributionControl.setPrefix(false);
+
+map.on('baselayerchange', function(e) {
+  try { localStorage.setItem(BASE_KEY, e.name); } catch (err) {}
+});
+// ---------- FINE MAPPE DI BASE ----------
 
 // Forza Leaflet a ricalcolare le dimensioni quando la finestra/iframe cambia size
 window.addEventListener('resize', function() {
