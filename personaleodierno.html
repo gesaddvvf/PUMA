@@ -380,8 +380,11 @@
       outline-offset: 2px;
     }
 
+    /* Squadra: evidenziata in giallo, subito leggibile accanto al comando */
     td.squadra-cell {
-      color: #ddd;
+      color: #ffd700;
+      font-weight: 700;
+      font-size: 14px;
     }
 
     /* Schermi stretti: scheda compatta (logo, comando, squadra, piano) + dettagli espandibili */
@@ -479,8 +482,9 @@
       td.squadra-cell {
         grid-column: 2 / span 2;
         grid-row: 2;
-        font-size: 13px;
-        color: #aaa;
+        font-size: 14px;
+        color: #ffd700;
+        font-weight: 700;
       }
 
       td.toggle-cell {
