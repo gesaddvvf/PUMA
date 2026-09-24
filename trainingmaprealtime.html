@@ -308,12 +308,11 @@
       height: 22px;
       display: block;
     }
-    /* Contatore: sempre sopra la goccia */
+    /* Contatore: attaccato alla goccia in alto a destra */
     .pin-count {
       position: absolute;
-      left: 50%;
-      bottom: calc(100% + 3px);
-      transform: translateX(-50%);
+      top: -9px;
+      left: 20px;   /* ancorato a sinistra: badge larghi ("1/3") crescono verso destra senza coprire il pittogramma */
       z-index: 2;
       min-width: 18px;
       height: 18px;
@@ -530,15 +529,53 @@ function highlightSelected(lat, lng) {
 // ---------- GRUPPI (addestramenti sulle stesse coordinate) ----------
 let selectedGroup = null;
 let tableHeaders = [];
+let startCol = null;   // colonna con l'orario di inizio, individuata dalle intestazioni
+
+// Orario di inizio in millisecondi ("24/09/2026 08:30" oppure solo "08:30" = oggi); null se assente
+function startTime(row) {
+  const v = startCol ? (row[startCol] || '').trim() : '';
+  if (!v) return null;
+  const d = v.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:\s+(\d{1,2})[:.](\d{2}))?/);
+  if (d) {
+    const anno = d[3].length === 2 ? 2000 + parseInt(d[3], 10) : parseInt(d[3], 10);
+    return new Date(anno, parseInt(d[2], 10) - 1, parseInt(d[1], 10),
+      d[4] ? parseInt(d[4], 10) : 0, d[5] ? parseInt(d[5], 10) : 0).getTime();
+  }
+  const t = v.match(/(\d{1,2})[:.](\d{2})/);
+  if (t) {
+    const oggi = new Date();
+    return new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate(), parseInt(t[1], 10), parseInt(t[2], 10)).getTime();
+  }
+  return null;
+}
+
+// Ordine nel gruppo: prima chi ha un orario (dal più vecchio), poi gli altri in ordine alfabetico di tipologia
+function sortGroupRows(rows) {
+  rows.sort((a, b) => {
+    const ta = startTime(a), tb = startTime(b);
+    if (ta !== null && tb !== null && ta !== tb) return ta - tb;
+    if (ta !== null && tb === null) return -1;
+    if (ta === null && tb !== null) return 1;
+    return (a[TIPOLOGIA_COL] || '').localeCompare(b[TIPOLOGIA_COL] || '', 'it', { sensitivity: 'base' });
+  });
+}
+
+// Livello del marker: selezionato sopra tutto, poi i gruppi, poi i singoli
+function baseZ(g) {
+  if (selectedGroup === g) return 2000;
+  return g.rows.length > 1 ? 500 : 0;
+}
 
 // Chiave di raggruppamento: coordinate arrotondate a 5 decimali (~1 m)
 function coordKey(lat, lng) {
   return `${lat.toFixed(5)},${lng.toFixed(5)}`;
 }
 
+// Il marker mostra sempre il logo dell'addestramento selezionato nel gruppo
 function refreshGroupIcon(g) {
   const isSel = selectedGroup === g;
   g.marker.setIcon(pinIcon(g.rows[g.idx], g.rows.length, isSel ? g.idx : null));
+  g.marker.setZIndexOffset(baseZ(g));
 }
 
 function selectGroup(g, idx) {
@@ -690,6 +727,8 @@ loghiReady.then(function() {
       if (data.length === 0) return;
 
       tableHeaders = Object.keys(data[0]);
+      startCol = tableHeaders.find(h => /inizio/i.test(h)) ||
+                 tableHeaders.find(h => /\bora\b|orario/i.test(h)) || null;
       const markers = L.featureGroup();
 
       // Raggruppa le righe per coordinate
@@ -704,6 +743,9 @@ loghiReady.then(function() {
         groups.get(key).rows.push(row);
       });
 
+      // Ordina ogni gruppo: il primo è quello che appare sul marker
+      groups.forEach(g => sortGroupRows(g.rows));
+
       let targetGroup = null;
       let targetDist = Infinity;
 
@@ -712,7 +754,7 @@ loghiReady.then(function() {
         const marker = L.marker([g.lat, g.lng], {
           icon: pinIcon(g.rows[0], count, null),
           title: count > 1 ? `${count} addestramenti su questo punto` : (g.rows[0][TIPOLOGIA_COL] || 'Addestramento'),
-          zIndexOffset: count > 1 ? 500 : 0   // i gruppi stanno sopra agli altri marker
+          zIndexOffset: baseZ(g)   // i gruppi stanno sopra agli altri marker
         }).addTo(map);
         g.marker = marker;
 
@@ -722,8 +764,8 @@ loghiReady.then(function() {
           else selectGroup(g, g.idx);
         });
 
-        marker.on('mouseover', function() { this.setZIndexOffset(1000); });
-        marker.on('mouseout', function() { this.setZIndexOffset(count > 1 ? 500 : 0); });
+        marker.on('mouseover', function() { this.setZIndexOffset(Math.max(1000, baseZ(g))); });
+        marker.on('mouseout', function() { this.setZIndexOffset(baseZ(g)); });
 
         markers.addLayer(marker);
 
