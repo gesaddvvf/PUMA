@@ -376,6 +376,27 @@
       50%  { transform: scale(1.2); opacity: 0.45; }
       100% { transform: scale(0.8); opacity: 0.9; }
     }
+    /* Avviso mappa vuota, al centro della mappa */
+    #map-empty {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      max-width: 80%;
+      box-sizing: border-box;
+      padding: 14px 18px;
+      background-color: rgba(30, 30, 30, 0.92);
+      color: #ffd700;
+      border: 1px solid #ffd700;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      pointer-events: none;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .marker-highlight-pulse { animation: none; }
     }
@@ -455,6 +476,23 @@ setTimeout(function() { map.invalidateSize(); }, 300);
 })();
 
 const detailsEmpty = document.getElementById('details-empty');
+const NO_DATA_MSG = 'Nessun addestramento in corso nella giornata odierna.';
+
+// Nessun addestramento: avviso al centro della mappa e nel pannello
+function showNoData() {
+  let el = document.getElementById('map-empty');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'map-empty';
+    document.getElementById('map').appendChild(el);
+  }
+  el.textContent = NO_DATA_MSG;
+  el.style.display = 'block';
+  detailsEmpty.textContent = NO_DATA_MSG;
+}
+
+// Valori di errore/assenza dati del foglio (#N/A, #N/D, N/A...)
+const isNA = v => /^#?N\/[AD]$/i.test((v || '').trim());
 const detailsContent = document.getElementById('details-content');
 
 // ---------- LOGHI ----------
@@ -750,8 +788,9 @@ loghiReady.then(function() {
     header: true,
     skipEmptyLines: true,
     complete: function(results) {
-      const data = results.data;
-      if (data.length === 0) return;
+      // Scarta le righe con errori del foglio in coordinate o tipologia
+      const data = results.data.filter(r => !isNA(r["Coordinate"]) && !isNA(r[TIPOLOGIA_COL]));
+      if (data.length === 0) { showNoData(); return; }
 
       tableHeaders = Object.keys(data[0]);
       startCol = tableHeaders.find(h => /inizio/i.test(h)) ||
@@ -772,6 +811,8 @@ loghiReady.then(function() {
 
       // Ordina ogni gruppo: il primo è quello che appare sul marker
       groups.forEach(g => sortGroupRows(g.rows));
+
+      if (groups.size === 0) { showNoData(); return; }
 
       let targetGroup = null;
       let targetDist = Infinity;
@@ -816,6 +857,10 @@ loghiReady.then(function() {
       }
 
       setTimeout(function() { map.invalidateSize(); }, 100);
+    },
+    error: function(err) {
+      console.error(err);
+      detailsEmpty.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
     }
   });
 });
