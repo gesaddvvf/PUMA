@@ -134,6 +134,8 @@ const group={1:'a',2:'a',3:'a',7:'a',4:'b',5:'b',6:'b',8:'b',9:'c',10:'c',11:'c'
 // Col.1 Desc → pompiere · Col.2 registrati · Col.3 comandi utilizzatori → bandierina rossa · Col.4 direzioni utilizzatrici → bandierone · Col.5 comandi per test → bandierina verde
 // Foglio Risiko dedicato (prima scheda). Deve essere condiviso "Chiunque abbia il link: Visualizzatore".
 const CSV_URL='https://docs.google.com/spreadsheets/d/1ofsI_ZoE1XWiBU8a30ZqeHI8bwJ9B6rRH5-EyXExbSU/gviz/tq?tqx=out:csv';
+// Web app Apps Script (RisikoLive.gs): ricalcola i numeri dal database a ogni apertura. Vuoto = non usata.
+const WEBAPP_URL='';
 const CSV_SAVED=`Desc,Valori dopo SRIPT,Comando/Direzione ORGANIZZATORE,Direzioni Utilizzatrici,comandi per test
 Comando Ancona,2,Comando Pordenone,Direzione Sardegna,Comando Oristano
 Comando Arezzo,60,Comando Forlì-Cesena,Direzione Friuli Venezia Giulia,Comando Ravenna
@@ -351,15 +353,19 @@ function start(txt,live){
   S.testSet=new Set(S.test);S.testOnly=S.test.filter(n=>!S.cmdSet.has(n));
   S.testDrOnly=S.testDr.filter(d=>!S.drs.some(x=>x.rcs.some(r=>d.rcs.includes(r))));
   S.testDrOnly.forEach(d=>S.capSet.add(CAP[d.rcs[0]]));
-  document.getElementById('src').textContent=live?'Dati letti in diretta dal foglio Risiko':'Dati del foglio Risiko al '+CSV_DATE;
+  document.getElementById('src').textContent=live==='database'?'Dati ricalcolati ora dal database PUMA':live?'Dati letti in diretta dal foglio Risiko':'Dati del foglio Risiko al '+CSV_DATE;
   render();invade();
 }
 document.getElementById('replay').addEventListener('click',invade);
-(async()=>{let txt=null;
-  try{const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),5000);
-    const r=await fetch(CSV_URL+'&t='+Date.now(),{signal:ctl.signal,cache:'no-store'});clearTimeout(to);
-    if(r.ok){const t=await r.text();const n=(t.match(/^"?Comando /gm)||[]).length;if(/^"?Desc"?,/i.test(t.trim())&&n>=10)txt=t;}}catch(e){}
-  start(txt||CSV_SAVED,!!txt);})();
+async function leggi(url,ms){
+  try{const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),ms);
+    const r=await fetch(url+(url.includes('?')?'&':'?')+'t='+Date.now(),{signal:ctl.signal,cache:'no-store'});clearTimeout(to);
+    if(!r.ok)return null;const t=await r.text();const n=(t.match(/^"?Comando /gim)||[]).length;
+    return /^"?Desc"?,/i.test(t.trim())&&n>=10?t:null;}catch(e){return null}}
+(async()=>{
+  let txt=WEBAPP_URL?await leggi(WEBAPP_URL,12000):null,fonte='database';
+  if(!txt){txt=await leggi(CSV_URL,5000);fonte='foglio';}
+  start(txt||CSV_SAVED,txt?fonte:null);})();
 </script>
 </body>
 </html>
