@@ -755,7 +755,7 @@ function elaboraReg(reg, pianoIdx) {
   colReg.manovre = head.map((h, i) => REG_MANOVRE.test(h) ? i : -1).filter(i => i >= 0);
   if (!colReg.manovre.length) colReg.manovre = [letterIdx('N'), letterIdx('O')];
 
-  let righe = 0, scartate = 0, senzaData = 0, collSenzaPiano = 0;
+  let righe = 0, scartate = 0, senzaData = 0, collSenzaPiano = 0, nonAttivita = 0;
   const g = (r, k) => val(r[colReg[k]]);
   reg.slice(1).forEach(r => {
     const { nome, cf } = separaNome(g(r, 'nome'));
@@ -763,20 +763,31 @@ function elaboraReg(reg, pianoIdx) {
     righe++;
     if (nome.length < 3 || NOME_NON_REALE.test(nome)) { scartate++; return; }
 
-    const cosa = g(r, 'cosa');
+    // Tipo: si incrociano più colonne.
+    //  D "Che cosa vuoi fare?": "2a - CONFERMA presenza addestramento collettivo odierno",
+    //    "2b - REGISTRAZIONE addestramenti e interventi INDIVIDUALI", "3 - STAMPA/INVIO Registro…" (non è un'attività)
+    //  I "Attività": "Addestramento" / "Intervento" (per le 2b)
+    //  L tipologia individuale, P/R categoria e numero intervento
+    const cosa = g(r, 'cosa'), attiv = g(r, 'attivita');
     let tipo;
-    if (/intervent/i.test(cosa) || (!cosa && (g(r, 'numInt') || g(r, 'catInt')))) tipo = 'intervento';
-    else if (/individual/i.test(cosa) || (!cosa && g(r, 'tipInd'))) tipo = 'individuale';
-    else if (/collettiv/i.test(cosa) || (!cosa && g(r, 'dataColl'))) tipo = 'collettivo';
-    else tipo = 'altro';
+    if (/collettiv/i.test(cosa)) tipo = 'collettivo';
+    else if (/^intervent/i.test(attiv)) tipo = 'intervento';
+    else if (/^addestr/i.test(attiv) || g(r, 'tipInd')) tipo = 'individuale';
+    else if (g(r, 'numInt') || g(r, 'catInt')) tipo = 'intervento';
+    else if (/stampa|invio|registro individuale/i.test(cosa)) { nonAttivita++; return; }
+    else if (g(r, 'inizio') || g(r, 'descr')) tipo = 'altro';
+    else if (!cosa && g(r, 'organizzatore')) tipo = 'collettivo';
+    else { nonAttivita++; return; }
 
+    // Data: collettivo "odierno" → H se è una data, altrimenti giorno di compilazione (A);
+    // individuali e interventi → Giorno ed Ora Inizio (J), altrimenti A. La colonna V non si usa.
     const data = tipo === 'collettivo'
-      ? (parseData(g(r, 'dataColl')) || parseData(g(r, 'data')) || parseData(g(r, 'inizio')) || parseData(g(r, 'cronologiche')))
-      : (parseData(g(r, 'inizio')) || parseData(g(r, 'data')) || parseData(g(r, 'dataColl')) || parseData(g(r, 'cronologiche')));
+      ? (parseData(g(r, 'dataColl')) || parseData(g(r, 'inizio')) || parseData(g(r, 'cronologiche')))
+      : (parseData(g(r, 'inizio')) || parseData(g(r, 'fine')) || parseData(g(r, 'dataColl')) || parseData(g(r, 'cronologiche')));
     if (!data) { senzaData++; return; }
 
     const a = {
-      tipo, data, anno: data.getFullYear(), giorno: giornoKey(data), cosa,
+      tipo, data, anno: data.getFullYear(), giorno: giornoKey(data), cosa: attiv || cosa,
       organizzatore: nomeComando(g(r, 'organizzatore')), organizzatoreRaw: g(r, 'organizzatore'), appartenenzaRaw: g(r, 'appartenenza'),
       team: g(r, 'team'), ics: g(r, 'ics'),
       attivita: g(r, 'attivita'), descr: g(r, 'descr'),
@@ -831,7 +842,9 @@ function elaboraReg(reg, pianoIdx) {
   });
   const piuFrequente = m => [...m.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] || '';
   PERSONE.forEach(p => { p.nome = piuFrequente(p.grafie); p.comando = piuFrequente(p.comandi); });
-  diag.reg = { righe, scartate, senzaData, collSenzaPiano, persone: PERSONE.size };
+  const perTipo = {};
+  PERSONE.forEach(p => p.att.forEach(a => { perTipo[a.tipo] = (perTipo[a.tipo] || 0) + 1; }));
+  diag.reg = { righe, scartate, senzaData, collSenzaPiano, nonAttivita, perTipo, persone: PERSONE.size };
 }
 
 /* =====================================================================
@@ -1386,7 +1399,7 @@ window.addEventListener('beforeprint', () => report.querySelectorAll('details.at
 function diagnostica() {
   const lettera = i => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
   return `<div class="debug-box"><b>Diagnostica</b><br>
-    Registrazioni: ${diag.reg?.righe} righe · ${diag.reg?.scartate} prove scartate · ${diag.reg?.senzaData} senza data · ${diag.reg?.collSenzaPiano} collettivi senza piano · ${diag.reg?.persone} persone<br>
+    Registrazioni: ${diag.reg?.righe} righe · ${diag.reg?.scartate} prove scartate · ${diag.reg?.nonAttivita} non attività (stampa/invio…) · ${diag.reg?.senzaData} senza data · per tipo: <code>${esc(JSON.stringify(diag.reg?.perTipo || {}))}</code> · ${diag.reg?.collSenzaPiano} collettivi senza piano · ${diag.reg?.persone} persone<br>
     Colonne registrazione: ${Object.entries(colReg).map(([k, v]) => `${k}=<code>${Array.isArray(v) ? v.map(lettera).join('+') : lettera(v)}</code>`).join(' ')}<br>
     Piano: ${diag.piano?.righe} righe · ${diag.piano?.validi} validi · ${diag.piano?.duplicati} duplicati · colonne: ${Object.entries(colPiano).map(([k, v]) => `${k}=<code>${esc(Array.isArray(v) ? v.join(' + ') : v)}</code>`).join(' ')}<br>
     Elenco_Filtrato: ${diag.elenco?.righe} righe · ${diag.elenco?.persone} persone${diag.elenco?.errore ? ' · <b>' + esc(diag.elenco.errore) + '</b>' : ''} · colonne: ${Object.entries(colElenco).map(([k, v]) => `${k}=<code>${v >= 0 ? lettera(v) : '—'}</code>`).join(' ')}${diag.elenco?.corsiNonTrovati?.length ? '<br>Corsi in possesso non trovati in Formazione: <code>' + esc(diag.elenco.corsiNonTrovati.join(' · ')) + '</code>' : ''}<br>

@@ -331,8 +331,9 @@ const COL_PIANO = {
 };
 
 // Colonne di Registrazione_Attivita_Semplificata (lettere del foglio)
-// data: si usa "Data Addestramento Collettivo" (H); se vuota "Data" (V), poi "Informazioni cronologiche" (A)
-const COL_REG = { data: 'H', data2: 'V', data3: 'A', nome: 'C', comando: 'E', squadra: 'F', funzioni: 'G' };
+// data: "Data Addestramento Collettivo" (H) se contiene una data; per "2a - CONFERMA presenza … odierno"
+// H contiene la frase di conferma, quindi vale il giorno di compilazione "Informazioni cronologiche" (A)
+const COL_REG = { data: 'H', data2: 'A', data3: 'A', nome: 'C', comando: 'E', squadra: 'F', funzioni: 'G' };
 
 // Colonne di Piano_Di_Sicurezza da NON mostrare nel pannello (dati personali)
 const NASCONDI = /e-?mail|codice fiscale|\bc\.?f\.?\b|telefon|cellulare|indirizzo di posta/i;
