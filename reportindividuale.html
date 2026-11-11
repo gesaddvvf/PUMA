@@ -87,7 +87,9 @@
       #nav-buttons { width: 100%; }
       .nav-btn { flex: 1 1 40%; text-align: center; }
       #filters label.lbl, #meta-info { display: none; }
-      #nome-input { flex: 1 1 100%; width: auto; }
+      .combo { flex: 1 1 100%; }
+      #nome-input { width: 100%; box-sizing: border-box; }
+      .drop { width: 100%; }
       #print-btn { margin-left: 0; }
       #filters { padding: 6px 10px; gap: 6px; }
     }
@@ -243,22 +245,25 @@
       color: var(--gold); font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12px; cursor: pointer;
     }
     .lett:hover:not(:disabled) { background: #3a3520; }
-    .lett.on { background: var(--gold); color: #1e1e1e; }
+    .lett.on, .lett.on:hover:not(:disabled) { background: var(--gold); color: #1e1e1e; }
     .lett:disabled { border-color: #444; color: #555; cursor: default; }
     @media (max-width: 700px) {
       #alfabeto { flex-wrap: nowrap; overflow-x: auto; padding: 6px 10px; }
       .lett { flex-shrink: 0; }
     }
-    .lista-title { color: var(--gold); font-size: 15px; margin: 0 0 12px; }
-    .lista-title span { color: #999; font-size: 12px; font-weight: normal; }
-    .nomi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 6px; }
-    .nome-btn {
-      text-align: left; background: #262626; border: 1px solid #3a3a3a; border-left: 3px solid var(--gold); border-radius: 3px;
-      color: #f0f0f0; padding: 7px 10px; cursor: pointer; font-family: 'Comfortaa', cursive; font-size: 12.5px; font-weight: bold;
+    /* Menu a comparsa dei nominativi */
+    .combo { position: relative; display: inline-block; }
+    .drop {
+      position: absolute; top: 100%; left: 0; margin-top: 3px; width: max(100%, 360px); max-height: 360px; overflow-y: auto;
+      background: #1e1e1e; border: 1px solid var(--gold); border-radius: 4px; z-index: 200; box-shadow: 0 6px 18px rgba(0,0,0,.6);
     }
-    .nome-btn:hover { background: #3a3520; }
-    .nome-btn small { display: block; color: #999; font-size: 11px; font-weight: normal; margin-top: 2px; }
-    .nome-btn.solo-reg { border-left-color: #777; }
+    .drop .head { position: sticky; top: 0; background: #2a2a2a; color: var(--gold); font-size: 11.5px; font-weight: bold; padding: 6px 10px; border-bottom: 1px solid #444; }
+    .drop .opt { padding: 6px 10px; cursor: pointer; font-size: 12.5px; border-bottom: 1px solid #2a2a2a; }
+    .drop .opt small { display: block; color: #999; font-size: 11px; margin-top: 1px; }
+    .drop .opt.act, .drop .opt:hover { background: #3a3520; }
+    .drop .opt.sel { border-left: 3px solid var(--gold); }
+    .drop .opt.solo-reg small::after { content: ' · non in Elenco_Filtrato'; color: #777; }
+    .drop .vuoto { padding: 10px; color: #999; font-size: 12px; }
 
     /* Pagina in costruzione */
     #wip-banner {
@@ -336,8 +341,10 @@
 
 <div id="filters">
   <label class="lbl" for="nome-input">Nominativo</label>
-  <input id="nome-input" list="nomi-list" placeholder="Scrivi cognome o nome…" autocomplete="off" disabled>
-  <datalist id="nomi-list"></datalist>
+  <span class="combo" id="nome-combo">
+    <input id="nome-input" placeholder="Scrivi cognome o nome…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="nome-drop" disabled>
+    <div id="nome-drop" class="drop" role="listbox" hidden></div>
+  </span>
   <button id="clear-btn" type="button" title="Cancella">✕</button>
   <label class="lbl" for="anno-select">Anno di riferimento</label>
   <select id="anno-select" aria-label="Anno di riferimento"></select>
@@ -856,9 +863,9 @@ async function caricaDati() {
   }
 }
 
-let ETICHETTE_NOMI = new Map();   // testo nell'elenco → chiave persona
+let ETICHETTE_NOMI = new Map();
+let LISTA_NOMI = [];   // testo nell'elenco → chiave persona
 function preparaNomi() {
-  const dl = document.getElementById('nomi-list');
   const lista = [...PERSONE.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
   const conta = new Map();
   lista.forEach(p => conta.set(normKey(p.nome), (conta.get(normKey(p.nome)) || 0) + 1));
@@ -871,8 +878,8 @@ function preparaNomi() {
     ETICHETTE_NOMI.set(lab, p.key);
     p.etichetta = lab;
   });
+  LISTA_NOMI = lista;
   preparaAlfabeto(lista);
-  dl.innerHTML = lista.map(p => `<option value="${esc(p.etichetta)}">${esc([p.qualifica, p.comando].filter(Boolean).join(' · '))}</option>`).join('');
 }
 
 function preparaAlfabeto(lista) {
@@ -882,18 +889,84 @@ function preparaAlfabeto(lista) {
   const box = document.getElementById('alfabeto');
   box.innerHTML = lett.map(l => `<button type="button" class="lett${state.lettera === l ? ' on' : ''}" data-l="${l}" ${conta.get(l) ? `title="${conta.get(l)} nominativi"` : 'disabled'}>${l}</button>`).join('');
   box.querySelectorAll('.lett').forEach(b => b.addEventListener('click', () => {
-    state.lettera = state.lettera === b.dataset.l ? null : b.dataset.l;
-    box.querySelectorAll('.lett').forEach(x => x.classList.toggle('on', x.dataset.l === state.lettera));
-    disegna();
-    document.getElementById('content').scrollTop = 0;
+    impostaLettera(state.lettera === b.dataset.l ? null : b.dataset.l);
+    if (state.lettera) { nomeInput.focus(); apriDrop(true); } else chiudiDrop();
   }));
 }
 
-function listaLettera(l) {
-  const lista = [...PERSONE.values()].filter(p => inizialeDi(p) === l).sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
-  return `<div class="lista-title">Cognomi con la lettera ${esc(l)} <span>· ${lista.length} nominativi · clic su un nome per il report</span></div>
-  <div class="nomi-grid">${lista.map(p => `<button type="button" class="nome-btn${p.inElenco ? '' : ' solo-reg'}" data-k="${esc(p.key)}">${esc(p.etichetta)}<small>${esc([p.qualifica, p.comando].filter(Boolean).join(' · ') || 'Comando non indicato')}${p.inElenco ? '' : ' · non in Elenco_Filtrato'}</small></button>`).join('')}</div>`;
+function impostaLettera(l) {
+  state.lettera = l;
+  document.querySelectorAll('.lett').forEach(x => x.classList.toggle('on', x.dataset.l === l));
 }
+
+/* Menu a comparsa: filtrato dalla lettera scelta e da quello che si scrive */
+const drop = document.getElementById('nome-drop');
+let dropVoci = [], dropAtt = -1;
+function testoFiltro() {
+  // se nel campo c'è il nome già scelto, non lo uso come filtro
+  return state.persona && nomeInput.value === state.persona.etichetta ? '' : nomeInput.value;
+}
+function apriDrop(daLettera) {
+  if (nomeInput.disabled) return;
+  const k = normKey(testoFiltro());
+  dropVoci = LISTA_NOMI.filter(p => (!state.lettera || inizialeDi(p) === state.lettera) && (!k || normKey(p.etichetta).includes(k)));
+  dropAtt = -1;
+  const head = state.lettera
+    ? `<div class="head">Lettera ${esc(state.lettera)} · ${dropVoci.length} nominativi${k ? ' contenenti «' + esc(testoFiltro().trim()) + '»' : ''}</div>`
+    : (k ? `<div class="head">${dropVoci.length} nominativi</div>` : '');
+  if (!state.lettera && !k && !daLettera) { chiudiDrop(); return; }
+  drop.innerHTML = head + (dropVoci.length
+    ? dropVoci.map((p, i) => `<div class="opt${p.inElenco ? '' : ' solo-reg'}${state.persona === p ? ' sel' : ''}" role="option" data-i="${i}">${esc(p.etichetta)}<small>${esc([p.qualifica, p.comando].filter(Boolean).join(' · ') || 'Comando non indicato')}</small></div>`).join('')
+    : '<div class="vuoto">Nessun nominativo trovato</div>');
+  drop.hidden = false;
+  nomeInput.setAttribute('aria-expanded', 'true');
+  drop.scrollTop = 0;
+}
+function chiudiDrop() {
+  drop.hidden = true;
+  nomeInput.setAttribute('aria-expanded', 'false');
+}
+function evidenzia(i) {
+  const opts = drop.querySelectorAll('.opt');
+  if (!opts.length) return;
+  dropAtt = Math.max(0, Math.min(opts.length - 1, i));
+  opts.forEach((o, j) => o.classList.toggle('act', j === dropAtt));
+  opts[dropAtt].scrollIntoView({ block: 'nearest' });
+}
+function scegli(p) {
+  state.persona = p; state.ambiguo = false; state.aperti.clear();
+  nomeInput.value = p.etichetta;
+  chiudiDrop();
+  disegna();
+  document.getElementById('content').scrollTop = 0;
+}
+drop.addEventListener('mousedown', e => {
+  const o = e.target.closest('.opt');
+  if (!o) return;
+  e.preventDefault();
+  scegli(dropVoci[+o.dataset.i]);
+});
+nomeInput.addEventListener('focus', () => { if (state.lettera) apriDrop(true); });
+nomeInput.addEventListener('click', () => { if (drop.hidden) apriDrop(!!state.lettera); });
+nomeInput.addEventListener('input', () => {
+  // se si scrive un'iniziale diversa dalla lettera scelta, la lettera si toglie
+  const k = normKey(nomeInput.value);
+  if (state.lettera && k && k.charAt(0).toUpperCase() !== state.lettera) impostaLettera(null);
+  apriDrop(false);
+});
+nomeInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); if (drop.hidden) apriDrop(true); evidenzia(dropAtt + 1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); evidenzia(dropAtt - 1); }
+  else if (e.key === 'Escape') chiudiDrop();
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (!drop.hidden && dropAtt >= 0) return scegli(dropVoci[dropAtt]);
+    if (!drop.hidden && dropVoci.length === 1) return scegli(dropVoci[0]);
+    chiudiDrop(); selezionaNome(nomeInput.value); state.aperti.clear(); disegna();
+  }
+});
+nomeInput.addEventListener('blur', () => setTimeout(chiudiDrop, 150));
+document.addEventListener('mousedown', e => { if (!e.target.closest('#nome-combo') && !e.target.closest('#alfabeto')) chiudiDrop(); });
 
 function selezionaNome(testo) {
   const t = (testo || '').trim();
@@ -918,10 +991,9 @@ function preparaAnni() {
   annoSelect.innerHTML = lista.map(y => `<option value="${y}"${y === state.anno ? ' selected' : ''}>${y}</option>`).join('');
 }
 
-const chiudiLettere = () => { state.lettera = null; document.querySelectorAll('.lett').forEach(x => x.classList.remove('on')); };
-nomeInput.addEventListener('change', () => { chiudiLettere(); selezionaNome(nomeInput.value); state.aperti.clear(); disegna(); });
-nomeInput.addEventListener('keydown', e => { if (e.key === 'Enter') { chiudiLettere(); selezionaNome(nomeInput.value); disegna(); } });
-document.getElementById('clear-btn').addEventListener('click', () => { nomeInput.value = ''; state.persona = null; disegna(); nomeInput.focus(); });
+document.getElementById('clear-btn').addEventListener('click', () => {
+  nomeInput.value = ''; state.persona = null; state.ambiguo = false; impostaLettera(null); chiudiDrop(); disegna(); nomeInput.focus();
+});
 annoSelect.addEventListener('change', () => { state.anno = +annoSelect.value; disegna(); });
 printBtn.addEventListener('click', () => window.print());
 refreshBtn.addEventListener('click', caricaDati);
@@ -1060,18 +1132,6 @@ function disegna() {
   document.title = p ? `P.U.M.A. - Report ${p.nome} ${y}` : 'P.U.M.A. - Report individuale';
 
   let html = DEBUG ? diagnostica() : '';
-  if (state.lettera) {
-    report.innerHTML = html + listaLettera(state.lettera);
-    report.querySelectorAll('.nome-btn').forEach(b => b.addEventListener('click', () => {
-      const q = PERSONE.get(b.dataset.k);
-      state.persona = q; state.lettera = null; state.aperti.clear();
-      nomeInput.value = q.etichetta;
-      document.querySelectorAll('.lett').forEach(x => x.classList.remove('on'));
-      disegna();
-      document.getElementById('content').scrollTop = 0;
-    }));
-    return;
-  }
   if (!p) {
     const scritto = nomeInput.value.trim();
     html += scritto && !nomeInput.disabled
