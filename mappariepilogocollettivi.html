@@ -225,6 +225,8 @@
     .cmd-pin .p { background: var(--anno-a); }
     .cmd-pin .c { background: var(--anno-b); }
     .cmd-pin .zero { opacity: .45; }
+    .cmd-pin.dir { transform: translate(-50%, -125%); border-radius: 3px; }   /* Direzione: sopra al Comando del capoluogo */
+    .cmd-pin.stimata { border-style: dashed; }
     .cmd-pin.sel { border-color: #ff3b30; box-shadow: 0 0 0 3px rgba(255,59,48,.5), 1px 2px 5px rgba(0,0,0,0.6); }
     .cmd-label {
       background: rgba(30,30,30,.85) !important; color: #f0f0f0 !important; border: 1px solid #555 !important;
@@ -321,6 +323,18 @@ const NOME_NON_REALE = /\b(test|prova|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;
 
 const LOGHI_URL = "https://gesaddvvf.github.io/PUMA/images/loghi/loghi.json";
 
+// Sedi dei Comandi (da FireOps db/comandi.json), chiave = nome normalizzato
+const SEDI_COMANDI = {agrigento:[37.29538,13.56612],alessandria:[44.90146,8.62734],ancona:[43.60923,13.51494],aosta:[45.74073,7.34750],arezzo:[43.45499,11.88418],ascolipiceno:[42.84511,13.62011],asti:[44.91217,8.20517],avellino:[40.90700,14.78392],bari:[41.09145,16.88984],barlettaandriatrani:[41.30863,16.31128],belluno:[46.13001,12.19445],benevento:[41.13945,14.80176],bergamo:[45.70208,9.68445],biella:[45.55035,8.07708],bologna:[44.53573,11.36831],bolzano:[46.49433,11.31859],brescia:[45.56120,10.21458],brindisi:[40.64468,17.92693],cagliari:[39.24270,9.15188],caltanissetta:[37.49310,14.04311],campobasso:[41.56668,14.66505],caserta:[41.08044,14.35766],catania:[37.51539,15.07598],catanzaro:[38.91765,16.58478],chieti:[42.36080,14.19353],como:[45.80094,9.09575],cosenza:[39.30074,16.24756],cremona:[45.15098,10.02595],crotone:[39.07211,17.11284],cuneo:[44.37364,7.52417],enna:[37.54877,14.30297],fermo:[43.16810,13.74151],ferrara:[44.82643,11.59433],firenze:[43.77842,11.27201],foggia:[41.44923,15.56024],forlicesena:[44.21346,12.06136],frosinone:[41.63782,13.33066],genova:[44.40921,8.90521],gorizia:[45.93957,13.60961],grosseto:[42.77841,11.10975],imperia:[43.88666,8.02639],isernia:[41.58718,14.23953],laquila:[42.35392,13.40938],laspezia:[44.11655,9.82994],latina:[41.47451,12.90312],lecce:[40.34346,18.15842],lecco:[45.84219,9.40033],livorno:[43.53423,10.32438],lodi:[45.29597,9.52160],lucca:[43.85258,10.51760],macerata:[43.29319,13.42079],mantova:[45.14775,10.79411],massacarrara:[44.02565,10.09837],matera:[40.66315,16.59616],messina:[38.17653,15.55009],milano:[45.48516,9.17404],modena:[44.64495,10.90041],monzaebrianza:[45.57960,9.26113],napoli:[40.86559,14.29220],novara:[45.43055,8.60511],nuoro:[40.32054,9.30377],oristano:[39.89178,8.59764],padova:[45.40841,11.90819],palermo:[38.12786,13.36771],parma:[44.78633,10.30372],pavia:[45.18886,9.16895],perugia:[43.09122,12.36312],pesaroeurbino:[43.91080,12.88982],pescara:[42.45291,14.22122],piacenza:[45.02557,9.68729],pisa:[43.70953,10.41081],pistoia:[43.92180,10.92252],pordenone:[45.97084,12.66122],potenza:[40.64478,15.83318],prato:[43.85834,11.06628],ragusa:[36.92392,14.71932],ravenna:[44.40759,12.18954],reggiocalabria:[38.09029,15.64555],reggioemilia:[44.68759,10.61852],rieti:[42.39605,12.85929],rimini:[44.03759,12.59712],roma:[41.89996,12.49104],rovigo:[45.07711,11.80372],salerno:[40.66565,14.81041],sassari:[40.71885,8.57064],savona:[44.29215,8.45550],siena:[43.33205,11.31339],siracusa:[37.07827,15.28745],sondrio:[46.16267,9.86160],taranto:[40.44364,17.26388],teramo:[42.65696,13.69331],terni:[42.56003,12.65298],torino:[45.08828,7.64933],trapani:[38.01199,12.57833],trento:[46.07659,11.12290],treviso:[45.67199,12.21661],trieste:[45.63651,13.77961],udine:[46.04706,13.21274],varese:[45.83586,8.81955],venezia:[45.51779,12.24381],verbanocusioossola:[45.92679,8.56000],vercelli:[45.31349,8.42297],verona:[45.41241,10.99033],vibovalentia:[38.67606,16.08998],vicenza:[45.54632,11.52020],viterbo:[42.43940,12.09069]};
+// Direzioni regionali: sede nel capoluogo di regione
+const SEDI_DIREZIONI = {
+  abruzzo: 'laquila', basilicata: 'potenza', calabria: 'catanzaro', campania: 'napoli',
+  emiliaromagna: 'bologna', friuliveneziagiulia: 'trieste', lazio: 'roma', liguria: 'genova',
+  lombardia: 'milano', marche: 'ancona', molise: 'campobasso', piemonte: 'torino', puglia: 'bari',
+  sardegna: 'cagliari', sicilia: 'palermo', toscana: 'firenze', umbria: 'perugia', veneto: 'venezia'
+};
+// Duplicati in Piano_Di_Sicurezza: stesso giorno + Comando + squadra + tipologia → resta l'ultimo inserito
+const FILTRA_DUPLICATI = true;
+
 /* ===================================================================== */
 const URLP = new URLSearchParams(location.search);
 const DEBUG = URLP.has('debug');
@@ -398,6 +412,18 @@ function formattaValore(h, v) {
   if (!m) return v;
   if (/inizio|fine/i.test(h) && m[2]) return `${m[1]} ${m[2].padStart(2, '0')}:${m[3]}`;
   return m[1];
+}
+
+// Coordinate della sede: Comando → sede del Comando; Direzione → capoluogo di regione
+function sedeDi(key) {
+  if (SEDI_COMANDI[key]) return { lat: SEDI_COMANDI[key][0], lng: SEDI_COMANDI[key][1], dir: false };
+  if (key.startsWith('direzione')) {
+    const r = key.replace(/^direzione/, '').replace(/regionale|vvf/g, '');
+    const reg = Object.keys(SEDI_DIREZIONI).find(k => r.startsWith(k));
+    const c = reg && SEDI_COMANDI[SEDI_DIREZIONI[reg]];
+    if (c) return { lat: c[0], lng: c[1], dir: true };
+  }
+  return null;
 }
 
 /* =====================================================================
@@ -605,6 +631,16 @@ function elabora(piano, reg) {
     });
   });
 
+  // Duplicati: stesso giorno + Comando + squadra + tipologia → tengo l'ultima riga (la più recente)
+  let duplicati = 0;
+  if (FILTRA_DUPLICATI) {
+    const ultimo = new Map();
+    ATT.forEach((a, i) => ultimo.set(`${a.giorno}|${a.comandoKey}|${squadraKey(a.squadra)}|${normKey(a.tipologia)}`, i));
+    const tenere = new Set(ultimo.values());
+    duplicati = ATT.length - tenere.size;
+    ATT = ATT.filter((a, i) => tenere.has(i));
+  }
+
   // Collego i registrati: stesso giorno + stesso Comando organizzatore + stessa squadra.
   // Se il piano non indica la squadra: stesso giorno + stesso Comando (tutte le squadre).
   const perChiave = new Map();
@@ -627,7 +663,8 @@ function elabora(piano, reg) {
   ATT.forEach(a => { if (!NOMI_COMANDO.has(a.comandoKey)) NOMI_COMANDO.set(a.comandoKey, a.comando); });
   ANNI = [...new Set(ATT.map(a => a.anno))].sort((x, y) => y - x);
 
-  diag = { righePiano: piano.length, att: ATT.length, senzaData, senzaCoord, prove, regTot, regScartate, regCollegate, attSenzaSquadra };
+  diag = { righePiano: piano.length, att: ATT.length, senzaData, senzaCoord, prove, regTot, regScartate, regCollegate, attSenzaSquadra, duplicati,
+    senzaSede: [...new Set(ATT.filter(a => !sedeDi(a.comandoKey)).map(a => a.comando))] };
 }
 
 // Una persona compare una sola volta (stesso nome): unisco squadre e funzioni
@@ -843,7 +880,7 @@ function selezionaGruppo(g, idx, silenzioso) {
 }
 
 function disegnaComandi(lista) {
-  // Un punto per Comando: posizione media dei suoi addestramenti (con coordinate) nel periodo scelto
+  // Un punto per Comando, sulla sede del Comando
   const anni = anniScelti();
   const per = new Map();
   lista.forEach(a => {
@@ -853,17 +890,21 @@ function disegnaComandi(lista) {
     if (a.lat !== null) x.pts.push([a.lat, a.lng]);
   });
   per.forEach(x => {
-    if (!x.pts.length) return;
-    const lat = x.pts.reduce((s, p) => s + p[0], 0) / x.pts.length;
-    const lng = x.pts.reduce((s, p) => s + p[1], 0) / x.pts.length;
+    // Sede del Comando; se non è in elenco, posizione media dei suoi addestramenti
+    const sede = sedeDi(x.key);
+    if (!sede && !x.pts.length) return;
+    const lat = sede ? sede.lat : x.pts.reduce((s, p) => s + p[0], 0) / x.pts.length;
+    const lng = sede ? sede.lng : x.pts.reduce((s, p) => s + p[1], 0) / x.pts.length;
+    const classi = (sede ? (sede.dir ? ' dir' : '') : ' stimata');
     const sel = state.selComando && state.selComando.key === x.key;
     const parti = anni.map(y => `<span class="${y === state.annoB ? 'c' : 'p'}${x.n[y] ? '' : ' zero'}">${x.n[y] || 0}</span>`);
     const tot = anni.reduce((s, y) => s + (x.n[y] || 0), 0);
     const m = L.marker([lat, lng], {
-      icon: L.divIcon({ className: 'cmd-wrapper', html: `<div class="cmd-pin${sel ? ' sel' : ''}">${parti.join('')}</div>`, iconSize: [0, 0], iconAnchor: [0, 0] }),
+      icon: L.divIcon({ className: 'cmd-wrapper', html: `<div class="cmd-pin${classi}${sel ? ' sel' : ''}">${parti.join('')}</div>`, iconSize: [0, 0], iconAnchor: [0, 0] }),
       zIndexOffset: sel ? 2000 : tot
     });
-    m.bindTooltip(esc(x.nome), { direction: 'top', offset: [0, -12], className: 'cmd-label' });
+    m.bindTooltip(esc(x.nome) + (sede ? '' : ' <i>(sede non in elenco: posizione media)</i>'),
+      { direction: 'top', offset: [0, sede && sede.dir ? -30 : -12], className: 'cmd-label' });
     m.on('click', ev => {
       L.DomEvent.stopPropagation(ev);
       state.selComando = { key: x.key };
@@ -983,7 +1024,9 @@ function diagnostica() {
     <div style="margin-bottom:6px"><b>Colonne riconosciute in Piano_Di_Sicurezza</b></div>
     ${riga('Data', colonne.data)}${riga('Comando organizzatore', colonne.comando)}${riga('Coordinate', colonne.coordinate)}${riga('Tipologia', colonne.tipologia)}${riga('Squadra', colonne.squadra)}
     <div style="margin-top:6px">Righe nel foglio: ${diag.righePiano ?? '—'} · addestramenti con data: ${diag.att ?? '—'} · senza data: ${diag.senzaData ?? '—'} · senza coordinate: ${diag.senzaCoord ?? '—'} · righe di prova: ${diag.prove ?? '—'}</div>
+    <div>Duplicati scartati (stesso giorno + Comando + squadra + tipologia): ${diag.duplicati ?? '—'}</div>
     <div>Anni presenti: ${ANNI.join(', ') || '—'}</div>
+    ${diag.senzaSede && diag.senzaSede.length ? `<div style="color:#ffb74d">Senza sede in elenco (posizione media): ${diag.senzaSede.map(esc).join(', ')}</div>` : ''}
     <div>Registrazioni: ${diag.regTot ?? '—'} · scartate (prove/vuote): ${diag.regScartate ?? '—'} · collegate agli addestramenti: ${diag.regCollegate ?? '—'}</div>
     <div>Collegamento: giorno + Comando + squadra${diag.attSenzaSquadra ? ` · <span style="color:#ffb74d">${diag.attSenzaSquadra} addestramenti senza squadra → giorno + Comando</span>` : ''}</div>
     <details style="margin-top:6px"><summary style="cursor:pointer">Tutte le intestazioni</summary><code>${headersPiano.map(esc).join(' | ')}</code></details>
