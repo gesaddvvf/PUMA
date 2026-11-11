@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>P.U.M.A. - Addestramenti collettivi di gennaio</title>
+  <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    :root {
+      color-scheme: dark;
+      --gold: #ffd700;
+      --anno-cur: #ffd700;   /* anno corrente */
+      --anno-prev: #4fc3f7;  /* anno precedente */
+    }
+    * { scrollbar-width: thin; scrollbar-color: #555 #1e1e1e; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #1e1e1e; }
+    ::-webkit-scrollbar-thumb { background-color: #555; border-radius: 5px; border: 2px solid #1e1e1e; }
+    ::-webkit-scrollbar-thumb:hover { background-color: var(--gold); }
+    ::-webkit-scrollbar-corner { background: #1e1e1e; }
+
+    html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
+    body {
+      font-family: 'Comfortaa', cursive;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---------- HEADER ---------- */
+    #page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      background-color: #1e1e1e;
+      border-bottom: 1px solid #444;
+      padding: 10px 16px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    #page-header h1 {
+      font-size: 16px; color: var(--gold); margin: 0 0 2px 0; font-weight: bold;
+      display: flex; align-items: center; gap: 6px;
+    }
+    #page-header .puma-icon { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+    #page-header .subtitle-divider { color: #666; }
+    #page-header h2 { font-size: 13px; color: #ccc; font-weight: normal; margin: 0; }
+    #page-header h2 b { color: var(--gold); }
+    #meta-info { font-size: 11.5px; color: #999; margin-top: 4px; }
+
+    #nav-buttons { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+    .nav-btn {
+      display: inline-block; background-color: #2a2a2a; color: var(--gold);
+      border: 1px solid var(--gold); border-radius: 4px; padding: 8px 14px;
+      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 13px;
+      text-decoration: none; transition: background-color 0.15s, color 0.15s;
+    }
+    .nav-btn:hover { background-color: var(--gold); color: #1e1e1e; }
+    button.nav-btn { cursor: pointer; }
+    button.nav-btn:disabled { opacity: 0.6; cursor: wait; }
+
+    /* ---------- BARRA FILTRI ---------- */
+    #filters {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 8px 16px; border-bottom: 1px solid #444; background-color: #232323;
+      font-size: 12.5px; flex-shrink: 0;
+    }
+    .seg { display: inline-flex; border: 1px solid var(--gold); border-radius: 4px; overflow: hidden; }
+    .seg button {
+      background: #1e1e1e; color: var(--gold); border: none; padding: 6px 12px;
+      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+    }
+    .seg button + button { border-left: 1px solid var(--gold); }
+    .seg button.on { background: var(--gold); color: #1e1e1e; }
+    .year-chk {
+      display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+      padding: 5px 10px; border-radius: 4px; border: 1px solid #555; background: #1e1e1e; user-select: none;
+    }
+    .year-chk input { accent-color: var(--gold); margin: 0; }
+    .year-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; border: 2px solid #fff; box-sizing: border-box; }
+    .year-chk b { font-weight: bold; }
+    #comando-select {
+      background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px;
+      padding: 6px 8px; font-family: 'Comfortaa', cursive; font-size: 12.5px; max-width: 320px;
+    }
+    #filters label.lbl { color: #aaa; }
+
+    /* ---------- LAYOUT ---------- */
+    #app-container { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: row; }
+    #map { flex: 1 1 auto; height: 100%; min-width: 0; position: relative; }
+    #details-panel {
+      width: 380px; flex-shrink: 0; height: 100%; overflow-y: auto;
+      background-color: #1e1e1e; border-left: 1px solid #444; padding: 16px; box-sizing: border-box;
+    }
+    @media (max-width: 900px) {
+      #app-container { flex-direction: column; }
+      #map { height: 52%; width: 100%; flex: none; }
+      #details-panel { width: 100%; height: 48%; border-left: none; border-top: 1px solid #444; }
+    }
+    @media (max-width: 700px) {
+      #page-header { flex-direction: column; }
+      #nav-buttons { width: 100%; }
+      .nav-btn { flex: 1; text-align: center; }
+      #comando-select { max-width: 100%; flex: 1 1 100%; }
+      #filters label.lbl, #meta-info { display: none; }
+      #filters { padding: 6px 10px; gap: 6px; }
+    }
+
+    /* ---------- PANNELLO ---------- */
+    .panel-title { color: var(--gold); font-size: 15px; margin: 0 0 10px 0; line-height: 1.3; }
+    .panel-note { color: #999; font-size: 12px; margin: 8px 0 12px; line-height: 1.5; }
+    .back-link {
+      display: inline-block; color: var(--gold); font-size: 12.5px; cursor: pointer;
+      margin-bottom: 10px; border-bottom: 1px dotted var(--gold);
+    }
+    .details-title { display: flex; align-items: center; gap: 10px; margin: 0 0 10px 0; }
+    .details-title .logo-att { width: 44px; height: 44px; flex-shrink: 0; }
+    .details-title .logo-att svg { width: 100%; height: 100%; display: block; }
+    .details-title h3 { color: var(--gold); font-size: 15px; margin: 0; line-height: 1.3; }
+    .chip {
+      display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11.5px; font-weight: bold;
+      color: #1e1e1e; margin-right: 6px; vertical-align: middle;
+    }
+
+    table { font-family: 'Comfortaa', cursive; border-collapse: collapse; width: 100%; font-size: 12.5px; }
+    td, th { padding: 4px 8px; border: 1px solid #444; }
+    th { background: #2a2a2a; color: #ccc; font-weight: bold; text-align: center; }
+    tr:nth-child(even) td { background-color: #2a2a2a; }
+    tr:nth-child(odd) td { background-color: #1f1f1f; }
+    td.value { font-weight: bold; text-align: right; color: var(--gold); word-break: break-word; }
+    td.key { text-align: left; color: #f0f0f0; }
+    td.num { text-align: center; font-weight: bold; }
+    td.num.cur { color: var(--anno-cur); }
+    td.num.prev { color: var(--anno-prev); }
+    td.delta-up { color: #66bb6a; text-align: center; font-weight: bold; }
+    td.delta-down { color: #ef5350; text-align: center; font-weight: bold; }
+    td.delta-eq { color: #999; text-align: center; }
+    tr.click { cursor: pointer; }
+    tr.click:hover td { background-color: #3a3520; }
+    tr.tot td { background: #333 !important; font-weight: bold; }
+
+    .popup-btn {
+      width: 100%; box-sizing: border-box; margin: 4px 0 10px; padding: 10px 0; font-size: 15px;
+      background-color: var(--gold); color: #1e1e1e; border: none; border-radius: 3px;
+      cursor: pointer; font-weight: bold; text-align: center; font-family: 'Comfortaa', cursive;
+    }
+
+    .group-switch {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+      background-color: #262626; border: 1px solid #3a3a3a; border-radius: 6px; padding: 6px;
+    }
+    .group-switch button {
+      flex-shrink: 0; width: 38px; height: 34px; background-color: #1e1e1e; color: var(--gold);
+      border: 1px solid var(--gold); border-radius: 4px; font-size: 15px; font-weight: bold; cursor: pointer;
+    }
+    .group-switch button:hover { background-color: var(--gold); color: #1e1e1e; }
+    .group-switch span { flex: 1; text-align: center; font-size: 12.5px; color: #ccc; }
+    .group-switch b { color: var(--gold); }
+
+    /* Nominativi */
+    .reg-box { margin-top: 14px; }
+    .reg-box summary { cursor: pointer; color: var(--gold); font-weight: bold; font-size: 13.5px; outline: none; }
+    .reg-box summary:hover { text-decoration: underline; }
+    .squadra-title { color: #ccc; font-size: 12px; font-weight: bold; margin: 12px 0 6px; text-transform: uppercase; letter-spacing: .03em; }
+    .persona-item {
+      background-color: #2a2a2a; border-left: 3px solid var(--gold); border-radius: 3px;
+      padding: 6px 10px; font-size: 12px; line-height: 1.5; margin-bottom: 5px;
+    }
+    .persona-nome { display: block; font-weight: bold; color: #f0f0f0; }
+    .persona-fun { display: block; color: #aaa; font-size: 11.5px; }
+    .reg-warn { color: #ffb74d; font-size: 11.5px; margin: 6px 0; line-height: 1.5; }
+
+    /* Lista addestramenti di un Comando */
+    .att-item {
+      background: #262626; border: 1px solid #3a3a3a; border-left-width: 4px; border-radius: 4px;
+      padding: 7px 10px; margin-bottom: 6px; cursor: pointer; font-size: 12.5px; line-height: 1.45;
+    }
+    .att-item:hover { background: #3a3520; }
+    .att-item .d { font-weight: bold; color: #f0f0f0; }
+    .att-item .t { color: #ccc; }
+    .att-item .n { color: #999; font-size: 11.5px; }
+
+    .debug-box { background: #2a2020; border: 1px solid #a33; border-radius: 4px; padding: 10px; font-size: 12px; margin-bottom: 12px; line-height: 1.5; }
+    .debug-box b { color: #ffb74d; }
+    .debug-box code { color: #fff; word-break: break-all; }
+
+    /* ---------- MAPPA ---------- */
+    .leaflet-top.leaflet-left { top: 50%; transform: translateY(-50%); }
+    .leaflet-control-layers { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-size: 13px; }
+    .leaflet-control-attribution { font-size: 10px; }
+
+    .pin-wrapper.leaflet-div-icon, .cmd-wrapper.leaflet-div-icon, .marker-highlight-wrapper.leaflet-div-icon {
+      background: transparent; border: none; overflow: visible;
+    }
+    .pin { position: relative; width: 32px; height: 32px; cursor: pointer; }
+    .pin-drop {
+      position: absolute; inset: 0; box-sizing: border-box; border: 3px solid #fff;
+      border-radius: 50% 50% 50% 0; box-shadow: 1px 2px 4px rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pin-drop svg { width: 20px; height: 20px; display: block; }
+    .pin-count {
+      position: absolute; top: -9px; left: 20px; z-index: 2; min-width: 18px; height: 18px; padding: 0 5px;
+      box-sizing: border-box; border-radius: 9px; background-color: #ff3b30; color: #fff; border: 2px solid #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5); font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 10.5px; font-weight: 700; line-height: 14px; text-align: center; white-space: nowrap;
+    }
+
+    /* Marker per Comando: due numeri (anno precedente | anno corrente) */
+    .cmd-pin {
+      display: inline-flex; align-items: stretch; transform: translate(-50%, -50%);
+      border: 2px solid #fff; border-radius: 14px; overflow: hidden; cursor: pointer;
+      box-shadow: 1px 2px 5px rgba(0,0,0,0.6); white-space: nowrap;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-weight: 800; font-size: 12px;
+    }
+    .cmd-pin span { padding: 3px 7px; color: #1e1e1e; min-width: 12px; text-align: center; }
+    .cmd-pin .p { background: var(--anno-prev); }
+    .cmd-pin .c { background: var(--anno-cur); }
+    .cmd-pin .zero { opacity: .45; }
+    .cmd-pin.sel { border-color: #ff3b30; box-shadow: 0 0 0 3px rgba(255,59,48,.5), 1px 2px 5px rgba(0,0,0,0.6); }
+    .cmd-label {
+      background: rgba(30,30,30,.85) !important; color: #f0f0f0 !important; border: 1px solid #555 !important;
+      font-family: 'Comfortaa', cursive; font-size: 11.5px; box-shadow: none !important; padding: 2px 6px !important;
+    }
+    .cmd-label::before { display: none; }
+
+    .marker-highlight-pulse {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,215,0,0.35) 0%, rgba(255,215,0,0.15) 55%, rgba(255,215,0,0) 70%);
+      box-shadow: 0 0 0 2px rgba(255,215,0,0.75); animation: pulse-highlight 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse-highlight {
+      0% { transform: scale(0.8); opacity: 0.9; } 50% { transform: scale(1.2); opacity: 0.45; } 100% { transform: scale(0.8); opacity: 0.9; }
+    }
+
+    #map-msg {
+      display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000;
+      max-width: 80%; box-sizing: border-box; padding: 14px 18px; background-color: rgba(30,30,30,0.92);
+      color: var(--gold); border: 1px solid var(--gold); border-radius: 6px; font-size: 14px; font-weight: bold;
+      text-align: center; pointer-events: none;
+    }
+    .legend {
+      background: rgba(30,30,30,.9); color: #f0f0f0; border: 1px solid #555; border-radius: 6px;
+      padding: 6px 10px; font-family: 'Comfortaa', cursive; font-size: 11.5px; line-height: 1.7;
+    }
+    .legend .year-dot { margin-right: 6px; vertical-align: -1px; }
+    @media (prefers-reduced-motion: reduce) { .marker-highlight-pulse { animation: none; } }
+  </style>
+</head>
+<body>
+<header id="page-header">
+  <div>
+    <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
+    <h2>Addestramenti collettivi di <b>gennaio</b> per Comando organizzatore: <b id="anni-label"></b></h2>
+    <div id="meta-info">Dati caricati: <span id="last-update">—</span></div>
+  </div>
+  <div id="nav-buttons">
+    <button class="nav-btn" id="refresh-btn" type="button">⟳ Aggiorna</button>
+    <a class="nav-btn" href="trainingmaprealtime.html">Mappa Real Time ➡</a>
+    <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page">Homepage P.U.M.A.</a>
+  </div>
+</header>
+
+<div id="filters">
+  <div class="seg" role="group" aria-label="Vista">
+    <button type="button" id="view-luoghi" class="on">📍 Luoghi</button>
+    <button type="button" id="view-comandi">🏢 Per Comando</button>
+  </div>
+  <label class="year-chk"><input type="checkbox" id="chk-prev" checked><span class="year-dot" style="background:var(--anno-prev)"></span><b id="lbl-prev"></b></label>
+  <label class="year-chk"><input type="checkbox" id="chk-cur" checked><span class="year-dot" style="background:var(--anno-cur)"></span><b id="lbl-cur"></b></label>
+  <label class="lbl" for="comando-select">Comando organizzatore</label>
+  <select id="comando-select"><option value="">Tutti</option></select>
+</div>
+
+<div id="app-container">
+  <div id="map"><div id="map-msg"></div></div>
+  <div id="details-panel"><div id="panel"></div></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<script>
+/* =====================================================================
+   CONFIGURAZIONE
+   ===================================================================== */
+const SHEET_ID  = "1WHGKaawomU_jMuO6FnwzYidou-fmpc0ndeE0aiEMYP4"; // PUMA VVF Database Personale
+const GID_PIANO = "1495276384";   // Piano_Di_Sicurezza: un addestramento collettivo per riga
+const GID_REG   = "2031805821";   // Registrazione_Attivita_Semplificata: un registrato per riga
+const MESE      = 0;              // 0 = gennaio
+
+// Colonne di Piano_Di_Sicurezza: null = riconoscimento automatico dalle intestazioni.
+// Se il riconoscimento sbaglia, scrivi qui il nome esatto dell'intestazione.
+const COL_PIANO = {
+  data: null,        // data dell'addestramento
+  comando: null,     // Comando/Direzione organizzatore
+  coordinate: null,  // "44.786040, 010.303237"
+  tipologia: null,   // tipologia di addestramento (per il logo)
+  squadra: null      // squadra (per collegare i registrati: giorno + Comando + squadra)
+};
+
+// Colonne di Registrazione_Attivita_Semplificata (lettere del foglio)
+const COL_REG = { data: 'A', nome: 'C', comando: 'E', squadra: 'F', funzioni: 'G' };
+
+// Colonne di Piano_Di_Sicurezza da NON mostrare nel pannello (dati personali)
+const NASCONDI = /e-?mail|codice fiscale|\bc\.?f\.?\b|telefon|cellulare|indirizzo di posta/i;
+
+// Registrazioni da scartare (prove): nome vuoto, "test", "prova", "xxx"...
+const NOME_NON_REALE = /\b(test|prova|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;
+
+const LOGHI_URL = "https://gesaddvvf.github.io/PUMA/images/loghi/loghi.json";
+const DEBUG = new URLSearchParams(location.search).has('debug');
+
+/* ===================================================================== */
+const ANNO_CUR  = new Date().getFullYear();
+const ANNO_PREV = ANNO_CUR - 1;
+const NOME_MESE = new Date(2000, MESE, 1).toLocaleDateString('it-IT', { month: 'long' });
+const csvUrl = gid => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+
+document.getElementById('anni-label').textContent = `${ANNO_PREV} e ${ANNO_CUR}`;
+document.getElementById('lbl-prev').textContent = `${NOME_MESE} ${ANNO_PREV}`;
+document.getElementById('lbl-cur').textContent  = `${NOME_MESE} ${ANNO_CUR}`;
+document.title = `P.U.M.A. - Addestramenti collettivi di ${NOME_MESE} ${ANNO_PREV}/${ANNO_CUR}`;
+
+const yearColor = y => y === ANNO_CUR ? 'var(--anno-cur)' : 'var(--anno-prev)';
+const yearHex   = y => y === ANNO_CUR ? '#ffd700' : '#4fc3f7';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const isNA = v => /^#?N\/[AD]$|^#(REF|VALUE|ERROR|NAME)!?/i.test((v || '').trim());
+const letterIdx = l => l.toUpperCase().split('').reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1;
+
+function normKey(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+}
+// "Comando VV.F. di Forlì-Cesena" e "Forlì Cesena" → stessa chiave; le Direzioni restano distinte
+function comandoKey(s) {
+  let t = (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  t = t.replace(/vigili del fuoco|v\.?v\.?f\.?|\bcomando\b|\bprovinciale\b|\bdi\b|\bdel\b|\bdella\b|\bdei\b/g, ' ');
+  return t.replace(/[^a-z0-9]/g, '');
+}
+// "Squadra 1", "SQ. 1", "1" → stessa chiave
+function squadraKey(s) {
+  return normKey((s || '').replace(/\bsquadra\b|\bsq\.?/gi, ' ')) || 'nonindicata';
+}
+function nomeComando(s) {
+  const t = (s || '').trim();
+  if (!t) return 'Non indicato';
+  if (/^(comando|direzione)/i.test(t)) return t;
+  return 'Comando ' + t;
+}
+
+// Data: "15/01/2026", "15/01/2026 08:30:00", "2026-01-15", "Date(2026,0,15)"
+function parseData(v) {
+  const t = (v || '').trim();
+  let m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if (m) {
+    const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+    return new Date(y, +m[2] - 1, +m[1]);
+  }
+  m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  m = t.match(/Date\((\d{4}),(\d{1,2}),(\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2], +m[3]);
+  return null;
+}
+const giornoKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fmtData = d => d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+
+// Coordinate: stessa logica di TOCOORDINATE (punto o virgola decimale, lat/lon invertite)
+function parseCoord(v) {
+  const t = String(v || '').replace(/ /g, ' ').trim();
+  const m = t.match(/^\D*?(-?\d{1,3})[.,](\d+)\D+?(-?\d{1,3})[.,](\d+)\D*$/);
+  if (!m) return null;
+  const num = (i, d) => { const n = Math.abs(+i) + (+d) / Math.pow(10, d.length); return i.startsWith('-') ? -n : n; };
+  let a = num(m[1], m[2]), b = num(m[3], m[4]);
+  if (a < 30 && b > 30) [a, b] = [b, a];
+  if (a < 35 || a > 48 || b < 6 || b > 19) return null;   // fuori Italia
+  return { lat: a, lng: b };
+}
+
+function trovaColonna(headers, scelta, regole, esclusi) {
+  if (scelta) return headers.includes(scelta) ? scelta : null;
+  for (const r of regole) {
+    const h = headers.find(h => r.test(h) && !(esclusi && esclusi.test(h)));
+    if (h) return h;
+  }
+  return null;
+}
+
+/* =====================================================================
+   MAPPA
+   ===================================================================== */
+const map = L.map('map', { tap: true, touchZoom: true }).setView([42.3, 12.5], 6);
+const baseLayers = {
+  'Stradale': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }),
+  'Topografica': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '&copy; OpenStreetMap, SRTM | &copy; OpenTopoMap (CC-BY-SA)' }),
+  'Satellitare': L.layerGroup([
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Immagini &copy; Esri, Maxar, Earthstar Geographics' }),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
+  ])
+};
+const BASE_KEY = 'puma-map-base';
+let savedBase = 'Stradale';
+try { savedBase = localStorage.getItem(BASE_KEY) || 'Stradale'; } catch (e) {}
+(baseLayers[savedBase] || baseLayers['Stradale']).addTo(map);
+L.control.layers(baseLayers, null, { position: 'topright', collapsed: true }).addTo(map);
+map.attributionControl.setPrefix(false);
+map.on('baselayerchange', e => { try { localStorage.setItem(BASE_KEY, e.name); } catch (err) {} });
+window.addEventListener('resize', () => map.invalidateSize());
+setTimeout(() => map.invalidateSize(), 300);
+
+const Legend = L.Control.extend({
+  options: { position: 'bottomleft' },
+  onAdd() {
+    const d = L.DomUtil.create('div', 'legend');
+    d.innerHTML = `<div><span class="year-dot" style="background:var(--anno-prev)"></span>${NOME_MESE} ${ANNO_PREV}</div>
+                   <div><span class="year-dot" style="background:var(--anno-cur)"></span>${NOME_MESE} ${ANNO_CUR}</div>`;
+    return d;
+  }
+});
+map.addControl(new Legend());
+
+const markersLayer = L.featureGroup().addTo(map);
+let highlightMarker = null;
+const highlightIcon = L.divIcon({ className: 'marker-highlight-wrapper', html: '<div class="marker-highlight-pulse"></div>', iconSize: [48, 48], iconAnchor: [24, 24] });
+function highlight(lat, lng) {
+  if (highlightMarker) map.removeLayer(highlightMarker);
+  highlightMarker = L.marker([lat, lng], { icon: highlightIcon, interactive: false, zIndexOffset: -1000, keyboard: false }).addTo(map);
+}
+function clearHighlight() { if (highlightMarker) { map.removeLayer(highlightMarker); highlightMarker = null; } }
+
+function mapMsg(txt) {
+  const el = document.getElementById('map-msg');
+  el.textContent = txt || '';
+  el.style.display = txt ? 'block' : 'none';
+}
+
+/* =====================================================================
+   LOGHI (come in Mappa Real Time)
+   ===================================================================== */
+let loghiIndex = [];
+const loghiReady = fetch(LOGHI_URL, { cache: 'no-cache' })
+  .then(r => r.ok ? r.json() : {})
+  .then(data => {
+    Object.values(data).forEach(l => {
+      const keys = new Set([normKey(l.nome), normKey((l.nome || '').replace(/\(.*?\)/g, ' ')), normKey(l.sigla)]);
+      const colorMatch = (l.svg || '').match(/<rect[^>]*fill="(#[0-9a-fA-F]{3,8})"/);
+      const color = colorMatch ? colorMatch[1] : '#6E6E6E';
+      const gStart = (l.svg || '').indexOf('<g'), gEnd = (l.svg || '').lastIndexOf('</g>');
+      const pict = gStart >= 0 && gEnd > gStart ? `<svg viewBox="12 4 76 72" xmlns="http://www.w3.org/2000/svg">${l.svg.slice(gStart, gEnd + 4)}</svg>` : '';
+      keys.forEach(k => { if (k) loghiIndex.push({ k, svg: l.svg, nome: l.nome, color, pict }); });
+    });
+  })
+  .catch(err => console.warn('Loghi non caricati:', err));
+
+function findLogo(text) {
+  const t = normKey(text);
+  if (!t || !loghiIndex.length) return null;
+  const exact = loghiIndex.find(e => e.k === t);
+  if (exact) return exact;
+  let best = null;
+  loghiIndex.forEach(e => { if (e.k.length >= 5 && t.includes(e.k) && (!best || e.k.length > best.k.length)) best = e; });
+  return best;
+}
+function logoFor(att) {
+  const voci = (att.tipologia || '').split(/\n|;/).map(v => v.trim()).filter(Boolean);
+  for (const v of voci) { const l = findLogo(v); if (l) return l; }
+  return findLogo('Altro');
+}
+
+/* =====================================================================
+   DATI
+   ===================================================================== */
+let ATT = [];          // addestramenti di gennaio (entrambi gli anni)
+let COMANDI = new Map(); // chiave comando → { key, nome, [ANNO_PREV]: n, [ANNO_CUR]: n, att: [] }
+let headersPiano = [], colonne = {}, diag = {};
+
+const state = { view: 'luoghi', anni: new Set([ANNO_PREV, ANNO_CUR]), comando: '', selGroup: null, selComando: null };
+
+function scaricaCsv(gid, header) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvUrl(gid) + '&_=' + Date.now(), {
+      download: true, header, skipEmptyLines: true,
+      complete: r => resolve(r.data), error: err => reject(err)
+    });
+  });
+}
+
+const refreshBtn = document.getElementById('refresh-btn');
+let loading = false;
+
+async function caricaDati() {
+  if (loading) return;
+  loading = true;
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = '⟳ Caricamento…';
+  mapMsg('Caricamento dati…');
+  try {
+    const [piano, reg] = await Promise.all([scaricaCsv(GID_PIANO, true), scaricaCsv(GID_REG, false), loghiReady]);
+    elabora(piano, reg);
+    document.getElementById('last-update').textContent = new Date().toLocaleString('it-IT');
+    mapMsg('');
+    disegna(true);
+  } catch (err) {
+    console.error(err);
+    mapMsg('Errore nel caricamento dei dati. Riprova più tardi.');
+    document.getElementById('panel').innerHTML =
+      `<div class="debug-box"><b>Dati non caricati.</b><br>Controlla che il file sia condiviso come "Chiunque abbia il link: Visualizzatore" e che i GID ${GID_PIANO} e ${GID_REG} siano giusti.</div>`;
+  } finally {
+    loading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = '⟳ Aggiorna';
+  }
+}
+
+function elabora(piano, reg) {
+  headersPiano = piano.length ? Object.keys(piano[0]) : [];
+  colonne = {
+    data: trovaColonna(headersPiano, COL_PIANO.data, [
+      /^data\s*(dell'?\s*)?(addestramento|attivit|esercitazione)/i,
+      /data.*(addestramento|attivit|svolgimento|esercitazione|inizio)/i,
+      /^data$/i, /inizio/i, /^data/i, /informazioni cronologiche|timestamp|marca temporale/i
+    ]),
+    comando: trovaColonna(headersPiano, COL_PIANO.comando, [
+      /organizzat/i, /^(comando|direzione)\s*(\/\s*direzione)?$/i, /^comando|^direzione/i
+    ], /funzione|utilizzat|appartenenza/i),
+    coordinate: trovaColonna(headersPiano, COL_PIANO.coordinate, [/coordinat/i, /lat.*lon|posizione gps/i]),
+    tipologia: trovaColonna(headersPiano, COL_PIANO.tipologia, [/tipologia/i, /tipo.*(addestr|attivit)/i, /settore/i]),
+    squadra: trovaColonna(headersPiano, COL_PIANO.squadra, [/^squadra$/i, /^squadra/i, /squadra/i])
+  };
+
+  // --- Registrazioni di gennaio, indicizzate per giorno + Comando organizzatore (+ squadra) ---
+  const iD = letterIdx(COL_REG.data), iN = letterIdx(COL_REG.nome), iC = letterIdx(COL_REG.comando),
+        iS = letterIdx(COL_REG.squadra), iF = letterIdx(COL_REG.funzioni);
+  const regIndex = new Map();    // giorno|comando|squadra
+  const regIndex2 = new Map();   // giorno|comando (se il piano non indica la squadra)
+  const push = (m, k, v) => { if (!m.has(k)) m.set(k, []); m.get(k).push(v); };
+  let regTot = 0, regScartate = 0;
+  reg.slice(1).forEach(r => {
+    const d = parseData(r[iD]);
+    if (!d || d.getMonth() !== MESE || (d.getFullYear() !== ANNO_CUR && d.getFullYear() !== ANNO_PREV)) return;
+    regTot++;
+    const nome = (r[iN] || '').trim().replace(/\s+/g, ' ');
+    if (nome.length < 3 || NOME_NON_REALE.test(nome) || isNA(nome)) { regScartate++; return; }
+    const p = { nome, squadra: (r[iS] || '').trim(), funzioni: (r[iF] || '').trim() };
+    const k2 = giornoKey(d) + '|' + comandoKey(r[iC]);
+    push(regIndex2, k2, p);
+    push(regIndex, k2 + '|' + squadraKey(p.squadra), p);
+  });
+
+  // --- Addestramenti di gennaio ---
+  ATT = [];
+  let senzaCoord = 0, senzaData = 0, fuoriPeriodo = 0;
+  piano.forEach((row, i) => {
+    const d = colonne.data ? parseData(row[colonne.data]) : null;
+    if (!d) { senzaData++; return; }
+    if (d.getMonth() !== MESE || (d.getFullYear() !== ANNO_CUR && d.getFullYear() !== ANNO_PREV)) { fuoriPeriodo++; return; }
+    const comandoRaw = colonne.comando ? (row[colonne.comando] || '').trim() : '';
+    const tip = colonne.tipologia ? (row[colonne.tipologia] || '').trim() : '';
+    if (/\btest\b/i.test(comandoRaw + ' ' + tip)) return;   // righe di prova
+    const c = colonne.coordinate ? parseCoord(row[colonne.coordinate]) : null;
+    const squadra = colonne.squadra && !isNA(row[colonne.squadra]) ? (row[colonne.squadra] || '').trim() : '';
+    if (!c) senzaCoord++;
+    ATT.push({
+      id: i, row, data: d, anno: d.getFullYear(), giorno: giornoKey(d),
+      comandoKey: comandoKey(comandoRaw) || 'nonindicato', comando: nomeComando(comandoRaw),
+      tipologia: isNA(tip) ? '' : tip, squadra, lat: c ? c.lat : null, lng: c ? c.lng : null, reg: []
+    });
+  });
+
+  // Collego i registrati: stesso giorno + stesso Comando organizzatore + stessa squadra.
+  // Se il piano non indica la squadra: stesso giorno + stesso Comando (tutte le squadre).
+  const perChiave = new Map();
+  ATT.forEach(a => {
+    a.conSquadra = !!(colonne.squadra && a.squadra);
+    const k = a.giorno + '|' + a.comandoKey + (a.conSquadra ? '|' + squadraKey(a.squadra) : '|*');
+    push(perChiave, k, a);
+  });
+  let regCollegate = 0, attSenzaSquadra = 0;
+  perChiave.forEach((lista, k) => {
+    const a0 = lista[0];
+    const fonte = a0.conSquadra ? regIndex.get(k) : regIndex2.get(k.slice(0, -2));
+    if (!a0.conSquadra) attSenzaSquadra += lista.length;
+    const persone = dedup(fonte || []);
+    regCollegate += persone.length;
+    lista.forEach(a => { a.reg = persone; a.condivisi = lista.length; });
+  });
+
+  // Riepilogo per Comando
+  COMANDI = new Map();
+  ATT.forEach(a => {
+    if (!COMANDI.has(a.comandoKey)) COMANDI.set(a.comandoKey, { key: a.comandoKey, nome: a.comando, [ANNO_PREV]: 0, [ANNO_CUR]: 0, regPrev: 0, regCur: 0, att: [] });
+    const c = COMANDI.get(a.comandoKey);
+    c[a.anno]++;
+    c.att.push(a);
+  });
+  // registrati per Comando/anno (contati una volta per giorno/squadra)
+  perChiave.forEach((lista, k) => {
+    const a = lista[0], c = COMANDI.get(a.comandoKey);
+    if (a.anno === ANNO_CUR) c.regCur += a.reg.length; else c.regPrev += a.reg.length;
+  });
+  COMANDI.forEach(c => c.att.sort((x, y) => x.data - y.data));
+
+  diag = { righePiano: piano.length, att: ATT.length, senzaData, fuoriPeriodo, senzaCoord, regTot, regScartate, regCollegate, attSenzaSquadra };
+
+  // Menu Comandi
+  const sel = document.getElementById('comando-select');
+  const prima = state.comando;
+  sel.innerHTML = '<option value="">Tutti</option>' + [...COMANDI.values()]
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'it'))
+    .map(c => `<option value="${esc(c.key)}">${esc(c.nome)} (${c[ANNO_PREV]} · ${c[ANNO_CUR]})</option>`).join('');
+  if (prima && COMANDI.has(prima)) sel.value = prima; else state.comando = '';
+}
+
+// Una persona compare una sola volta (stesso nome): unisco squadre e funzioni
+function dedup(lista) {
+  const m = new Map();
+  lista.forEach(p => {
+    const k = normKey(p.nome);
+    if (!m.has(k)) m.set(k, { nome: p.nome, squadre: new Set(), funzioni: new Set() });
+    const x = m.get(k);
+    if (p.squadra) x.squadre.add(p.squadra);
+    if (p.funzioni) x.funzioni.add(p.funzioni);
+  });
+  return [...m.values()].map(x => ({ nome: x.nome, squadra: [...x.squadre].join(' / '), funzioni: [...x.funzioni].join(' / ') }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
+}
+
+/* =====================================================================
+   FILTRI
+   ===================================================================== */
+const visibili = () => ATT.filter(a => state.anni.has(a.anno) && (!state.comando || a.comandoKey === state.comando));
+
+document.getElementById('view-luoghi').onclick = () => setView('luoghi');
+document.getElementById('view-comandi').onclick = () => setView('comandi');
+function setView(v) {
+  state.view = v;
+  document.getElementById('view-luoghi').classList.toggle('on', v === 'luoghi');
+  document.getElementById('view-comandi').classList.toggle('on', v === 'comandi');
+  state.selGroup = null;
+  state.selComando = state.comando ? COMANDI.get(state.comando) || null : null;
+  disegna(true);
+}
+document.getElementById('chk-prev').onchange = e => { e.target.checked ? state.anni.add(ANNO_PREV) : state.anni.delete(ANNO_PREV); state.selGroup = null; disegna(true); };
+document.getElementById('chk-cur').onchange  = e => { e.target.checked ? state.anni.add(ANNO_CUR)  : state.anni.delete(ANNO_CUR);  state.selGroup = null; disegna(true); };
+document.getElementById('comando-select').onchange = e => setComando(e.target.value);
+function setComando(key) {
+  state.comando = key || '';
+  document.getElementById('comando-select').value = state.comando;
+  state.selGroup = null;
+  state.selComando = state.comando ? COMANDI.get(state.comando) || null : null;
+  disegna(true);
+}
+map.on('click', () => {
+  if (state.selGroup || state.selComando) {
+    state.selGroup = null;
+    if (!state.comando) state.selComando = null;
+    clearHighlight();
+    disegna(false);
+  }
+});
+
+/* =====================================================================
+   DISEGNO MAPPA
+   ===================================================================== */
+const coordKey = (lat, lng) => `${lat.toFixed(5)},${lng.toFixed(5)}`;
+let gruppi = new Map();
+
+function pinIcon(a, count, idx) {
+  const logo = logoFor(a);
+  const color = logo ? logo.color : '#6E6E6E';
+  const badge = count > 1 ? `<span class="pin-count">${idx !== null ? (idx + 1) + '/' + count : count}</span>` : '';
+  return L.divIcon({
+    className: 'pin-wrapper',
+    html: `<div class="pin"><div class="pin-drop" style="background-color:${color};border-color:${yearHex(a.anno)}">${logo ? logo.pict : ''}</div>${badge}</div>`,
+    iconSize: [32, 32], iconAnchor: [1, 31]
+  });
+}
+
+function disegna(adattaVista) {
+  markersLayer.clearLayers();
+  clearHighlight();
+  if (!ATT.length && !headersPiano.length) return;
+  const lista = visibili();
+  if (state.view === 'luoghi') disegnaLuoghi(lista); else disegnaComandi(lista);
+
+  if (!state.anni.size) mapMsg('Seleziona almeno un anno.');
+  else if (!lista.length) mapMsg(`Nessun addestramento collettivo a ${NOME_MESE} per i filtri scelti.`);
+  else if (!markersLayer.getLayers().length) mapMsg('Gli addestramenti trovati non hanno coordinate valide.');
+  else mapMsg('');
+
+  if (adattaVista && markersLayer.getLayers().length) {
+    map.fitBounds(markersLayer.getBounds().pad(0.15), { maxZoom: state.comando ? 12 : 10 });
+  }
+  pannello();
+  setTimeout(() => map.invalidateSize(), 60);
+}
+
+function disegnaLuoghi(lista) {
+  gruppi = new Map();
+  lista.forEach(a => {
+    if (a.lat === null) return;
+    const k = coordKey(a.lat, a.lng);
+    if (!gruppi.has(k)) gruppi.set(k, { lat: a.lat, lng: a.lng, att: [], idx: 0, marker: null });
+    gruppi.get(k).att.push(a);
+  });
+  gruppi.forEach(g => {
+    g.att.sort((x, y) => y.data - x.data);   // prima i più recenti
+    const m = L.marker([g.lat, g.lng], {
+      icon: pinIcon(g.att[0], g.att.length, null),
+      title: g.att.length > 1 ? `${g.att.length} addestramenti su questo punto` : `${g.att[0].comando} – ${g.att[0].data.toLocaleDateString('it-IT')}`,
+      zIndexOffset: g.att.length > 1 ? 500 : 0
+    });
+    m.on('click', ev => {
+      L.DomEvent.stopPropagation(ev);
+      if (state.selGroup === g && g.att.length > 1) selezionaGruppo(g, g.idx + 1);
+      else selezionaGruppo(g, g.idx);
+    });
+    g.marker = m;
+    markersLayer.addLayer(m);
+  });
+  // riseleziono il gruppo aperto, se esiste ancora
+  if (state.selGroup) {
+    const g = gruppi.get(coordKey(state.selGroup.lat, state.selGroup.lng));
+    if (g) { const id = state.selGroup.att[state.selGroup.idx].id; const i = g.att.findIndex(a => a.id === id); selezionaGruppo(g, i >= 0 ? i : 0, true); }
+    else state.selGroup = null;
+  }
+}
+
+function selezionaGruppo(g, idx, silenzioso) {
+  const prev = state.selGroup;
+  state.selGroup = g;
+  g.idx = ((idx % g.att.length) + g.att.length) % g.att.length;
+  if (prev && prev !== g && prev.marker) prev.marker.setIcon(pinIcon(prev.att[prev.idx], prev.att.length, null));
+  g.marker.setIcon(pinIcon(g.att[g.idx], g.att.length, g.att.length > 1 ? g.idx : null));
+  g.marker.setZIndexOffset(2000);
+  highlight(g.lat, g.lng);
+  if (!silenzioso) pannello();
+}
+
+function disegnaComandi(lista) {
+  // Un punto per Comando: posizione media dei suoi addestramenti (con coordinate) nei filtri attivi
+  const per = new Map();
+  lista.forEach(a => {
+    if (!per.has(a.comandoKey)) per.set(a.comandoKey, { c: COMANDI.get(a.comandoKey), pts: [], prev: 0, cur: 0 });
+    const x = per.get(a.comandoKey);
+    a.anno === ANNO_CUR ? x.cur++ : x.prev++;
+    if (a.lat !== null) x.pts.push([a.lat, a.lng]);
+  });
+  per.forEach(x => {
+    if (!x.pts.length) return;
+    const lat = x.pts.reduce((s, p) => s + p[0], 0) / x.pts.length;
+    const lng = x.pts.reduce((s, p) => s + p[1], 0) / x.pts.length;
+    const sel = state.selComando && state.selComando.key === x.c.key;
+    const parti = [];
+    if (state.anni.has(ANNO_PREV)) parti.push(`<span class="p${x.prev ? '' : ' zero'}">${x.prev}</span>`);
+    if (state.anni.has(ANNO_CUR))  parti.push(`<span class="c${x.cur ? '' : ' zero'}">${x.cur}</span>`);
+    const m = L.marker([lat, lng], {
+      icon: L.divIcon({ className: 'cmd-wrapper', html: `<div class="cmd-pin${sel ? ' sel' : ''}">${parti.join('')}</div>`, iconSize: [0, 0], iconAnchor: [0, 0] }),
+      zIndexOffset: sel ? 2000 : x.prev + x.cur
+    });
+    m.bindTooltip(esc(x.c.nome), { direction: 'top', offset: [0, -12], className: 'cmd-label' });
+    m.on('click', ev => {
+      L.DomEvent.stopPropagation(ev);
+      state.selComando = x.c;
+      disegna(false);
+    });
+    markersLayer.addLayer(m);
+  });
+}
+
+/* =====================================================================
+   PANNELLO LATERALE
+   ===================================================================== */
+const panel = document.getElementById('panel');
+
+function pannello() {
+  let html = DEBUG || !colonne.data || !colonne.comando || !colonne.coordinate || !colonne.squadra ? diagnostica() : '';
+  if (state.view === 'luoghi' && state.selGroup) html += dettaglioAddestramento(state.selGroup);
+  else if (state.selComando) html += dettaglioComando(state.selComando);
+  else html += riepilogo();
+  panel.innerHTML = html;
+  bindPannello();
+}
+
+function riepilogo() {
+  const lista = [...COMANDI.values()].sort((a, b) => (b[ANNO_CUR] + b[ANNO_PREV]) - (a[ANNO_CUR] + a[ANNO_PREV]) || a.nome.localeCompare(b.nome, 'it'));
+  if (!lista.length) return `<h3 class="panel-title">Nessun addestramento collettivo a ${NOME_MESE} ${ANNO_PREV} o ${NOME_MESE} ${ANNO_CUR}.</h3>`;
+  let totP = 0, totC = 0;
+  const righe = lista.map(c => {
+    totP += c[ANNO_PREV]; totC += c[ANNO_CUR];
+    return `<tr class="click" data-comando="${esc(c.key)}"><td class="key">${esc(c.nome)}</td>
+      <td class="num prev">${c[ANNO_PREV]}</td><td class="num cur">${c[ANNO_CUR]}</td>${deltaTd(c[ANNO_CUR] - c[ANNO_PREV])}</tr>`;
+  }).join('');
+  return `<h3 class="panel-title">Addestramenti collettivi di ${NOME_MESE}</h3>
+    <div class="panel-note">Clicca un Comando per filtrare la mappa e vedere l'elenco degli addestramenti con i registrati.</div>
+    <table><tr><th>Comando organizzatore</th><th style="color:var(--anno-prev)">${ANNO_PREV}</th><th style="color:var(--anno-cur)">${ANNO_CUR}</th><th>Δ</th></tr>
+    ${righe}
+    <tr class="tot"><td class="key">Totale</td><td class="num prev">${totP}</td><td class="num cur">${totC}</td>${deltaTd(totC - totP)}</tr></table>`;
+}
+function deltaTd(d) {
+  if (d > 0) return `<td class="delta-up">+${d}</td>`;
+  if (d < 0) return `<td class="delta-down">${d}</td>`;
+  return `<td class="delta-eq">=</td>`;
+}
+
+function dettaglioComando(c) {
+  const att = c.att.filter(a => state.anni.has(a.anno));
+  let html = `<span class="back-link" data-back="1">◀ Tutti i Comandi</span>
+    <h3 class="panel-title">${esc(c.nome)}</h3>
+    <table>
+      <tr><th></th><th style="color:var(--anno-prev)">${NOME_MESE} ${ANNO_PREV}</th><th style="color:var(--anno-cur)">${NOME_MESE} ${ANNO_CUR}</th></tr>
+      <tr><td class="key">Addestramenti</td><td class="num prev">${c[ANNO_PREV]}</td><td class="num cur">${c[ANNO_CUR]}</td></tr>
+      <tr><td class="key">Registrati</td><td class="num prev">${c.regPrev}</td><td class="num cur">${c.regCur}</td></tr>
+    </table>
+    <div class="panel-note">Clicca un addestramento per vederlo sulla mappa con l'elenco dei registrati.</div>`;
+  if (!att.length) return html + '<div class="panel-note">Nessun addestramento per gli anni selezionati.</div>';
+  html += att.map(a => `<div class="att-item" data-att="${a.id}" style="border-left-color:${yearHex(a.anno)}">
+      <span class="d">${esc(fmtData(a.data))}</span><br>
+      <span class="t">${esc(a.tipologia || 'Addestramento')}${a.squadra ? ' · ' + esc(a.squadra) : ''}</span><br>
+      <span class="n">👥 ${a.reg.length} registrati${a.lat === null ? ' · ⚠️ senza coordinate' : ''}</span></div>`).join('');
+  return html;
+}
+
+function dettaglioAddestramento(g) {
+  const a = g.att[g.idx];
+  const logo = logoFor(a);
+  let html = `<span class="back-link" data-back="1">◀ Riepilogo</span>
+    <div class="details-title">${logo ? `<span class="logo-att" title="${esc(logo.nome)}">${logo.svg}</span>` : ''}<h3>${esc(a.tipologia || 'Addestramento').replace(/\n/g, '<br>')}</h3></div>
+    <div style="margin-bottom:8px"><span class="chip" style="background:${yearHex(a.anno)}">${NOME_MESE} ${a.anno}</span><b>${esc(fmtData(a.data))}</b></div>
+    <div style="margin-bottom:8px;color:#ccc;font-size:13px">🏢 <span class="back-link" style="margin:0" data-comando="${esc(a.comandoKey)}">${esc(a.comando)}</span>${a.squadra ? ` · 👥 ${esc(a.squadra)}` : ''}</div>`;
+  if (g.att.length > 1) {
+    html += `<div class="group-switch"><button type="button" id="grp-prev" aria-label="Precedente">◀</button>
+      <span>Addestramento <b>${g.idx + 1}</b> di <b>${g.att.length}</b> su questo punto</span>
+      <button type="button" id="grp-next" aria-label="Successivo">▶</button></div>`;
+  }
+  html += `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${a.lat},${a.lng}','_blank')">🚒 Naviga a</button>`;
+
+  // Registrati
+  html += `<details class="reg-box" open><summary>👥 Registrati: ${a.reg.length}</summary>`;
+  if (!a.conSquadra) {
+    html += `<div class="reg-warn">⚠️ Il piano di sicurezza non indica la squadra: sono mostrati tutti i registrati di ${esc(a.comando)} in questo giorno.</div>`;
+  } else if (a.condivisi > 1) {
+    html += `<div class="reg-warn">⚠️ Lo stesso giorno ${esc(a.comando)} ha ${a.condivisi} piani di sicurezza per la squadra "${esc(a.squadra)}": i registrati sono gli stessi per tutti.</div>`;
+  }
+  if (!a.reg.length) html += '<div class="panel-note">Nessuna registrazione trovata per questo giorno e questo Comando.</div>';
+  else {
+    const perSquadra = new Map();
+    a.reg.forEach(p => { const s = p.squadra || 'Squadra non indicata'; if (!perSquadra.has(s)) perSquadra.set(s, []); perSquadra.get(s).push(p); });
+    [...perSquadra.keys()].sort((x, y) => x.localeCompare(y, 'it', { numeric: true })).forEach(s => {
+      const pp = perSquadra.get(s);
+      html += `<div class="squadra-title">${esc(s)} · ${pp.length}</div>` + pp.map(p =>
+        `<div class="persona-item"><span class="persona-nome">${esc(p.nome)}</span>${p.funzioni ? `<span class="persona-fun">${esc(p.funzioni)}</span>` : ''}</div>`).join('');
+    });
+  }
+  html += '</details>';
+
+  // Dati del piano di sicurezza
+  html += `<details class="reg-box"><summary>📋 Dati del piano di sicurezza</summary><table style="margin-top:8px">`;
+  headersPiano.forEach(h => {
+    const v = formattaValore(h, (a.row[h] || '').trim());
+    if (!v || isNA(v) || NASCONDI.test(h)) return;
+    html += `<tr><td class="key">${esc(h)}</td><td class="value">${esc(v).replace(/\n/g, '<br>')}</td></tr>`;
+  });
+  html += '</table></details>';
+  return html;
+}
+
+// Date: solo giorno, tranne le colonne di inizio/fine che tengono ore e minuti (senza secondi)
+const DATA_ORA = /^(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})(?:\s+(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?)?$/;
+function formattaValore(h, v) {
+  const m = v.match(DATA_ORA);
+  if (!m) return v;
+  if (/inizio|fine/i.test(h) && m[2]) return `${m[1]} ${m[2].padStart(2, '0')}:${m[3]}`;
+  return m[1];
+}
+
+function diagnostica() {
+  const riga = (n, v) => `<b>${n}:</b> ${v ? `<code>${esc(v)}</code>` : '<span style="color:#ef5350">NON TROVATA</span>'}<br>`;
+  return `<div class="debug-box">
+    <div style="margin-bottom:6px"><b>Colonne riconosciute in Piano_Di_Sicurezza</b></div>
+    ${riga('Data', colonne.data)}${riga('Comando organizzatore', colonne.comando)}${riga('Coordinate', colonne.coordinate)}${riga('Tipologia', colonne.tipologia)}${riga('Squadra', colonne.squadra)}
+    <div style="margin-top:6px">Righe nel foglio: ${diag.righePiano ?? '—'} · gennaio ${ANNO_PREV}/${ANNO_CUR}: ${diag.att ?? '—'} · senza data: ${diag.senzaData ?? '—'} · senza coordinate: ${diag.senzaCoord ?? '—'}</div>
+    <div>Registrazioni di gennaio: ${diag.regTot ?? '—'} · scartate (prove/vuote): ${diag.regScartate ?? '—'} · collegate agli addestramenti: ${diag.regCollegate ?? '—'}</div>
+    <div>Collegamento: giorno + Comando + squadra${diag.attSenzaSquadra ? ` · <span style="color:#ffb74d">${diag.attSenzaSquadra} addestramenti senza squadra → giorno + Comando</span>` : ''}</div>
+    <details style="margin-top:6px"><summary style="cursor:pointer">Tutte le intestazioni</summary><code>${headersPiano.map(esc).join(' | ')}</code></details>
+    <div style="margin-top:6px;color:#aaa">Se una colonna è sbagliata, scrivi il nome esatto in <code>COL_PIANO</code> in cima alla pagina.</div>
+  </div>`;
+}
+
+function bindPannello() {
+  panel.querySelectorAll('[data-comando]').forEach(el => el.addEventListener('click', () => setComando(el.dataset.comando)));
+  panel.querySelectorAll('[data-back]').forEach(el => el.addEventListener('click', () => {
+    if (state.selGroup) { state.selGroup = null; clearHighlight(); disegna(false); }
+    else { setComando(''); }
+  }));
+  panel.querySelectorAll('[data-att]').forEach(el => el.addEventListener('click', () => apriAddestramento(+el.dataset.att)));
+  const p = document.getElementById('grp-prev'), n = document.getElementById('grp-next');
+  if (p) p.addEventListener('click', () => selezionaGruppo(state.selGroup, state.selGroup.idx - 1));
+  if (n) n.addEventListener('click', () => selezionaGruppo(state.selGroup, state.selGroup.idx + 1));
+  if (!state.selGroup) panel.parentElement.scrollTop = 0;
+}
+
+// Dal pannello Comando: passa alla vista luoghi e apre l'addestramento
+function apriAddestramento(id) {
+  const a = ATT.find(x => x.id === id);
+  if (!a) return;
+  if (a.lat === null) { alert('Questo addestramento non ha coordinate valide nel piano di sicurezza.'); return; }
+  state.comando = a.comandoKey;
+  document.getElementById('comando-select').value = state.comando;
+  state.view = 'luoghi';
+  document.getElementById('view-luoghi').classList.add('on');
+  document.getElementById('view-comandi').classList.remove('on');
+  state.selGroup = null;
+  disegna(false);
+  const g = gruppi.get(coordKey(a.lat, a.lng));
+  if (g) {
+    map.setView([a.lat, a.lng], Math.max(map.getZoom(), 13));
+    selezionaGruppo(g, g.att.findIndex(x => x.id === id));
+  }
+}
+
+refreshBtn.addEventListener('click', caricaDati);
+caricaDati();
+</script>
+</body>
+</html>
