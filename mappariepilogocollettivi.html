@@ -11,8 +11,8 @@
     :root {
       color-scheme: dark;
       --gold: #ffd700;
-      --anno-cur: #ffd700;   /* anno corrente */
-      --anno-prev: #4fc3f7;  /* anno precedente */
+      --anno-a: #4fc3f7;     /* anno principale */
+      --anno-b: #ffd700;     /* anno di confronto */
     }
     * { scrollbar-width: thin; scrollbar-color: #555 #1e1e1e; }
     ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -84,7 +84,9 @@
     .year-chk input { accent-color: var(--gold); margin: 0; }
     .year-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; border: 2px solid #fff; box-sizing: border-box; }
     .year-chk b { font-weight: bold; }
-    #comando-select {
+    .year-pick { display: inline-flex; align-items: center; gap: 6px; padding: 0 0 0 8px; border: 1px solid #555; border-radius: 4px; background: #1e1e1e; }
+    .year-pick select { border: none !important; font-weight: bold; }
+    #filters select {
       background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px;
       padding: 6px 8px; font-family: 'Comfortaa', cursive; font-size: 12.5px; max-width: 320px;
     }
@@ -106,7 +108,8 @@
       #page-header { flex-direction: column; }
       #nav-buttons { width: 100%; }
       .nav-btn { flex: 1; text-align: center; }
-      #comando-select { max-width: 100%; flex: 1 1 100%; }
+      #filters #comando-select { max-width: 100%; flex: 1 1 100%; }
+      #mese-select { flex: 1 1 auto; }
       #filters label.lbl, #meta-info { display: none; }
       #filters { padding: 6px 10px; gap: 6px; }
     }
@@ -135,8 +138,8 @@
     td.value { font-weight: bold; text-align: right; color: var(--gold); word-break: break-word; }
     td.key { text-align: left; color: #f0f0f0; }
     td.num { text-align: center; font-weight: bold; }
-    td.num.cur { color: var(--anno-cur); }
-    td.num.prev { color: var(--anno-prev); }
+    td.num.cur { color: var(--anno-b); }
+    td.num.prev { color: var(--anno-a); }
     td.delta-up { color: #66bb6a; text-align: center; font-weight: bold; }
     td.delta-down { color: #ef5350; text-align: center; font-weight: bold; }
     td.delta-eq { color: #999; text-align: center; }
@@ -219,8 +222,8 @@
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-weight: 800; font-size: 12px;
     }
     .cmd-pin span { padding: 3px 7px; color: #1e1e1e; min-width: 12px; text-align: center; }
-    .cmd-pin .p { background: var(--anno-prev); }
-    .cmd-pin .c { background: var(--anno-cur); }
+    .cmd-pin .p { background: var(--anno-a); }
+    .cmd-pin .c { background: var(--anno-b); }
     .cmd-pin .zero { opacity: .45; }
     .cmd-pin.sel { border-color: #ff3b30; box-shadow: 0 0 0 3px rgba(255,59,48,.5), 1px 2px 5px rgba(0,0,0,0.6); }
     .cmd-label {
@@ -256,7 +259,7 @@
 <header id="page-header">
   <div>
     <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
-    <h2>Addestramenti collettivi di <b>gennaio</b> per Comando organizzatore: <b id="anni-label"></b></h2>
+    <h2>Riepilogo addestramenti collettivi per Comando organizzatore: <b id="periodo-label">—</b></h2>
     <div id="meta-info">Dati caricati: <span id="last-update">—</span></div>
   </div>
   <div id="nav-buttons">
@@ -271,8 +274,11 @@
     <button type="button" id="view-luoghi" class="on">📍 Luoghi</button>
     <button type="button" id="view-comandi">🏢 Per Comando</button>
   </div>
-  <label class="year-chk"><input type="checkbox" id="chk-prev" checked><span class="year-dot" style="background:var(--anno-prev)"></span><b id="lbl-prev"></b></label>
-  <label class="year-chk"><input type="checkbox" id="chk-cur" checked><span class="year-dot" style="background:var(--anno-cur)"></span><b id="lbl-cur"></b></label>
+  <label class="lbl" for="mese-select">Mese</label>
+  <select id="mese-select" aria-label="Mese"></select>
+  <span class="year-pick" title="Anno"><span class="year-dot" style="background:var(--anno-a)"></span><select id="anno-a" aria-label="Anno"></select></span>
+  <span class="lbl">confronta con</span>
+  <span class="year-pick" title="Anno di confronto"><span class="year-dot" style="background:var(--anno-b)"></span><select id="anno-b" aria-label="Anno di confronto"></select></span>
   <label class="lbl" for="comando-select">Comando organizzatore</label>
   <select id="comando-select"><option value="">Tutti</option></select>
 </div>
@@ -292,7 +298,7 @@
 const SHEET_ID  = "1WHGKaawomU_jMuO6FnwzYidou-fmpc0ndeE0aiEMYP4"; // PUMA VVF Database Personale
 const GID_PIANO = "1495276384";   // Piano_Di_Sicurezza: un addestramento collettivo per riga
 const GID_REG   = "2031805821";   // Registrazione_Attivita_Semplificata: un registrato per riga
-const MESE      = 0;              // 0 = gennaio
+const MESE_PREDEFINITO = 1;       // mese all'apertura: 1 = gennaio … 12 = dicembre, 0 = tutto l'anno
 
 // Colonne di Piano_Di_Sicurezza: null = riconoscimento automatico dalle intestazioni.
 // Se il riconoscimento sbaglia, scrivi qui il nome esatto dell'intestazione.
@@ -314,24 +320,18 @@ const NASCONDI = /e-?mail|codice fiscale|\bc\.?f\.?\b|telefon|cellulare|indirizz
 const NOME_NON_REALE = /\b(test|prova|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;
 
 const LOGHI_URL = "https://gesaddvvf.github.io/PUMA/images/loghi/loghi.json";
-const DEBUG = new URLSearchParams(location.search).has('debug');
 
 /* ===================================================================== */
-const ANNO_CUR  = new Date().getFullYear();
-const ANNO_PREV = ANNO_CUR - 1;
-const NOME_MESE = new Date(2000, MESE, 1).toLocaleDateString('it-IT', { month: 'long' });
+const URLP = new URLSearchParams(location.search);
+const DEBUG = URLP.has('debug');
+const MESI = Array.from({ length: 12 }, (_, i) => new Date(2000, i, 1).toLocaleDateString('it-IT', { month: 'long' }));
 const csvUrl = gid => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+const COL_A = '#4fc3f7', COL_B = '#ffd700';
 
-document.getElementById('anni-label').textContent = `${ANNO_PREV} e ${ANNO_CUR}`;
-document.getElementById('lbl-prev').textContent = `${NOME_MESE} ${ANNO_PREV}`;
-document.getElementById('lbl-cur').textContent  = `${NOME_MESE} ${ANNO_CUR}`;
-document.title = `P.U.M.A. - Addestramenti collettivi di ${NOME_MESE} ${ANNO_PREV}/${ANNO_CUR}`;
-
-const yearColor = y => y === ANNO_CUR ? 'var(--anno-cur)' : 'var(--anno-prev)';
-const yearHex   = y => y === ANNO_CUR ? '#ffd700' : '#4fc3f7';
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const isNA = v => /^#?N\/[AD]$|^#(REF|VALUE|ERROR|NAME)!?/i.test((v || '').trim());
 const letterIdx = l => l.toUpperCase().split('').reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1;
+const push = (m, k, v) => { if (!m.has(k)) m.set(k, []); m.get(k).push(v); };
 
 function normKey(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
@@ -391,6 +391,38 @@ function trovaColonna(headers, scelta, regole, esclusi) {
   return null;
 }
 
+// Date nel pannello: solo giorno, tranne le colonne di inizio/fine che tengono ore e minuti
+const DATA_ORA = /^(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})(?:\s+(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?)?$/;
+function formattaValore(h, v) {
+  const m = v.match(DATA_ORA);
+  if (!m) return v;
+  if (/inizio|fine/i.test(h) && m[2]) return `${m[1]} ${m[2].padStart(2, '0')}:${m[3]}`;
+  return m[1];
+}
+
+/* =====================================================================
+   STATO E PERIODO
+   ===================================================================== */
+const state = {
+  view: URLP.get('vista') === 'comandi' ? 'comandi' : 'luoghi',
+  mese: null,      // 0-11, oppure -1 = tutto l'anno
+  annoA: null,     // anno principale (azzurro)
+  annoB: null,     // anno di confronto (giallo) oppure null
+  comando: URLP.get('comando') || '',
+  selGroup: null, selComando: null
+};
+(function meseIniziale() {
+  const p = URLP.get('mese');
+  const n = p !== null && p !== '' ? parseInt(p, 10) : MESE_PREDEFINITO;
+  state.mese = n >= 1 && n <= 12 ? n - 1 : -1;
+})();
+
+const anniScelti = () => [state.annoA, state.annoB].filter(y => y !== null);
+const yearHex = y => y === state.annoB ? COL_B : COL_A;
+const periodo = y => (state.mese >= 0 ? MESI[state.mese] + ' ' : '') + y;
+const inPeriodo = a => (state.mese < 0 || a.data.getMonth() === state.mese) && anniScelti().includes(a.anno);
+const visibili = () => ATT.filter(a => inPeriodo(a) && (!state.comando || a.comandoKey === state.comando));
+
 /* =====================================================================
    MAPPA
    ===================================================================== */
@@ -413,16 +445,18 @@ map.on('baselayerchange', e => { try { localStorage.setItem(BASE_KEY, e.name); }
 window.addEventListener('resize', () => map.invalidateSize());
 setTimeout(() => map.invalidateSize(), 300);
 
+let legendDiv = null;
 const Legend = L.Control.extend({
   options: { position: 'bottomleft' },
-  onAdd() {
-    const d = L.DomUtil.create('div', 'legend');
-    d.innerHTML = `<div><span class="year-dot" style="background:var(--anno-prev)"></span>${NOME_MESE} ${ANNO_PREV}</div>
-                   <div><span class="year-dot" style="background:var(--anno-cur)"></span>${NOME_MESE} ${ANNO_CUR}</div>`;
-    return d;
-  }
+  onAdd() { legendDiv = L.DomUtil.create('div', 'legend'); return legendDiv; }
 });
 map.addControl(new Legend());
+function aggiornaLegenda() {
+  if (!legendDiv) return;
+  legendDiv.innerHTML = anniScelti().map(y =>
+    `<div><span class="year-dot" style="background:${yearHex(y)}"></span>${esc(periodo(y))}</div>`).join('');
+  legendDiv.style.display = anniScelti().length ? '' : 'none';
+}
 
 const markersLayer = L.featureGroup().addTo(map);
 let highlightMarker = null;
@@ -475,11 +509,10 @@ function logoFor(att) {
 /* =====================================================================
    DATI
    ===================================================================== */
-let ATT = [];          // addestramenti di gennaio (entrambi gli anni)
-let COMANDI = new Map(); // chiave comando → { key, nome, [ANNO_PREV]: n, [ANNO_CUR]: n, att: [] }
+let ATT = [];                 // tutti gli addestramenti collettivi con data valida
+let NOMI_COMANDO = new Map(); // chiave → nome leggibile
+let ANNI = [];                // anni presenti nei dati (decrescente)
 let headersPiano = [], colonne = {}, diag = {};
-
-const state = { view: 'luoghi', anni: new Set([ANNO_PREV, ANNO_CUR]), comando: '', selGroup: null, selComando: null };
 
 function scaricaCsv(gid, header) {
   return new Promise((resolve, reject) => {
@@ -491,7 +524,7 @@ function scaricaCsv(gid, header) {
 }
 
 const refreshBtn = document.getElementById('refresh-btn');
-let loading = false;
+let loading = false, primoCaricamento = true;
 
 async function caricaDati() {
   if (loading) return;
@@ -502,9 +535,11 @@ async function caricaDati() {
   try {
     const [piano, reg] = await Promise.all([scaricaCsv(GID_PIANO, true), scaricaCsv(GID_REG, false), loghiReady]);
     elabora(piano, reg);
+    preparaFiltri();
     document.getElementById('last-update').textContent = new Date().toLocaleString('it-IT');
     mapMsg('');
     disegna(true);
+    primoCaricamento = false;
   } catch (err) {
     console.error(err);
     mapMsg('Errore nel caricamento dei dati. Riprova più tardi.');
@@ -533,16 +568,15 @@ function elabora(piano, reg) {
     squadra: trovaColonna(headersPiano, COL_PIANO.squadra, [/^squadra$/i, /^squadra/i, /squadra/i])
   };
 
-  // --- Registrazioni di gennaio, indicizzate per giorno + Comando organizzatore (+ squadra) ---
+  // --- Registrazioni, indicizzate per giorno + Comando organizzatore (+ squadra) ---
   const iD = letterIdx(COL_REG.data), iN = letterIdx(COL_REG.nome), iC = letterIdx(COL_REG.comando),
         iS = letterIdx(COL_REG.squadra), iF = letterIdx(COL_REG.funzioni);
   const regIndex = new Map();    // giorno|comando|squadra
   const regIndex2 = new Map();   // giorno|comando (se il piano non indica la squadra)
-  const push = (m, k, v) => { if (!m.has(k)) m.set(k, []); m.get(k).push(v); };
   let regTot = 0, regScartate = 0;
   reg.slice(1).forEach(r => {
     const d = parseData(r[iD]);
-    if (!d || d.getMonth() !== MESE || (d.getFullYear() !== ANNO_CUR && d.getFullYear() !== ANNO_PREV)) return;
+    if (!d) return;
     regTot++;
     const nome = (r[iN] || '').trim().replace(/\s+/g, ' ');
     if (nome.length < 3 || NOME_NON_REALE.test(nome) || isNA(nome)) { regScartate++; return; }
@@ -552,19 +586,18 @@ function elabora(piano, reg) {
     push(regIndex, k2 + '|' + squadraKey(p.squadra), p);
   });
 
-  // --- Addestramenti di gennaio ---
+  // --- Addestramenti ---
   ATT = [];
-  let senzaCoord = 0, senzaData = 0, fuoriPeriodo = 0;
+  let senzaCoord = 0, senzaData = 0, prove = 0;
   piano.forEach((row, i) => {
     const d = colonne.data ? parseData(row[colonne.data]) : null;
     if (!d) { senzaData++; return; }
-    if (d.getMonth() !== MESE || (d.getFullYear() !== ANNO_CUR && d.getFullYear() !== ANNO_PREV)) { fuoriPeriodo++; return; }
     const comandoRaw = colonne.comando ? (row[colonne.comando] || '').trim() : '';
     const tip = colonne.tipologia ? (row[colonne.tipologia] || '').trim() : '';
-    if (/\btest\b/i.test(comandoRaw + ' ' + tip)) return;   // righe di prova
+    if (/\btest\b/i.test(comandoRaw + ' ' + tip)) { prove++; return; }   // righe di prova
     const c = colonne.coordinate ? parseCoord(row[colonne.coordinate]) : null;
-    const squadra = colonne.squadra && !isNA(row[colonne.squadra]) ? (row[colonne.squadra] || '').trim() : '';
     if (!c) senzaCoord++;
+    const squadra = colonne.squadra && !isNA(row[colonne.squadra]) ? (row[colonne.squadra] || '').trim() : '';
     ATT.push({
       id: i, row, data: d, anno: d.getFullYear(), giorno: giornoKey(d),
       comandoKey: comandoKey(comandoRaw) || 'nonindicato', comando: nomeComando(comandoRaw),
@@ -577,8 +610,8 @@ function elabora(piano, reg) {
   const perChiave = new Map();
   ATT.forEach(a => {
     a.conSquadra = !!(colonne.squadra && a.squadra);
-    const k = a.giorno + '|' + a.comandoKey + (a.conSquadra ? '|' + squadraKey(a.squadra) : '|*');
-    push(perChiave, k, a);
+    a.chiave = a.giorno + '|' + a.comandoKey + (a.conSquadra ? '|' + squadraKey(a.squadra) : '|*');
+    push(perChiave, a.chiave, a);
   });
   let regCollegate = 0, attSenzaSquadra = 0;
   perChiave.forEach((lista, k) => {
@@ -590,30 +623,11 @@ function elabora(piano, reg) {
     lista.forEach(a => { a.reg = persone; a.condivisi = lista.length; });
   });
 
-  // Riepilogo per Comando
-  COMANDI = new Map();
-  ATT.forEach(a => {
-    if (!COMANDI.has(a.comandoKey)) COMANDI.set(a.comandoKey, { key: a.comandoKey, nome: a.comando, [ANNO_PREV]: 0, [ANNO_CUR]: 0, regPrev: 0, regCur: 0, att: [] });
-    const c = COMANDI.get(a.comandoKey);
-    c[a.anno]++;
-    c.att.push(a);
-  });
-  // registrati per Comando/anno (contati una volta per giorno/squadra)
-  perChiave.forEach((lista, k) => {
-    const a = lista[0], c = COMANDI.get(a.comandoKey);
-    if (a.anno === ANNO_CUR) c.regCur += a.reg.length; else c.regPrev += a.reg.length;
-  });
-  COMANDI.forEach(c => c.att.sort((x, y) => x.data - y.data));
+  NOMI_COMANDO = new Map();
+  ATT.forEach(a => { if (!NOMI_COMANDO.has(a.comandoKey)) NOMI_COMANDO.set(a.comandoKey, a.comando); });
+  ANNI = [...new Set(ATT.map(a => a.anno))].sort((x, y) => y - x);
 
-  diag = { righePiano: piano.length, att: ATT.length, senzaData, fuoriPeriodo, senzaCoord, regTot, regScartate, regCollegate, attSenzaSquadra };
-
-  // Menu Comandi
-  const sel = document.getElementById('comando-select');
-  const prima = state.comando;
-  sel.innerHTML = '<option value="">Tutti</option>' + [...COMANDI.values()]
-    .sort((a, b) => a.nome.localeCompare(b.nome, 'it'))
-    .map(c => `<option value="${esc(c.key)}">${esc(c.nome)} (${c[ANNO_PREV]} · ${c[ANNO_CUR]})</option>`).join('');
-  if (prima && COMANDI.has(prima)) sel.value = prima; else state.comando = '';
+  diag = { righePiano: piano.length, att: ATT.length, senzaData, senzaCoord, prove, regTot, regScartate, regCollegate, attSenzaSquadra };
 }
 
 // Una persona compare una sola volta (stesso nome): unisco squadre e funzioni
@@ -630,33 +644,117 @@ function dedup(lista) {
     .sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
 }
 
+// Conteggi per Comando nel periodo scelto (addestramenti e registrati per ciascun anno)
+function statistiche(lista) {
+  const m = new Map();
+  const visti = new Set();
+  lista.forEach(a => {
+    if (!m.has(a.comandoKey)) m.set(a.comandoKey, { key: a.comandoKey, nome: a.comando, n: {}, reg: {}, att: [] });
+    const c = m.get(a.comandoKey);
+    c.n[a.anno] = (c.n[a.anno] || 0) + 1;
+    c.att.push(a);
+    if (!visti.has(a.chiave)) { visti.add(a.chiave); c.reg[a.anno] = (c.reg[a.anno] || 0) + a.reg.length; }
+  });
+  m.forEach(c => c.att.sort((x, y) => x.data - y.data));
+  return m;
+}
+
 /* =====================================================================
    FILTRI
    ===================================================================== */
-const visibili = () => ATT.filter(a => state.anni.has(a.anno) && (!state.comando || a.comandoKey === state.comando));
+const selMese = document.getElementById('mese-select');
+const selA = document.getElementById('anno-a');
+const selB = document.getElementById('anno-b');
+const selCom = document.getElementById('comando-select');
+
+selMese.innerHTML = '<option value="-1">Tutto l\'anno</option>' + MESI.map((m, i) => `<option value="${i}">${m.charAt(0).toUpperCase() + m.slice(1)}</option>`).join('');
+
+function preparaFiltri() {
+  const anniUrl = (URLP.get('anni') || '').split(',').map(n => parseInt(n, 10)).filter(n => ANNI.includes(n));
+  if (state.annoA === null || !ANNI.includes(state.annoA)) {
+    const oggi = new Date().getFullYear();
+    if (anniUrl.length) { state.annoA = anniUrl[0]; state.annoB = anniUrl[1] ?? null; }
+    else {
+      const b = ANNI.includes(oggi) ? oggi : (ANNI[0] ?? oggi);
+      state.annoB = b;
+      state.annoA = ANNI.includes(b - 1) ? b - 1 : null;
+      if (state.annoA === null) { state.annoA = b; state.annoB = null; }
+    }
+  }
+  if (state.annoB !== null && !ANNI.includes(state.annoB)) state.annoB = null;
+  const opt = y => `<option value="${y}">${y}</option>`;
+  selA.innerHTML = ANNI.map(opt).join('') || `<option value="${state.annoA}">${state.annoA}</option>`;
+  selB.innerHTML = '<option value="">— nessuno</option>' + ANNI.map(opt).join('');
+  selMese.value = String(state.mese);
+  selA.value = String(state.annoA);
+  selB.value = state.annoB === null ? '' : String(state.annoB);
+  aggiornaMenuComandi();
+}
+
+function aggiornaMenuComandi() {
+  const st = statistiche(ATT.filter(inPeriodo));
+  if (state.comando && !st.has(state.comando) && NOMI_COMANDO.has(state.comando)) {
+    st.set(state.comando, { key: state.comando, nome: NOMI_COMANDO.get(state.comando), n: {}, reg: {}, att: [] });
+  }
+  if (state.comando && !st.has(state.comando)) state.comando = '';
+  const anni = anniScelti();
+  selCom.innerHTML = '<option value="">Tutti</option>' + [...st.values()]
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'it'))
+    .map(c => `<option value="${esc(c.key)}">${esc(c.nome)} (${anni.map(y => c.n[y] || 0).join(' · ')})</option>`).join('');
+  selCom.value = state.comando;
+}
+
+function aggiornaTitolo() {
+  const anni = anniScelti();
+  const testo = (state.mese >= 0 ? MESI[state.mese] + ' ' : 'anno ') + anni.join(' e ');
+  document.getElementById('periodo-label').textContent = testo;
+  document.title = `P.U.M.A. - Addestramenti collettivi ${testo}`;
+  // link condivisibile con i filtri attuali
+  const p = new URLSearchParams();
+  p.set('mese', String(state.mese + 1));
+  p.set('anni', anni.join(','));
+  if (state.comando) p.set('comando', state.comando);
+  if (state.view === 'comandi') p.set('vista', 'comandi');
+  if (DEBUG) p.set('debug', '1');
+  try { history.replaceState(null, '', '?' + p.toString()); } catch (e) {}
+}
+
+function filtriCambiati() {
+  state.selGroup = null;
+  state.selComando = state.comando ? { key: state.comando } : null;
+  aggiornaMenuComandi();
+  disegna(true);
+}
+selMese.onchange = () => { state.mese = parseInt(selMese.value, 10); filtriCambiati(); };
+selA.onchange = () => {
+  state.annoA = parseInt(selA.value, 10);
+  if (state.annoB === state.annoA) { state.annoB = null; selB.value = ''; }
+  filtriCambiati();
+};
+selB.onchange = () => {
+  state.annoB = selB.value === '' ? null : parseInt(selB.value, 10);
+  if (state.annoB === state.annoA) { state.annoB = null; selB.value = ''; }
+  filtriCambiati();
+};
+selCom.onchange = () => setComando(selCom.value);
 
 document.getElementById('view-luoghi').onclick = () => setView('luoghi');
 document.getElementById('view-comandi').onclick = () => setView('comandi');
 function setView(v) {
   state.view = v;
-  document.getElementById('view-luoghi').classList.toggle('on', v === 'luoghi');
-  document.getElementById('view-comandi').classList.toggle('on', v === 'comandi');
   state.selGroup = null;
-  state.selComando = state.comando ? COMANDI.get(state.comando) || null : null;
+  state.selComando = state.comando ? { key: state.comando } : null;
   disegna(true);
 }
-document.getElementById('chk-prev').onchange = e => { e.target.checked ? state.anni.add(ANNO_PREV) : state.anni.delete(ANNO_PREV); state.selGroup = null; disegna(true); };
-document.getElementById('chk-cur').onchange  = e => { e.target.checked ? state.anni.add(ANNO_CUR)  : state.anni.delete(ANNO_CUR);  state.selGroup = null; disegna(true); };
-document.getElementById('comando-select').onchange = e => setComando(e.target.value);
 function setComando(key) {
   state.comando = key || '';
-  document.getElementById('comando-select').value = state.comando;
+  selCom.value = state.comando;
   state.selGroup = null;
-  state.selComando = state.comando ? COMANDI.get(state.comando) || null : null;
+  state.selComando = state.comando ? { key: state.comando } : null;
   disegna(true);
 }
 map.on('click', () => {
-  if (state.selGroup || state.selComando) {
+  if (state.selGroup || (state.selComando && !state.comando)) {
     state.selGroup = null;
     if (!state.comando) state.selComando = null;
     clearHighlight();
@@ -682,14 +780,17 @@ function pinIcon(a, count, idx) {
 }
 
 function disegna(adattaVista) {
+  document.getElementById('view-luoghi').classList.toggle('on', state.view === 'luoghi');
+  document.getElementById('view-comandi').classList.toggle('on', state.view === 'comandi');
+  aggiornaTitolo();
+  aggiornaLegenda();
   markersLayer.clearLayers();
   clearHighlight();
-  if (!ATT.length && !headersPiano.length) return;
+  if (!headersPiano.length) return;
   const lista = visibili();
   if (state.view === 'luoghi') disegnaLuoghi(lista); else disegnaComandi(lista);
 
-  if (!state.anni.size) mapMsg('Seleziona almeno un anno.');
-  else if (!lista.length) mapMsg(`Nessun addestramento collettivo a ${NOME_MESE} per i filtri scelti.`);
+  if (!lista.length) mapMsg('Nessun addestramento collettivo per i filtri scelti.');
   else if (!markersLayer.getLayers().length) mapMsg('Gli addestramenti trovati non hanno coordinate valide.');
   else mapMsg('');
 
@@ -723,7 +824,6 @@ function disegnaLuoghi(lista) {
     g.marker = m;
     markersLayer.addLayer(m);
   });
-  // riseleziono il gruppo aperto, se esiste ancora
   if (state.selGroup) {
     const g = gruppi.get(coordKey(state.selGroup.lat, state.selGroup.lng));
     if (g) { const id = state.selGroup.att[state.selGroup.idx].id; const i = g.att.findIndex(a => a.id === id); selezionaGruppo(g, i >= 0 ? i : 0, true); }
@@ -743,30 +843,30 @@ function selezionaGruppo(g, idx, silenzioso) {
 }
 
 function disegnaComandi(lista) {
-  // Un punto per Comando: posizione media dei suoi addestramenti (con coordinate) nei filtri attivi
+  // Un punto per Comando: posizione media dei suoi addestramenti (con coordinate) nel periodo scelto
+  const anni = anniScelti();
   const per = new Map();
   lista.forEach(a => {
-    if (!per.has(a.comandoKey)) per.set(a.comandoKey, { c: COMANDI.get(a.comandoKey), pts: [], prev: 0, cur: 0 });
+    if (!per.has(a.comandoKey)) per.set(a.comandoKey, { key: a.comandoKey, nome: a.comando, pts: [], n: {} });
     const x = per.get(a.comandoKey);
-    a.anno === ANNO_CUR ? x.cur++ : x.prev++;
+    x.n[a.anno] = (x.n[a.anno] || 0) + 1;
     if (a.lat !== null) x.pts.push([a.lat, a.lng]);
   });
   per.forEach(x => {
     if (!x.pts.length) return;
     const lat = x.pts.reduce((s, p) => s + p[0], 0) / x.pts.length;
     const lng = x.pts.reduce((s, p) => s + p[1], 0) / x.pts.length;
-    const sel = state.selComando && state.selComando.key === x.c.key;
-    const parti = [];
-    if (state.anni.has(ANNO_PREV)) parti.push(`<span class="p${x.prev ? '' : ' zero'}">${x.prev}</span>`);
-    if (state.anni.has(ANNO_CUR))  parti.push(`<span class="c${x.cur ? '' : ' zero'}">${x.cur}</span>`);
+    const sel = state.selComando && state.selComando.key === x.key;
+    const parti = anni.map(y => `<span class="${y === state.annoB ? 'c' : 'p'}${x.n[y] ? '' : ' zero'}">${x.n[y] || 0}</span>`);
+    const tot = anni.reduce((s, y) => s + (x.n[y] || 0), 0);
     const m = L.marker([lat, lng], {
       icon: L.divIcon({ className: 'cmd-wrapper', html: `<div class="cmd-pin${sel ? ' sel' : ''}">${parti.join('')}</div>`, iconSize: [0, 0], iconAnchor: [0, 0] }),
-      zIndexOffset: sel ? 2000 : x.prev + x.cur
+      zIndexOffset: sel ? 2000 : tot
     });
-    m.bindTooltip(esc(x.c.nome), { direction: 'top', offset: [0, -12], className: 'cmd-label' });
+    m.bindTooltip(esc(x.nome), { direction: 'top', offset: [0, -12], className: 'cmd-label' });
     m.on('click', ev => {
       L.DomEvent.stopPropagation(ev);
-      state.selComando = x.c;
+      state.selComando = { key: x.key };
       disegna(false);
     });
     markersLayer.addLayer(m);
@@ -780,46 +880,55 @@ const panel = document.getElementById('panel');
 
 function pannello() {
   let html = DEBUG || !colonne.data || !colonne.comando || !colonne.coordinate || !colonne.squadra ? diagnostica() : '';
+  const st = statistiche(ATT.filter(inPeriodo));
   if (state.view === 'luoghi' && state.selGroup) html += dettaglioAddestramento(state.selGroup);
-  else if (state.selComando) html += dettaglioComando(state.selComando);
-  else html += riepilogo();
+  else if (state.selComando) html += dettaglioComando(st.get(state.selComando.key) ||
+    { key: state.selComando.key, nome: NOMI_COMANDO.get(state.selComando.key) || '', n: {}, reg: {}, att: [] });
+  else html += riepilogo(st);
   panel.innerHTML = html;
   bindPannello();
 }
 
-function riepilogo() {
-  const lista = [...COMANDI.values()].sort((a, b) => (b[ANNO_CUR] + b[ANNO_PREV]) - (a[ANNO_CUR] + a[ANNO_PREV]) || a.nome.localeCompare(b.nome, 'it'));
-  if (!lista.length) return `<h3 class="panel-title">Nessun addestramento collettivo a ${NOME_MESE} ${ANNO_PREV} o ${NOME_MESE} ${ANNO_CUR}.</h3>`;
-  let totP = 0, totC = 0;
-  const righe = lista.map(c => {
-    totP += c[ANNO_PREV]; totC += c[ANNO_CUR];
-    return `<tr class="click" data-comando="${esc(c.key)}"><td class="key">${esc(c.nome)}</td>
-      <td class="num prev">${c[ANNO_PREV]}</td><td class="num cur">${c[ANNO_CUR]}</td>${deltaTd(c[ANNO_CUR] - c[ANNO_PREV])}</tr>`;
-  }).join('');
-  return `<h3 class="panel-title">Addestramenti collettivi di ${NOME_MESE}</h3>
-    <div class="panel-note">Clicca un Comando per filtrare la mappa e vedere l'elenco degli addestramenti con i registrati.</div>
-    <table><tr><th>Comando organizzatore</th><th style="color:var(--anno-prev)">${ANNO_PREV}</th><th style="color:var(--anno-cur)">${ANNO_CUR}</th><th>Δ</th></tr>
-    ${righe}
-    <tr class="tot"><td class="key">Totale</td><td class="num prev">${totP}</td><td class="num cur">${totC}</td>${deltaTd(totC - totP)}</tr></table>`;
-}
+const thAnno = y => `<th style="color:${yearHex(y)}">${esc(periodo(y))}</th>`;
 function deltaTd(d) {
   if (d > 0) return `<td class="delta-up">+${d}</td>`;
   if (d < 0) return `<td class="delta-down">${d}</td>`;
   return `<td class="delta-eq">=</td>`;
 }
 
+function riepilogo(st) {
+  const anni = anniScelti();
+  const confronto = state.annoB !== null;
+  const tot = c => anni.reduce((s, y) => s + (c.n[y] || 0), 0);
+  const lista = [...st.values()].sort((a, b) => tot(b) - tot(a) || a.nome.localeCompare(b.nome, 'it'));
+  const titolo = `<h3 class="panel-title">Addestramenti collettivi – ${esc(anni.map(periodo).join(' / '))}</h3>`;
+  if (!lista.length) return titolo + '<div class="panel-note">Nessun addestramento collettivo nel periodo scelto.</div>';
+  const somme = {};
+  const righe = lista.map(c => {
+    anni.forEach(y => somme[y] = (somme[y] || 0) + (c.n[y] || 0));
+    return `<tr class="click" data-comando="${esc(c.key)}"><td class="key">${esc(c.nome)}</td>
+      ${anni.map(y => `<td class="num" style="color:${yearHex(y)}">${c.n[y] || 0}</td>`).join('')}
+      ${confronto ? deltaTd((c.n[state.annoB] || 0) - (c.n[state.annoA] || 0)) : ''}</tr>`;
+  }).join('');
+  return titolo + `<div class="panel-note">Clicca un Comando per filtrare la mappa e vedere l'elenco degli addestramenti con i registrati.</div>
+    <table><tr><th>Comando organizzatore</th>${anni.map(y => `<th style="color:${yearHex(y)}">${y}</th>`).join('')}${confronto ? '<th>Δ</th>' : ''}</tr>
+    ${righe}
+    <tr class="tot"><td class="key">Totale</td>${anni.map(y => `<td class="num" style="color:${yearHex(y)}">${somme[y] || 0}</td>`).join('')}
+    ${confronto ? deltaTd((somme[state.annoB] || 0) - (somme[state.annoA] || 0)) : ''}</tr></table>`;
+}
+
 function dettaglioComando(c) {
-  const att = c.att.filter(a => state.anni.has(a.anno));
+  const anni = anniScelti();
   let html = `<span class="back-link" data-back="1">◀ Tutti i Comandi</span>
     <h3 class="panel-title">${esc(c.nome)}</h3>
     <table>
-      <tr><th></th><th style="color:var(--anno-prev)">${NOME_MESE} ${ANNO_PREV}</th><th style="color:var(--anno-cur)">${NOME_MESE} ${ANNO_CUR}</th></tr>
-      <tr><td class="key">Addestramenti</td><td class="num prev">${c[ANNO_PREV]}</td><td class="num cur">${c[ANNO_CUR]}</td></tr>
-      <tr><td class="key">Registrati</td><td class="num prev">${c.regPrev}</td><td class="num cur">${c.regCur}</td></tr>
+      <tr><th></th>${anni.map(thAnno).join('')}</tr>
+      <tr><td class="key">Addestramenti</td>${anni.map(y => `<td class="num" style="color:${yearHex(y)}">${c.n[y] || 0}</td>`).join('')}</tr>
+      <tr><td class="key">Registrati</td>${anni.map(y => `<td class="num" style="color:${yearHex(y)}">${c.reg[y] || 0}</td>`).join('')}</tr>
     </table>
     <div class="panel-note">Clicca un addestramento per vederlo sulla mappa con l'elenco dei registrati.</div>`;
-  if (!att.length) return html + '<div class="panel-note">Nessun addestramento per gli anni selezionati.</div>';
-  html += att.map(a => `<div class="att-item" data-att="${a.id}" style="border-left-color:${yearHex(a.anno)}">
+  if (!c.att.length) return html + '<div class="panel-note">Nessun addestramento nel periodo scelto.</div>';
+  html += c.att.map(a => `<div class="att-item" data-att="${a.id}" style="border-left-color:${yearHex(a.anno)}">
       <span class="d">${esc(fmtData(a.data))}</span><br>
       <span class="t">${esc(a.tipologia || 'Addestramento')}${a.squadra ? ' · ' + esc(a.squadra) : ''}</span><br>
       <span class="n">👥 ${a.reg.length} registrati${a.lat === null ? ' · ⚠️ senza coordinate' : ''}</span></div>`).join('');
@@ -831,7 +940,7 @@ function dettaglioAddestramento(g) {
   const logo = logoFor(a);
   let html = `<span class="back-link" data-back="1">◀ Riepilogo</span>
     <div class="details-title">${logo ? `<span class="logo-att" title="${esc(logo.nome)}">${logo.svg}</span>` : ''}<h3>${esc(a.tipologia || 'Addestramento').replace(/\n/g, '<br>')}</h3></div>
-    <div style="margin-bottom:8px"><span class="chip" style="background:${yearHex(a.anno)}">${NOME_MESE} ${a.anno}</span><b>${esc(fmtData(a.data))}</b></div>
+    <div style="margin-bottom:8px"><span class="chip" style="background:${yearHex(a.anno)}">${a.anno}</span><b>${esc(fmtData(a.data))}</b></div>
     <div style="margin-bottom:8px;color:#ccc;font-size:13px">🏢 <span class="back-link" style="margin:0" data-comando="${esc(a.comandoKey)}">${esc(a.comando)}</span>${a.squadra ? ` · 👥 ${esc(a.squadra)}` : ''}</div>`;
   if (g.att.length > 1) {
     html += `<div class="group-switch"><button type="button" id="grp-prev" aria-label="Precedente">◀</button>
@@ -840,17 +949,16 @@ function dettaglioAddestramento(g) {
   }
   html += `<button class="popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${a.lat},${a.lng}','_blank')">🚒 Naviga a</button>`;
 
-  // Registrati
   html += `<details class="reg-box" open><summary>👥 Registrati: ${a.reg.length}</summary>`;
   if (!a.conSquadra) {
     html += `<div class="reg-warn">⚠️ Il piano di sicurezza non indica la squadra: sono mostrati tutti i registrati di ${esc(a.comando)} in questo giorno.</div>`;
   } else if (a.condivisi > 1) {
     html += `<div class="reg-warn">⚠️ Lo stesso giorno ${esc(a.comando)} ha ${a.condivisi} piani di sicurezza per la squadra "${esc(a.squadra)}": i registrati sono gli stessi per tutti.</div>`;
   }
-  if (!a.reg.length) html += '<div class="panel-note">Nessuna registrazione trovata per questo giorno e questo Comando.</div>';
+  if (!a.reg.length) html += '<div class="panel-note">Nessuna registrazione trovata per questo giorno, Comando e squadra.</div>';
   else {
     const perSquadra = new Map();
-    a.reg.forEach(p => { const s = p.squadra || 'Squadra non indicata'; if (!perSquadra.has(s)) perSquadra.set(s, []); perSquadra.get(s).push(p); });
+    a.reg.forEach(p => push(perSquadra, p.squadra || 'Squadra non indicata', p));
     [...perSquadra.keys()].sort((x, y) => x.localeCompare(y, 'it', { numeric: true })).forEach(s => {
       const pp = perSquadra.get(s);
       html += `<div class="squadra-title">${esc(s)} · ${pp.length}</div>` + pp.map(p =>
@@ -859,7 +967,6 @@ function dettaglioAddestramento(g) {
   }
   html += '</details>';
 
-  // Dati del piano di sicurezza
   html += `<details class="reg-box"><summary>📋 Dati del piano di sicurezza</summary><table style="margin-top:8px">`;
   headersPiano.forEach(h => {
     const v = formattaValore(h, (a.row[h] || '').trim());
@@ -870,22 +977,14 @@ function dettaglioAddestramento(g) {
   return html;
 }
 
-// Date: solo giorno, tranne le colonne di inizio/fine che tengono ore e minuti (senza secondi)
-const DATA_ORA = /^(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})(?:\s+(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?)?$/;
-function formattaValore(h, v) {
-  const m = v.match(DATA_ORA);
-  if (!m) return v;
-  if (/inizio|fine/i.test(h) && m[2]) return `${m[1]} ${m[2].padStart(2, '0')}:${m[3]}`;
-  return m[1];
-}
-
 function diagnostica() {
   const riga = (n, v) => `<b>${n}:</b> ${v ? `<code>${esc(v)}</code>` : '<span style="color:#ef5350">NON TROVATA</span>'}<br>`;
   return `<div class="debug-box">
     <div style="margin-bottom:6px"><b>Colonne riconosciute in Piano_Di_Sicurezza</b></div>
     ${riga('Data', colonne.data)}${riga('Comando organizzatore', colonne.comando)}${riga('Coordinate', colonne.coordinate)}${riga('Tipologia', colonne.tipologia)}${riga('Squadra', colonne.squadra)}
-    <div style="margin-top:6px">Righe nel foglio: ${diag.righePiano ?? '—'} · gennaio ${ANNO_PREV}/${ANNO_CUR}: ${diag.att ?? '—'} · senza data: ${diag.senzaData ?? '—'} · senza coordinate: ${diag.senzaCoord ?? '—'}</div>
-    <div>Registrazioni di gennaio: ${diag.regTot ?? '—'} · scartate (prove/vuote): ${diag.regScartate ?? '—'} · collegate agli addestramenti: ${diag.regCollegate ?? '—'}</div>
+    <div style="margin-top:6px">Righe nel foglio: ${diag.righePiano ?? '—'} · addestramenti con data: ${diag.att ?? '—'} · senza data: ${diag.senzaData ?? '—'} · senza coordinate: ${diag.senzaCoord ?? '—'} · righe di prova: ${diag.prove ?? '—'}</div>
+    <div>Anni presenti: ${ANNI.join(', ') || '—'}</div>
+    <div>Registrazioni: ${diag.regTot ?? '—'} · scartate (prove/vuote): ${diag.regScartate ?? '—'} · collegate agli addestramenti: ${diag.regCollegate ?? '—'}</div>
     <div>Collegamento: giorno + Comando + squadra${diag.attSenzaSquadra ? ` · <span style="color:#ffb74d">${diag.attSenzaSquadra} addestramenti senza squadra → giorno + Comando</span>` : ''}</div>
     <details style="margin-top:6px"><summary style="cursor:pointer">Tutte le intestazioni</summary><code>${headersPiano.map(esc).join(' | ')}</code></details>
     <div style="margin-top:6px;color:#aaa">Se una colonna è sbagliata, scrivi il nome esatto in <code>COL_PIANO</code> in cima alla pagina.</div>
@@ -896,7 +995,7 @@ function bindPannello() {
   panel.querySelectorAll('[data-comando]').forEach(el => el.addEventListener('click', () => setComando(el.dataset.comando)));
   panel.querySelectorAll('[data-back]').forEach(el => el.addEventListener('click', () => {
     if (state.selGroup) { state.selGroup = null; clearHighlight(); disegna(false); }
-    else { setComando(''); }
+    else { state.selComando = null; setComando(''); }
   }));
   panel.querySelectorAll('[data-att]').forEach(el => el.addEventListener('click', () => apriAddestramento(+el.dataset.att)));
   const p = document.getElementById('grp-prev'), n = document.getElementById('grp-next');
@@ -911,11 +1010,10 @@ function apriAddestramento(id) {
   if (!a) return;
   if (a.lat === null) { alert('Questo addestramento non ha coordinate valide nel piano di sicurezza.'); return; }
   state.comando = a.comandoKey;
-  document.getElementById('comando-select').value = state.comando;
+  selCom.value = state.comando;
   state.view = 'luoghi';
-  document.getElementById('view-luoghi').classList.add('on');
-  document.getElementById('view-comandi').classList.remove('on');
   state.selGroup = null;
+  state.selComando = { key: a.comandoKey };
   disegna(false);
   const g = gruppi.get(coordKey(a.lat, a.lng));
   if (g) {
