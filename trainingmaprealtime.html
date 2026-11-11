@@ -278,6 +278,8 @@
 
     #nav-buttons {
       display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
       gap: 8px;
       flex-shrink: 0;
     }
@@ -503,7 +505,7 @@
         width: 100%;
       }
       .nav-btn {
-        flex: 1;
+        flex: 1 1 40%;
         text-align: center;
       }
     }
@@ -518,8 +520,9 @@
   </div>
   <div id="nav-buttons">
     <button class="nav-btn" id="refresh-btn" type="button">⟳ Aggiorna</button>
-    <a class="nav-btn" href="personaleodierno.html">Presenze Odierne ➡</a>
-    <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page">Homepage P.U.M.A.</a>
+    <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page" id="btn-home">Homepage P.U.M.A.</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/personaleodierno.html" id="btn-presenze">Presenze Odierne</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/mappariepilogocollettivi.html" id="btn-riepilogo">Riepilogo Globale</a>
   </div>
 </header>
 

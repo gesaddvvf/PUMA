@@ -53,7 +53,7 @@
     #page-header h2 b { color: var(--gold); }
     #meta-info { font-size: 11.5px; color: #999; margin-top: 4px; }
 
-    #nav-buttons { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+    #nav-buttons { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
     .nav-btn {
       display: inline-block; background-color: #2a2a2a; color: var(--gold);
       border: 1px solid var(--gold); border-radius: 4px; padding: 8px 14px;
@@ -107,7 +107,7 @@
     @media (max-width: 700px) {
       #page-header { flex-direction: column; }
       #nav-buttons { width: 100%; }
-      .nav-btn { flex: 1; text-align: center; }
+      .nav-btn { flex: 1 1 40%; text-align: center; }
       #filters #comando-select { max-width: 100%; flex: 1 1 100%; }
       #mese-select { flex: 1 1 auto; }
       #filters label.lbl, #meta-info { display: none; }
@@ -266,8 +266,9 @@
   </div>
   <div id="nav-buttons">
     <button class="nav-btn" id="refresh-btn" type="button">⟳ Aggiorna</button>
-    <a class="nav-btn" href="trainingmaprealtime.html">Mappa Real Time ➡</a>
-    <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page">Homepage P.U.M.A.</a>
+    <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page" id="btn-home">Homepage P.U.M.A.</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html" id="btn-mappa">Mappa Real Time</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/personaleodierno.html" id="btn-presenze">Presenze Odierne</a>
   </div>
 </header>
 
