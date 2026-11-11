@@ -301,7 +301,7 @@
 const SHEET_ID  = "1WHGKaawomU_jMuO6FnwzYidou-fmpc0ndeE0aiEMYP4"; // PUMA VVF Database Personale
 const GID_PIANO = "1495276384";   // Piano_Di_Sicurezza: un addestramento collettivo per riga
 const GID_REG   = "2031805821";   // Registrazione_Attivita_Semplificata: un registrato per riga
-const MESE_PREDEFINITO = 1;       // mese all'apertura: 1 = gennaio … 12 = dicembre, 0 = tutto l'anno
+const MESE_PREDEFINITO = 0;       // mese all'apertura: 0 = tutto l'anno, 1 = gennaio … 12 = dicembre
 
 // Colonne di Piano_Di_Sicurezza: null = riconoscimento automatico dalle intestazioni.
 // Se il riconoscimento sbaglia, scrivi qui il nome esatto dell'intestazione.
@@ -713,10 +713,9 @@ function preparaFiltri() {
     const oggi = new Date().getFullYear();
     if (anniUrl.length) { state.annoA = anniUrl[0]; state.annoB = anniUrl[1] ?? null; }
     else {
-      const b = ANNI.includes(oggi) ? oggi : (ANNI[0] ?? oggi);
-      state.annoB = b;
-      state.annoA = ANNI.includes(b - 1) ? b - 1 : null;
-      if (state.annoA === null) { state.annoA = b; state.annoB = null; }
+      // All'apertura: solo l'anno corrente (o il più recente presente nei dati), nessun confronto
+      state.annoA = ANNI.includes(oggi) ? oggi : (ANNI[0] ?? oggi);
+      state.annoB = null;
     }
   }
   if (state.annoB !== null && !ANNI.includes(state.annoB)) state.annoB = null;
@@ -747,14 +746,6 @@ function aggiornaTitolo() {
   const testo = (state.mese >= 0 ? MESI[state.mese] + ' ' : 'anno ') + anni.join(' e ');
   document.getElementById('periodo-label').textContent = testo;
   document.title = `P.U.M.A. - Addestramenti collettivi ${testo}`;
-  // link condivisibile con i filtri attuali
-  const p = new URLSearchParams();
-  p.set('mese', String(state.mese + 1));
-  p.set('anni', anni.join(','));
-  if (state.comando) p.set('comando', state.comando);
-  if (state.view === 'comandi') p.set('vista', 'comandi');
-  if (DEBUG) p.set('debug', '1');
-  try { history.replaceState(null, '', '?' + p.toString()); } catch (e) {}
 }
 
 function filtriCambiati() {
