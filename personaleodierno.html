@@ -102,9 +102,9 @@
     }
 
     #meta-info {
-      font-size: 12px;
+      font-size: 11.5px;
       color: #999;
-      margin-bottom: 16px;
+      margin-top: 2px;
     }
 
     #status {
@@ -340,21 +340,9 @@
       border-bottom-color: #ffd700;
     }
 
-    #refresh-btn {
-      background-color: #ffd700;
-      color: #1e1e1e;
-      border: none;
-      border-radius: 4px;
-      padding: 6px 14px;
-      font-family: 'Comfortaa', cursive;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 12px;
-      margin-left: 8px;
-    }
-
-    #refresh-btn:hover {
-      opacity: 0.85;
+    button.nav-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
     }
 
     #nav-buttons {
@@ -583,8 +571,10 @@
     <div>
       <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
       <h2>Riepilogo presenze odierne <span id="today-date"></span></h2>
+      <div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span></div>
     </div>
     <div id="nav-buttons">
+      <button class="nav-btn" id="refresh-btn" type="button">⟳ Aggiorna</button>
       <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page" id="btn-home">Homepage P.U.M.A.</a>
       <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html" id="btn-mappa">Mappa Real Time</a>
       <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/mappariepilogocollettivi.html" id="btn-riepilogo">Riepilogo Globale</a>
@@ -592,9 +582,6 @@
   </header>
 
   <div class="page-content">
-    <div id="meta-info">Ultimo aggiornamento: <span id="last-update">—</span><button id="refresh-btn">Aggiorna
-        ora</button></div>
-
     <div id="status">Caricamento dati in corso...</div>
     <div class="table-wrapper" id="table-wrapper" style="display:none;">
       <table>
@@ -853,7 +840,15 @@
 
     const MAPPA_URL = "https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html";
 
+    const refreshBtn = document.getElementById('refresh-btn');
+    function setLoading(on) {
+      refreshBtn.disabled = on;
+      refreshBtn.textContent = on ? '⟳ Aggiornamento…' : '⟳ Aggiorna';
+    }
+
     function loadData() {
+      if (refreshBtn.disabled) return;
+      setLoading(true);
       if (firstLoad) {
         statusEl.style.display = 'block';
         statusEl.textContent = 'Caricamento dati in corso...';
@@ -865,6 +860,7 @@
         header: false,
         skipEmptyLines: false,
         complete: function (results) {
+          setLoading(false);
           const rows = results.data;
           const headerRow = rows[HEADER_ROW_INDEX] || [];
 
@@ -1105,6 +1101,7 @@
         },
         error: function (err) {
           console.error(err);
+          setLoading(false);
           if (firstLoad) {
             statusEl.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
           } else {
@@ -1114,7 +1111,7 @@
       });
     }
 
-    document.getElementById('refresh-btn').addEventListener('click', loadData);
+    refreshBtn.addEventListener('click', loadData);
 
     function setTodayDate() {
       const oggi = new Date();
