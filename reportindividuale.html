@@ -368,14 +368,14 @@ const GID_MANOVRE   = "605866354";    // Manovre_PREVISTE: A2:F
 const GID_FORMAZIONE = "1631986002";  // Formazione: requisiti per corso
 const GID_ELENCO    = "84413100";     // Elenco_Filtrato: corsi in possesso di ogni persona
 
-// Elenco_Filtrato: si leggono SOLO queste colonne (e-mail, cellulare e codice fiscale non vengono mai mostrati)
+// Elenco_Filtrato: si leggono SOLO queste colonne (e-mail e cellulare non vengono letti)
 const COL_ELENCO = {
   nome:      /cognome nome/i,
   comando:   /appartenenza/i,
   qualifica: /^qualifica$/i,
   corsi:     /corsi in possesso/i
 };
-// Codice fiscale dentro "Cognome Nome - Codice Fiscale": serve solo a distinguere gli omonimi
+// Codice fiscale dentro "Cognome Nome - Codice Fiscale": identifica la persona (anche tra omonimi)
 const RE_CF = /\b[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]\b/i;
 
 // Registrazione_Attivita_Semplificata: colonna trovata dall'intestazione; se manca, si usa la lettera.
@@ -430,10 +430,13 @@ function normKey(s) {
 function comandoKey(s) {
   let t = (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   t = t.replace(/vigili del fuoco|v\.?v\.?f\.?|\bcomando\b|\bprovinciale\b|\bdi\b|\bdel\b|\bdella\b|\bdei\b/g, ' ');
-  return t.replace(/[^a-z0-9]/g, '');
+  t = t.replace(/[^a-z0-9]/g, '');
+  // "Direzione Regionale Emilia-Romagna" = "Direzione Emilia Romagna" = "Direzione Interregionale …"
+  if (t.includes('direzione')) t = 'direzione' + t.replace(/direzione|interregionale|regionale/g, '');
+  return t;
 }
 function squadraKey(s) {
-  return normKey((s || '').replace(/\bsquadra\b|\bsq\.?/gi, ' ')) || 'nonindicata';
+  return normKey((s || '').replace(/\bsquadra\b|\bsq\.?|\bteam\b/gi, ' ')) || 'nonindicata';
 }
 function nomeComando(s) {
   const t = (s || '').trim();
@@ -517,7 +520,7 @@ function chiavePersona(nome, cf) {
   return c && c !== '*' ? c : 'n:' + k;
 }
 function persona(key, nome) {
-  if (!PERSONE.has(key)) PERSONE.set(key, { key, grafie: new Map(), comandi: new Map(), qualifica: '', corsiPossesso: new Set(), corsiTxt: [], inElenco: false, att: [] });
+  if (!PERSONE.has(key)) PERSONE.set(key, { key, grafie: new Map(), originali: new Map(), originaleElenco: '', comandi: new Map(), qualifica: '', corsiPossesso: new Set(), corsiTxt: [], inElenco: false, att: [] });
   const p = PERSONE.get(key);
   if (nome) p.grafie.set(nome, (p.grafie.get(nome) || 0) + 1);
   return p;
@@ -670,6 +673,7 @@ function elaboraElenco(rows) {
     if (cf) NOME_A_CF.set(nk, NOME_A_CF.has(nk) && NOME_A_CF.get(nk) !== key ? '*' : key);
     const p = persona(key, nome);
     p.inElenco = true; n++;
+    if (!p.originaleElenco) p.originaleElenco = val(r[colElenco.nome]).replace(/\s+/g, ' ');
     const com = nomeComando(g(r, 'comando'));
     if (com) p.comandi.set(com, (p.comandi.get(com) || 0) + 100);   // l'Elenco vale più delle registrazioni
     if (g(r, 'qualifica')) p.qualifica = g(r, 'qualifica');
@@ -808,6 +812,8 @@ function elaboraReg(reg, pianoIdx) {
     a.manovre.forEach(m => { if (m.corso && tipo !== 'intervento') a.corsi.add(m.corso); });
 
     const p = persona(chiavePersona(nome, cf), nome);
+    const orig = g(r, 'nome').replace(/\s+/g, ' ');
+    p.originali.set(orig, (p.originali.get(orig) || 0) + 1);
     const app = nomeComando(g(r, 'appartenenza'));
     if (app) p.comandi.set(app, (p.comandi.get(app) || 0) + 1);
     p.att.push(a);
@@ -868,11 +874,13 @@ let LISTA_NOMI = [];   // testo nell'elenco → chiave persona
 function preparaNomi() {
   const lista = [...PERSONE.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
   const conta = new Map();
-  lista.forEach(p => conta.set(normKey(p.nome), (conta.get(normKey(p.nome)) || 0) + 1));
+  // Etichetta = nominativo così com'è nel foglio ("COGNOME NOME - CODICE FISCALE"), prima da Elenco_Filtrato
+  const originale = p => p.originaleElenco || [...p.originali.entries()].sort((x, z) => z[1] - x[1])[0]?.[0] || p.nome;
+  lista.forEach(p => { const k = normKey(originale(p)); conta.set(k, (conta.get(k) || 0) + 1); });
   ETICHETTE_NOMI = new Map();
   lista.forEach(p => {
-    let lab = p.nome;
-    if (conta.get(normKey(p.nome)) > 1) lab += ` (${p.comando || 'Comando non indicato'})`;
+    let lab = originale(p);
+    if (conta.get(normKey(lab)) > 1) lab += ` (${p.comando || 'Comando non indicato'})`;
     let i = 2; const base = lab;
     while (ETICHETTE_NOMI.has(lab)) lab = `${base} ${i++}`;
     ETICHETTE_NOMI.set(lab, p.key);
@@ -1128,7 +1136,7 @@ function disegna() {
   preparaAnni();
   const p = state.persona, y = state.anno;
   printBtn.disabled = !p;
-  document.getElementById('periodo-label').textContent = p ? `${p.nome} – ${y}` : String(y);
+  document.getElementById('periodo-label').textContent = p ? `${p.etichetta} – ${y}` : String(y);
   document.title = p ? `P.U.M.A. - Report ${p.nome} ${y}` : 'P.U.M.A. - Report individuale';
 
   let html = DEBUG ? diagnostica() : '';
@@ -1151,7 +1159,7 @@ function disegna() {
   html += `<div class="print-only print-title"><b>P.U.M.A.</b> – Report individuale del personale <span class="wip-print">(IN COSTRUZIONE – BOZZA)</span> · stampato il ${new Date().toLocaleDateString('it-IT')}</div>
   <div class="persona-head">
     <div>
-      <h3>${esc(p.nome)}</h3>
+      <h3>${esc(p.etichetta)}</h3>
       <div class="sub">${[p.qualifica, p.comando || 'Comando di appartenenza non indicato'].filter(Boolean).map(esc).join(' · ')}
         <br>Corsi in possesso: ${p.corsiPossesso.size || p.corsiTxt.length ? [...[...p.corsiPossesso].sort((x, z) => x.ordine - z.ordine).map(c => c.sigla), ...p.corsiTxt].map(esc).join(', ') : '<i>nessuno indicato in Elenco_Filtrato</i>'}${ics.length ? `<br>Funzioni ICS nell'anno: ${esc(ics.join(', '))}` : ''}</div>
     </div>

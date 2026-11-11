@@ -331,7 +331,8 @@ const COL_PIANO = {
 };
 
 // Colonne di Registrazione_Attivita_Semplificata (lettere del foglio)
-const COL_REG = { data: 'A', nome: 'C', comando: 'E', squadra: 'F', funzioni: 'G' };
+// data: si usa "Data Addestramento Collettivo" (H); se vuota "Data" (V), poi "Informazioni cronologiche" (A)
+const COL_REG = { data: 'H', data2: 'V', data3: 'A', nome: 'C', comando: 'E', squadra: 'F', funzioni: 'G' };
 
 // Colonne di Piano_Di_Sicurezza da NON mostrare nel pannello (dati personali)
 const NASCONDI = /e-?mail|codice fiscale|\bc\.?f\.?\b|telefon|cellulare|indirizzo di posta/i;
@@ -372,11 +373,14 @@ function normKey(s) {
 function comandoKey(s) {
   let t = (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   t = t.replace(/vigili del fuoco|v\.?v\.?f\.?|\bcomando\b|\bprovinciale\b|\bdi\b|\bdel\b|\bdella\b|\bdei\b/g, ' ');
-  return t.replace(/[^a-z0-9]/g, '');
+  t = t.replace(/[^a-z0-9]/g, '');
+  // "Direzione Regionale Emilia-Romagna" = "Direzione Emilia Romagna" = "Direzione Interregionale …"
+  if (t.includes('direzione')) t = 'direzione' + t.replace(/direzione|interregionale|regionale/g, '');
+  return t;
 }
 // "Squadra 1", "SQ. 1", "1" → stessa chiave
 function squadraKey(s) {
-  return normKey((s || '').replace(/\bsquadra\b|\bsq\.?/gi, ' ')) || 'nonindicata';
+  return normKey((s || '').replace(/\bsquadra\b|\bsq\.?|\bteam\b/gi, ' ')) || 'nonindicata';
 }
 function nomeComando(s) {
   const t = (s || '').trim();
@@ -613,13 +617,15 @@ function elabora(piano, reg) {
   };
 
   // --- Registrazioni, indicizzate per giorno + Comando organizzatore (+ squadra) ---
-  const iD = letterIdx(COL_REG.data), iN = letterIdx(COL_REG.nome), iC = letterIdx(COL_REG.comando),
+  const iD = letterIdx(COL_REG.data), iD2 = letterIdx(COL_REG.data2), iD3 = letterIdx(COL_REG.data3),
+        iN = letterIdx(COL_REG.nome), iC = letterIdx(COL_REG.comando),
         iS = letterIdx(COL_REG.squadra), iF = letterIdx(COL_REG.funzioni);
   const regIndex = new Map();    // giorno|comando|squadra
   const regIndex2 = new Map();   // giorno|comando (se il piano non indica la squadra)
   let regTot = 0, regScartate = 0;
   reg.slice(1).forEach(r => {
-    const d = parseData(r[iD]);
+    if (!(r[iC] || '').trim()) return;   // senza Comando organizzatore: non è un collettivo
+    const d = parseData(r[iD]) || parseData(r[iD2]) || parseData(r[iD3]);
     if (!d) return;
     regTot++;
     const nome = (r[iN] || '').trim().replace(/\s+/g, ' ');
@@ -667,10 +673,19 @@ function elabora(piano, reg) {
     a.chiave = a.giorno + '|' + a.comandoKey + (a.conSquadra ? '|' + squadraKey(a.squadra) : '|*');
     push(perChiave, a.chiave, a);
   });
-  let regCollegate = 0, attSenzaSquadra = 0;
+  // Quante squadre diverse ha ogni giorno + Comando nel Piano
+  const squadrePerGiorno = new Map();
+  perChiave.forEach((lista, k) => { const g = k.split('|').slice(0, 2).join('|'); squadrePerGiorno.set(g, (squadrePerGiorno.get(g) || 0) + 1); });
+  let regCollegate = 0, attSenzaSquadra = 0, squadraNonCombacia = 0;
   perChiave.forEach((lista, k) => {
     const a0 = lista[0];
-    const fonte = a0.conSquadra ? regIndex.get(k) : regIndex2.get(k.slice(0, -2));
+    const g = k.split('|').slice(0, 2).join('|');
+    let fonte = a0.conSquadra ? regIndex.get(k) : regIndex2.get(g);
+    // La squadra della registrazione è scritta in modo diverso, ma quel giorno il Comando ha una sola squadra nel Piano:
+    // prendo tutti i registrati di quel giorno e Comando
+    if (a0.conSquadra && !(fonte && fonte.length) && squadrePerGiorno.get(g) === 1 && regIndex2.get(g)) {
+      fonte = regIndex2.get(g); squadraNonCombacia += lista.length;
+    }
     if (!a0.conSquadra) attSenzaSquadra += lista.length;
     const persone = dedup(fonte || []);
     regCollegate += persone.length;
@@ -681,7 +696,7 @@ function elabora(piano, reg) {
   ATT.forEach(a => { if (!NOMI_COMANDO.has(a.comandoKey)) NOMI_COMANDO.set(a.comandoKey, a.comando); });
   ANNI = [...new Set(ATT.map(a => a.anno))].sort((x, y) => y - x);
 
-  diag = { righePiano: piano.length, att: ATT.length, senzaData, senzaCoord, prove, regTot, regScartate, regCollegate, attSenzaSquadra, duplicati,
+  diag = { righePiano: piano.length, att: ATT.length, senzaData, senzaCoord, prove, regTot, regScartate, regCollegate, attSenzaSquadra, duplicati, squadraNonCombacia,
     senzaSede: [...new Set(ATT.filter(a => !sedeDi(a.comandoKey)).map(a => a.comando))] };
 }
 
@@ -1037,7 +1052,7 @@ function diagnostica() {
     <div>Anni presenti: ${ANNI.join(', ') || '—'}</div>
     ${diag.senzaSede && diag.senzaSede.length ? `<div style="color:#ffb74d">Senza sede in elenco (posizione media): ${diag.senzaSede.map(esc).join(', ')}</div>` : ''}
     <div>Registrazioni: ${diag.regTot ?? '—'} · scartate (prove/vuote): ${diag.regScartate ?? '—'} · collegate agli addestramenti: ${diag.regCollegate ?? '—'}</div>
-    <div>Collegamento: giorno + Comando + squadra${diag.attSenzaSquadra ? ` · <span style="color:#ffb74d">${diag.attSenzaSquadra} addestramenti senza squadra → giorno + Comando</span>` : ''}</div>
+    <div>Collegamento: giorno + Comando + squadra${diag.attSenzaSquadra ? ` · <span style="color:#ffb74d">${diag.attSenzaSquadra} addestramenti senza squadra → giorno + Comando</span>` : ''}${diag.squadraNonCombacia ? ` · <span style="color:#ffb74d">${diag.squadraNonCombacia} con squadra scritta diversamente → giorno + Comando</span>` : ''}</div>
     <details style="margin-top:6px"><summary style="cursor:pointer">Tutte le intestazioni</summary><code>${headersPiano.map(esc).join(' | ')}</code></details>
     <div style="margin-top:6px;color:#aaa">Se una colonna è sbagliata, scrivi il nome esatto in <code>COL_PIANO</code> in cima alla pagina.</div>
   </div>`;
