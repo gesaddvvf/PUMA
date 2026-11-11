@@ -1319,6 +1319,15 @@ function fmtDataOra(v) {
   if (!r) return '';
   return r.d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }) + (r.ora ? ' ' + fmtOra(r.d) : '');
 }
+// "I Ciclo - 01 - …, II Ciclo - 27 - …" → una riga per manovra, ogni manovra una sola volta
+function righeManovre(txt) {
+  const viste = new Set(), out = [];
+  val(txt).split(/\n|,\s*(?=(?:[IVX]+|\d+)\s*°?\s*ciclo\b)/i).map(t => t.trim()).filter(Boolean).forEach(t => {
+    const k = normKey(t);
+    if (!viste.has(k)) { viste.add(k); out.push(t); }
+  });
+  return out;
+}
 function rigaLibretto(a, catSezione) {
   const prima = a.anno !== state.anno;
   const comando = a.tipo === 'collettivo' ? (a.organizzatoreRaw || a.organizzatore) : a.appartenenzaRaw;
@@ -1328,9 +1337,9 @@ function rigaLibretto(a, catSezione) {
   } else {
     righe.push(a.piano ? a.piano.descr || a.descr : a.descr);
     if (a.tipo !== 'collettivo' && a.tipo !== 'individuale' && a.tipologia) righe.unshift(a.tipologia);
-    const man = [...a.manovre];
-    if (man.length) man.forEach(m => righe.push(m.testo));
-    else if (a.manovreTxt) righe.push(a.manovreTxt);
+    // manovre come scritte nel modulo (già complete), una riga ciascuna, senza ripetizioni
+    const giaScritto = normKey(righe.join(' '));
+    righeManovre(a.manovreTxt).forEach(t => { if (!giaScritto.includes(normKey(t))) righe.push(t); });
     if (a.tipo === 'collettivo' && !a.piano) righe.push('⚠ Piano di Sicurezza non trovato');
   }
   const dalle = fmtDataOra(a.inizio) || a.data.toLocaleDateString('it-IT');
