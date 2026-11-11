@@ -681,10 +681,11 @@ function elabora(piano, reg) {
     const a0 = lista[0];
     const g = k.split('|').slice(0, 2).join('|');
     let fonte = a0.conSquadra ? regIndex.get(k) : regIndex2.get(g);
-    // La squadra della registrazione è scritta in modo diverso, ma quel giorno il Comando ha una sola squadra nel Piano:
-    // prendo tutti i registrati di quel giorno e Comando
-    if (a0.conSquadra && !(fonte && fonte.length) && squadrePerGiorno.get(g) === 1 && regIndex2.get(g)) {
-      fonte = regIndex2.get(g); squadraNonCombacia += lista.length;
+    // Quel giorno il Comando ha una sola squadra nel Piano: tutti i registrati di quel giorno e Comando sono suoi,
+    // anche se la squadra nella registrazione è scritta in modo diverso
+    if (a0.conSquadra && squadrePerGiorno.get(g) === 1 && regIndex2.get(g)) {
+      if ((fonte || []).length < regIndex2.get(g).length) squadraNonCombacia += lista.length;
+      fonte = regIndex2.get(g);
     }
     if (!a0.conSquadra) attSenzaSquadra += lista.length;
     const persone = dedup(fonte || []);
