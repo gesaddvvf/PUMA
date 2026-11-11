@@ -201,6 +201,27 @@
       .att summary .ty { justify-self: end; }
     }
 
+    /* Settori nella tabella requisiti */
+    tr.grp-row td { background: #3a3a3a !important; color: var(--gold); font-size: 13px; padding: 7px 10px; }
+    tr.grp-row td > b { font-size: 14px; }
+    tr.grp-row td span { float: right; color: #ddd; font-size: 12px; font-weight: normal; }
+    tr.grp-row td span b { color: #f0f0f0; }
+
+    /* Libretto */
+    table.libretto td { vertical-align: top; }
+    .lib-h1 td { background: #4a4a4a !important; color: var(--gold); font-weight: bold; font-size: 13px; cursor: pointer; }
+    .lib-h1 td:first-child::before { content: '▾ '; }
+    .lib-cat.chiuso .lib-h1 td:first-child::before { content: '▸ '; }
+    .lib-cat.chiuso tr:not(.lib-h1) { display: none; }
+    .lib-h1:hover td { background: #5a5230 !important; }
+    .lib-h2 td { background: #303030 !important; color: #e0e0e0; font-weight: bold; }
+    .lib-desc { white-space: pre-line; line-height: 1.45; }
+    .lib-dt { white-space: nowrap; text-align: center; }
+    .lib-sub td { background: #262626 !important; text-align: right; color: #ccc; }
+    .lib-sub td.n { color: #f0f0f0; font-weight: bold; }
+    .lib-tot td { background: #353535 !important; text-align: right; font-weight: bold; color: #f0f0f0; }
+    .lib-gtot td { background: #2a2a2a !important; text-align: right; font-weight: bold; color: var(--gold); border-top: 2px solid var(--gold); }
+
     .note-box { background: #2a2620; border: 1px solid #5a4a20; border-radius: 4px; padding: 10px 12px; font-size: 12px; line-height: 1.6; color: #ddd; margin-top: 18px; }
     .note-box b { color: var(--warn); }
     .note-box ul { margin: 4px 0 0; padding-left: 18px; }
@@ -252,6 +273,17 @@
       .xax, .chart .yax, .legend { color: #333 !important; }
       * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .att, tr, .tile { break-inside: avoid; }
+      tr.grp-row td { background: #777 !important; color: #fff !important; }
+      tr.grp-row td span, tr.grp-row td span b { color: #fff !important; }
+      .lib-cat.chiuso tr { display: table-row !important; }
+      .lib-h1 td { background: #777 !important; color: #fff !important; }
+      .lib-h1 td:first-child::before { content: '' !important; }
+      .lib-h2 td { background: #c8c8c8 !important; }
+      .lib-sub td { background: #eee !important; }
+      .lib-tot td { background: #d8d8d8 !important; }
+      .lib-gtot td { background: #bbb !important; border-top: 2px solid #000 !important; }
+      table.libretto { font-size: 10.5px; }
+      .lib-h1, .lib-h2 { break-after: avoid; }
     }
   </style>
 </head>
@@ -398,11 +430,13 @@ function oreTra(inizio, fine) {
   const h = (b.d - a.d) / 3600000;
   return h > 0 && h <= ORE_MAX ? h : null;
 }
-function fmtH(h) {
+// Ore in formato hh:mm, come nel libretto (12:00, 108:00)
+function fmtHM(h) {
   if (h == null) return '—';
-  const r = Math.round(h * 10) / 10;
-  return (Number.isInteger(r) ? r : r.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })) + ' h';
+  const m = Math.round(h * 60);
+  return Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
 }
+const fmtH = h => h == null ? '—' : fmtHM(h) + ' h';
 
 // "Ore Minime (in giorni)": durata di Google Sheets → 1 = 24 ore. Accetta anche "36:00:00".
 function parseOreMin(v) {
@@ -518,6 +552,29 @@ function elaboraManovre(rows) {
     MANOVRE.push(m);
   });
   diag.manovre = { righe: MANOVRE.length, senzaCorso };
+}
+
+// Livelli del raggruppamento: Settore (es. SAF) → Categoria → Tipologia
+const settoreDi = c => c.settore || c.categoria || c.sigla;
+const categoriaDi = c => c.categoria || c.settore || c.tipologia || c.sigla;
+const tipologiaDi = c => c.tipologia || c.sigla;
+const senzaParentesi = t => normKey((t || '').replace(/\(.*?\)/g, ' '));
+
+// "SAF (Speleo Alpino Fluviale), TAS (Topografia Applicata al Soccorso)" → due categorie
+function splitCategorie(t) {
+  return val(t).split(/\n|;|,(?![^()]*\))/).map(v => v.trim()).filter(Boolean);
+}
+// Categoria di intervento → categoria del libretto e settori dei requisiti
+function infoCategoria(cat) {
+  const k = normKey(cat), k2 = senzaParentesi(cat);
+  const corsi = CORSI.filter(c => (c.categoria && (normKey(c.categoria) === k || (k2.length >= 2 && senzaParentesi(c.categoria) === k2))) || c.tipInt.includes(k));
+  let settori = new Set(corsi.map(settoreDi));
+  if (!settori.size) {
+    CORSI.forEach(c => { const sk = normKey(settoreDi(c)); if (sk.length >= 3 && (k.startsWith(sk) || k2 === sk)) settori.add(settoreDi(c)); });
+  }
+  const label = corsi.length ? categoriaDi(corsi[0]) : cat;
+  if (!settori.size) settori.add(label);
+  return { cat, label, settori };
 }
 
 // Testo di tipologia → corsi di Formazione
@@ -663,7 +720,8 @@ function elaboraReg(reg, pianoIdx) {
 
     const a = {
       tipo, data, anno: data.getFullYear(), giorno: giornoKey(data), cosa,
-      organizzatore: nomeComando(g(r, 'organizzatore')), team: g(r, 'team'), ics: g(r, 'ics'),
+      organizzatore: nomeComando(g(r, 'organizzatore')), organizzatoreRaw: g(r, 'organizzatore'), appartenenzaRaw: g(r, 'appartenenza'),
+      team: g(r, 'team'), ics: g(r, 'ics'),
       attivita: g(r, 'attivita'), descr: g(r, 'descr'),
       inizio: g(r, 'inizio'), fine: g(r, 'fine'),
       ore: oreTra(g(r, 'inizio'), g(r, 'fine')), oreDa: 'registrazione',
@@ -699,10 +757,9 @@ function elaboraReg(reg, pianoIdx) {
 
     // Corsi di Formazione collegati
     a.corsi = trovaCorsi(a.tipologia);
-    if (tipo === 'intervento' && a.catInt) {
-      const kc = normKey(a.catInt);
-      CORSI.forEach(c => { if (c.tipInt.some(k => kc.includes(k))) a.corsi.add(c); });
-    }
+    a.corsiTip = new Set(a.corsi);   // corsi dalla sola tipologia (per il libretto)
+    // Interventi: categorie accorpate ("SAF (...), TAS (...)") divise una per una
+    a.cats = tipo === 'intervento' ? splitCategorie(a.catInt).map(infoCategoria) : [];
     a.manovre = trovaManovre(a.manovreTxt, a.corsi);
     a.manovre.forEach(m => { if (m.corso && tipo !== 'intervento') a.corsi.add(m.corso); });
 
@@ -725,7 +782,7 @@ const annoSelect = document.getElementById('anno-select');
 const printBtn = document.getElementById('print-btn');
 const report = document.getElementById('report');
 let loading = false;
-const state = { persona: null, anno: parseInt(URLP.get('anno'), 10) || ANNO_OGGI, aperti: new Set() };
+const state = { persona: null, anno: parseInt(URLP.get('anno'), 10) || ANNO_OGGI, aperti: new Set(), chiusi: new Set() };
 
 async function caricaDati() {
   if (loading) return;
@@ -861,7 +918,69 @@ function riepilogoCorsi(p, y) {
       nAtt: add.length, nInt: nel.length - add.length, fatte,
       dal: y - c.delta + 1, possesso: p.corsiPossesso.has(c)
     };
-  }).sort((a, b) => (b.possesso - a.possesso) || (a.c.settore || '').localeCompare(b.c.settore || '', 'it') || a.c.sigla.localeCompare(b.c.sigla, 'it'));
+  }).sort((a, b) => (b.possesso - a.possesso) || a.c.id - b.c.id);
+}
+
+// Settori: corsi + ore di addestramento e interventi dell'anno
+function riepilogoSettori(att, corsi, y) {
+  const ordine = new Map();
+  CORSI.forEach(c => { const s = settoreDi(c); if (!ordine.has(s)) ordine.set(s, c.id); });
+  const settori = new Map();
+  const get = s => { if (!settori.has(s)) settori.set(s, { nome: s, ordine: ordine.has(s) ? ordine.get(s) : 9000, righe: [], add: new Set(), int: new Set() }); return settori.get(s); };
+  corsi.forEach(r => get(settoreDi(r.c)).righe.push(r));
+  att.filter(a => a.anno === y).forEach(a => {
+    if (a.tipo === 'intervento') a.cats.forEach(i => i.settori.forEach(s => get(s).int.add(a)));
+    else a.corsi.forEach(c => get(settoreDi(c)).add.add(a));
+  });
+  const ore = set => [...set].reduce((t, a) => t + (a.ore || 0), 0);
+  return [...settori.values()].map(s => ({ ...s, oreAdd: ore(s.add), oreInt: ore(s.int) }))
+    .sort((a, b) => a.ordine - b.ordine || a.nome.localeCompare(b.nome, 'it'));
+}
+
+// Libretto: Categoria → Tipologia → attività (subtotale) → Interventi (subtotale) → Totale Categoria
+function costruisciLibretto(att, y) {
+  const ordineCat = new Map();
+  CORSI.forEach(c => { const k = categoriaDi(c); if (!ordineCat.has(k)) ordineCat.set(k, c.id); });
+  const cats = new Map();
+  const getCat = (label, ordine) => {
+    if (!cats.has(label)) cats.set(label, { label, ordine: ordine != null ? ordine : (ordineCat.has(label) ? ordineCat.get(label) : 5000), tip: new Map(), int: [], intCat: new Map() });
+    return cats.get(label);
+  };
+  const getTip = (cat, label, ordine) => {
+    if (!cat.tip.has(label)) cat.tip.set(label, { label, ordine, righe: [] });
+    return cat.tip.get(label);
+  };
+  att.filter(a => a.anno === y).sort((a, b) => a.data - b.data || (parseDataOra(a.inizio)?.d || 0) - (parseDataOra(b.inizio)?.d || 0)).forEach(a => {
+    if (a.tipo === 'intervento') {
+      const viste = new Set();
+      if (!a.cats.length) getCat('Interventi senza categoria', 9500).int.push(a);
+      a.cats.forEach(i => {
+        const c = getCat(i.label);
+        if (!viste.has(i.label)) { viste.add(i.label); c.int.push(a); }
+        c.intCat.set(a, [...(c.intCat.get(a) || []), i.cat]);
+      });
+      return;
+    }
+    const base = [...(a.corsiTip.size ? a.corsiTip : a.corsi)].sort((x, z) => x.id - z.id);
+    if (!base.length) {
+      getTip(getCat('Altre attività (non collegate a Formazione)', 9000), a.tipologia || 'Tipologia non indicata', 0).righe.push(a);
+      return;
+    }
+    const viste = new Set();
+    base.forEach(c => {
+      const k = categoriaDi(c);
+      if (viste.has(k)) return;
+      viste.add(k);
+      getTip(getCat(k), tipologiaDi(c), c.id).righe.push(a);
+    });
+  });
+  const ore = l => l.reduce((t, a) => t + (a.ore || 0), 0);
+  return [...cats.values()].sort((a, b) => a.ordine - b.ordine || a.label.localeCompare(b.label, 'it')).map(c => {
+    const tip = [...c.tip.values()].sort((a, b) => a.ordine - b.ordine || a.label.localeCompare(b.label, 'it'));
+    tip.forEach(t => t.ore = ore(t.righe));
+    const oreInt = ore(c.int);
+    return { ...c, tip, oreInt, tot: tip.reduce((s, t) => s + t.ore, 0) + oreInt };
+  });
 }
 
 /* =====================================================================
@@ -917,19 +1036,23 @@ function disegna() {
     <div class="tile"><div class="k">Addestramenti collettivi</div><div class="v">${A.coll.n} <small>· ${fmtH(A.coll.ore)}</small></div><div class="p">${confronto(A.coll.n, P.coll.n, nf)}</div></div>
     <div class="tile"><div class="k">Addestramenti individuali</div><div class="v">${A.ind.n} <small>· ${fmtH(A.ind.ore)}</small></div><div class="p">${confronto(A.ind.n, P.ind.n, nf)}</div></div>
     ${(() => { const req = corsi.filter(r => r.possesso && r.stato !== 'nd'); return req.length ? `<div class="tile"><div class="k">Requisiti ore raggiunti</div><div class="v" style="color:${req.every(r => r.stato === 'ok') ? 'var(--ok)' : 'var(--ko)'}">${req.filter(r => r.stato === 'ok').length} <small>/ ${req.length} corsi</small></div><div class="p">corsi in possesso con ore minime</div></div>` : ''; })()}
-    <div class="tile"><div class="k">Interventi registrati</div><div class="v">${A.int.n}</div><div class="p">${confronto(A.int.n, P.int.n, nf)}</div></div>
+    <div class="tile"><div class="k">Interventi registrati</div><div class="v">${A.int.n}${A.int.ore ? ` <small>· ${fmtH(A.int.ore)}</small>` : ''}</div><div class="p">${confronto(A.int.n, P.int.n, nf)}</div></div>
   </div>`;
   if (A.altro.n) html += `<div class="p" style="font-size:11.5px;color:#999;margin-top:6px">Altre attività registrate nel ${y}: ${A.altro.n} (${fmtH(A.altro.ore)}), comprese nelle ore totali.</div>`;
 
-  // Corsi
-  html += `<h4 class="sec">Requisiti per corso <span>· ore minime e manovre previste (Formazione e Manovre_PREVISTE) · clic su una riga per le manovre</span></h4>`;
-  if (!corsi.length) {
+  // Corsi, raggruppati per settore
+  const settori = riepilogoSettori(att, corsi, y);
+  html += `<h4 class="sec">Requisiti per settore e corso <span>· ore minime e manovre previste (Formazione e Manovre_PREVISTE) · clic su un corso per le manovre</span></h4>`;
+  if (!settori.length) {
     html += `<div class="man-none">Nessun corso in possesso e nessuna attività collegata a un corso di Formazione nel periodo.</div>`;
   } else {
     html += `<div class="table-scroll"><table><thead><tr>
-      <th>Corso</th><th>Periodo</th><th>Ore svolte / minime</th><th>di cui collettive</th><th>Manovre previste</th><th>Interventi</th><th>Stato</th>
+      <th>Corso</th><th>Periodo</th><th>Ore svolte / minime</th><th>di cui collettive</th><th>Manovre previste</th><th>Stato</th>
     </tr></thead><tbody>`;
-    corsi.forEach(r => {
+    settori.forEach(st => {
+    html += `<tr class="grp-row"><td colspan="6"><b>${esc(st.nome)}</b><span>Addestramento ${y}: <b>${fmtH(st.oreAdd)}</b> (${st.add.size} attività) · Interventi ${y}: <b>${st.int.size}</b>${st.int.size ? ` (${fmtH(st.oreInt)})` : ''}</span></td></tr>`;
+    if (!st.righe.length) html += `<tr><td colspan="6" class="man-none" style="padding-left:18px">Nessun corso di questo settore in possesso o con attività nel periodo.</td></tr>`;
+    st.righe.forEach(r => {
       const c = r.c, id = 'c' + c.id, aperto = state.aperti.has(id);
       const pct = c.oreMin ? Math.min(100, r.ore / c.oreMin * 100) : 0;
       const periodo = c.delta > 1 ? `${r.dal}–${y}<br><small style="color:#999">${c.delta} anni</small>` : String(y);
@@ -940,15 +1063,15 @@ function disegna() {
         : r.stato === 'ko' ? `<span class="stato ko">✘ Mancano ${fmtH(Math.max(0, c.oreMin - r.ore, r.collMin != null ? r.collMin - r.oreColl : 0))}</span>`
         : '<span class="stato nd">nessun minimo</span>';
       html += `<tr class="corso-row${aperto ? ' open' : ''}" data-id="${id}">
-        <td class="corso-nome"><b>${esc(c.sigla)}</b>${r.possesso ? '' : ' <span class="t" style="display:inline;color:var(--warn)">· non tra i corsi in possesso</span>'}${c.tipologia && c.tipologia !== c.sigla ? `<span class="t">${esc(c.tipologia)}</span>` : ''}${c.settore ? `<span class="t">Settore: ${esc(c.settore)}</span>` : ''}</td>
+        <td class="corso-nome"><b>${esc(c.sigla)}</b>${r.possesso ? '' : ' <span class="t" style="display:inline;color:var(--warn)">· non tra i corsi in possesso</span>'}${c.tipologia && c.tipologia !== c.sigla ? `<span class="t">${esc(c.tipologia)}</span>` : ''}${c.categoria && c.categoria !== c.tipologia ? `<span class="t">${esc(c.categoria)}</span>` : ''}</td>
         <td class="c">${periodo}</td>
         <td class="n">${fmtH(r.ore)}${c.oreMin != null ? ` / ${fmtH(c.oreMin)}<div class="bar"><i class="${r.ore >= c.oreMin ? 'ok' : ''}" style="width:${pct}%"></i></div>` : ''}${c.delta > 1 ? `<div style="font-size:11px;color:#999">nel ${y}: ${fmtH(r.oreAnno)}</div>` : ''}</td>
         <td class="n">${fmtH(r.oreColl)}${r.collMin != null ? ` / ${fmtH(r.collMin)}<div style="font-size:11px;color:#999">${Math.round(c.collPct * 100)}% del minimo</div>` : ''}</td>
         <td class="c">${nPrev ? `<b style="color:${nFatte >= nPrev ? 'var(--ok)' : '#f0f0f0'}">${nFatte}</b> / ${nPrev}` : '—'}</td>
-        <td class="c">${r.nInt || '—'}</td>
         <td class="c">${statoTxt}</td>
       </tr>
-      <tr class="det-row" data-for="${id}" ${aperto ? '' : 'style="display:none"'}><td colspan="7">${dettaglioManovre(c, r)}</td></tr>`;
+      <tr class="det-row" data-for="${id}" ${aperto ? '' : 'style="display:none"'}><td colspan="6">${dettaglioManovre(c, r)}</td></tr>`;
+    });
     });
     html += `</tbody></table></div>`;
   }
@@ -956,10 +1079,10 @@ function disegna() {
   // Grafico mensile
   html += graficoMesi(A.mesi, P.mesi, y);
 
-  // Attività
-  const anno = att.filter(a => a.anno === y).sort((a, b) => b.data - a.data);
-  html += `<h4 class="sec">Attività del ${y} <span>· ${anno.length} registrazioni</span></h4>`;
-  html += anno.length ? anno.map(cardAttivita).join('') : `<div class="man-none">Nessuna attività registrata nel ${y}.</div>`;
+  // Libretto
+  const anno = att.filter(a => a.anno === y);
+  html += `<h4 class="sec">Libretto di formazione ${y} <span>· per categoria e tipologia · gli interventi con più categorie compaiono in ognuna · clic su una categoria per chiuderla</span></h4>`;
+  html += anno.length ? tabellaLibretto(costruisciLibretto(att, y), A) : `<div class="man-none">Nessuna attività registrata nel ${y}.</div>`;
 
   // Note sui dati
   const note = [];
@@ -974,6 +1097,12 @@ function disegna() {
   if (note.length) html += `<div class="note-box"><b>Note sui dati</b><ul>${note.map(n => `<li>${n}</li>`).join('')}</ul></div>`;
 
   report.innerHTML = html;
+  report.querySelectorAll('tr.lib-h1').forEach(tr => tr.addEventListener('click', () => {
+    const tb = tr.closest('tbody'), k = tb.dataset.cat;
+    const chiudi = !state.chiusi.has(k);
+    chiudi ? state.chiusi.add(k) : state.chiusi.delete(k);
+    tb.classList.toggle('chiuso', chiudi);
+  }));
   report.querySelectorAll('tr.corso-row').forEach(tr => tr.addEventListener('click', () => {
     const id = tr.dataset.id, det = report.querySelector(`tr.det-row[data-for="${id}"]`);
     const apri = !state.aperti.has(id);
@@ -1016,42 +1145,55 @@ function graficoMesi(a, p, y) {
   }
   h += `</div><div class="xax"><span></span>${MESI_BREVI.map(m => `<span>${m}</span>`).join('')}</div></div>
   <details class="tabella"><summary>Mostra come tabella</summary><div class="table-scroll"><table><thead><tr><th>Anno</th>${MESI_BREVI.map(m => `<th>${m}</th>`).join('')}<th>Totale</th></tr></thead><tbody>
-    ${[[y, a], [y - 1, p]].map(([yy, v]) => `<tr><td class="c"><b>${yy}</b></td>${v.map(x => `<td class="n">${x ? Math.round(x * 10) / 10 : ''}</td>`).join('')}<td class="n"><b>${fmtH(v.reduce((s, x) => s + x, 0))}</b></td></tr>`).join('')}
+    ${[[y, a], [y - 1, p]].map(([yy, v]) => `<tr><td class="c"><b>${yy}</b></td>${v.map(x => `<td class="n">${x ? fmtHM(x) : ''}</td>`).join('')}<td class="n"><b>${fmtH(v.reduce((s, x) => s + x, 0))}</b></td></tr>`).join('')}
   </tbody></table></div></details>`;
   return h;
 }
 
-const ETICHETTE = { collettivo: 'Collettivo', individuale: 'Individuale', intervento: 'Intervento', altro: 'Altro' };
-function cardAttivita(a) {
-  const orario = a.inizio && a.fine ? (() => {
-    const i = parseDataOra(a.inizio), f = parseDataOra(a.fine);
-    if (!i || !f || !i.ora || !f.ora) return '';
-    return giornoKey(i.d) === giornoKey(f.d) ? `${fmtOra(i.d)}–${fmtOra(f.d)}` : `${i.d.toLocaleDateString('it-IT')} ${fmtOra(i.d)} – ${f.d.toLocaleDateString('it-IT')} ${fmtOra(f.d)}`;
-  })() : '';
-  const corsi = [...a.corsi].map(c => c.sigla);
-  let titolo, sotto;
+const TIPO_LIBRETTO = { collettivo: 'Addestramento collettivo', individuale: 'Addestramento', intervento: 'Intervento' };
+function fmtDataOra(v) {
+  const r = parseDataOra(v);
+  if (!r) return '';
+  return r.d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }) + (r.ora ? ' ' + fmtOra(r.d) : '');
+}
+function rigaLibretto(a, catSezione) {
+  const comando = a.tipo === 'collettivo' ? (a.organizzatoreRaw || a.organizzatore) : a.appartenenzaRaw;
+  const righe = [];
   if (a.tipo === 'intervento') {
-    titolo = a.catInt || 'Intervento';
-    sotto = [a.numInt ? 'N. ' + a.numInt : '', a.descrInt].filter(Boolean).join(' · ');
+    righe.push(a.numInt, a.descrInt, catSezione ? catSezione.join(', ') : a.catInt);
   } else {
-    titolo = a.tipologia || a.attivita || a.cosa || '—';
-    sotto = [a.tipo === 'collettivo' ? [a.organizzatore, a.team].filter(Boolean).join(' · ') : '', corsi.length ? 'Corso: ' + corsi.join(', ') : ''].filter(Boolean).join(' · ');
+    righe.push(a.piano ? a.piano.descr || a.descr : a.descr);
+    if (a.tipo !== 'collettivo' && a.tipo !== 'individuale' && a.tipologia) righe.unshift(a.tipologia);
+    const man = [...a.manovre];
+    if (man.length) man.forEach(m => righe.push(m.testo));
+    else if (a.manovreTxt) righe.push(a.manovreTxt);
+    if (a.tipo === 'collettivo' && !a.piano) righe.push('⚠ Piano di Sicurezza non trovato');
   }
-  const man = [...a.manovre];
-  let body = '';
-  if (orario) body += `<b>Orario:</b> ${esc(orario)}${a.oreDa === 'piano' ? ' <i>(dal Piano di Sicurezza)</i>' : ''}<br>`;
-  if (a.ics) body += `<b>Funzione ICS:</b> ${esc(a.ics)}<br>`;
-  if (a.piano && a.piano.area) body += `<b>Area:</b> ${esc(a.piano.area)}<br>`;
-  if (a.tipo === 'collettivo' && !a.piano) body += `<span style="color:var(--warn)">Piano di Sicurezza non trovato.</span><br>`;
-  if (a.pianiMultipli) body += `<span style="color:#999">Più Piani di Sicurezza nello stesso giorno per questa squadra: usato il più recente.</span><br>`;
-  if (a.descr) body += `<b>Descrizione:</b> ${esc(a.descr)}<br>`;
-  if (man.length) body += `<b>Manovre riconosciute (${man.length}):</b><ul>${man.map(m => `<li>${esc(m.corso ? m.corso.sigla + ' · ' : '')}${m.codice ? esc(m.codice) + ' ' : ''}${esc(m.manovra)}</li>`).join('')}</ul>`;
-  else if (a.manovreTxt) body += `<b>Manovre indicate:</b> ${esc(a.manovreTxt).replace(/\n/g, '<br>')}<br>`;
-  return `<details class="att" style="border-left:4px solid ${a.tipo === 'collettivo' ? '#4fc3f7' : a.tipo === 'individuale' ? '#ce93d8' : a.tipo === 'intervento' ? '#ff8a65' : '#bdbdbd'}">
-    <summary><span class="d">${esc(fmtData(a.data))}</span><span class="ty"><span class="chip ${a.tipo}">${ETICHETTE[a.tipo]}</span></span>
-      <span class="t">${esc(titolo)}${sotto ? `<small>${esc(sotto)}</small>` : ''}</span><span class="o">${a.tipo === 'intervento' && a.ore == null ? '' : fmtH(a.ore)}</span></summary>
-    ${body ? `<div class="body">${body}</div>` : ''}
-  </details>`;
+  const dalle = fmtDataOra(a.inizio) || a.data.toLocaleDateString('it-IT');
+  return `<tr class="lib-row"><td>${esc(comando)}</td><td>${esc(TIPO_LIBRETTO[a.tipo] || a.cosa || 'Altro')}</td>
+    <td class="lib-desc">${righe.filter(Boolean).map(esc).join('\n')}</td>
+    <td class="lib-dt">${esc(dalle)}</td><td class="lib-dt">${esc(fmtDataOra(a.fine))}</td><td class="n">${a.ore == null ? '—' : fmtHM(a.ore)}</td></tr>`;
+}
+function tabellaLibretto(cats, A) {
+  let h = `<div class="table-scroll"><table class="libretto"><thead><tr>
+    <th style="width:14%">Comando</th><th style="width:12%">Tipologia</th><th>Descrizione attività</th><th style="width:11%">Dalle ore</th><th style="width:11%">Alle ore</th><th style="width:7%">Ore</th></tr></thead>`;
+  cats.forEach(c => {
+    const k = normKey(c.label);
+    h += `<tbody class="lib-cat${state.chiusi.has(k) ? ' chiuso' : ''}" data-cat="${k}">
+      <tr class="lib-h1"><td colspan="5">${esc(c.label)}</td><td class="n">${fmtHM(c.tot)}</td></tr>`;
+    c.tip.forEach(t => {
+      h += `<tr class="lib-h2"><td colspan="6">${esc(t.label)}</td></tr>` + t.righe.map(a => rigaLibretto(a)).join('') +
+        `<tr class="lib-sub"><td colspan="5">Subtotale</td><td class="n">${fmtHM(t.ore)}</td></tr>`;
+    });
+    if (c.int.length) {
+      h += `<tr class="lib-h2"><td colspan="6">Intervento</td></tr>` + c.int.map(a => rigaLibretto(a, c.intCat.get(a))).join('') +
+        `<tr class="lib-sub"><td colspan="5">Subtotale</td><td class="n">${fmtHM(c.oreInt)}</td></tr>`;
+    }
+    h += `<tr class="lib-tot"><td colspan="5">Totale Categoria</td><td class="n">${fmtHM(c.tot)}</td></tr></tbody>`;
+  });
+  h += `<tbody><tr class="lib-gtot"><td colspan="5">Totale anno, ogni attività contata una sola volta: addestramenti ${fmtHM(A.tot.ore)} · interventi ${fmtHM(A.int.ore)}</td>
+    <td class="n">${fmtHM(A.tot.ore + A.int.ore)}</td></tr></tbody></table></div>`;
+  return h;
 }
 
 const tip = document.getElementById('tip');
