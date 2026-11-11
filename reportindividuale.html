@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P.U.M.A. - Report individuale</title>
+  <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --gold: #ffd700;
+      --anno-a: #4fc3f7;     /* anno selezionato */
+      --anno-b: #ffd700;     /* anno precedente */
+      --ok: #66bb6a;
+      --ko: #ef5350;
+      --warn: #ffb74d;
+    }
+    * { scrollbar-width: thin; scrollbar-color: #555 #1e1e1e; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #1e1e1e; }
+    ::-webkit-scrollbar-thumb { background-color: #555; border-radius: 5px; border: 2px solid #1e1e1e; }
+    ::-webkit-scrollbar-thumb:hover { background-color: var(--gold); }
+
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body {
+      font-family: 'Comfortaa', cursive; background-color: #1e1e1e; color: #f0f0f0;
+      display: flex; flex-direction: column;
+    }
+
+    /* ---------- HEADER ---------- */
+    #page-header {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+      background-color: #1e1e1e; border-bottom: 1px solid #444; padding: 10px 16px; box-sizing: border-box; flex-shrink: 0;
+    }
+    #page-header h1 {
+      font-size: 16px; color: var(--gold); margin: 0 0 2px 0; font-weight: bold;
+      display: flex; align-items: center; gap: 6px;
+    }
+    #page-header .puma-icon { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+    #page-header .subtitle-divider { color: #666; }
+    #page-header h2 { font-size: 13px; color: #ccc; font-weight: normal; margin: 0; }
+    #page-header h2 b { color: var(--gold); }
+    #meta-info { font-size: 11.5px; color: #999; margin-top: 4px; }
+
+    #nav-buttons { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .nav-btn {
+      display: inline-block; background-color: #2a2a2a; color: var(--gold);
+      border: 1px solid var(--gold); border-radius: 4px; padding: 8px 14px;
+      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 13px;
+      text-decoration: none; transition: background-color 0.15s, color 0.15s;
+    }
+    .nav-btn:hover { background-color: var(--gold); color: #1e1e1e; }
+    button.nav-btn { cursor: pointer; }
+    button.nav-btn:disabled { opacity: 0.6; cursor: wait; }
+    #refresh-btn.nav-btn { background-color: #c62828; color: #fff; border-color: #c62828; }
+    #refresh-btn.nav-btn:hover { background-color: #e53935; border-color: #e53935; color: #fff; }
+    #refresh-btn.nav-btn:disabled { background-color: #7f1d1d; border-color: #7f1d1d; }
+
+    /* ---------- FILTRI ---------- */
+    #filters {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 8px 16px; border-bottom: 1px solid #444; background-color: #232323; font-size: 12.5px; flex-shrink: 0;
+    }
+    #filters label.lbl { color: #aaa; }
+    #filters input, #filters select {
+      background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px;
+      padding: 6px 8px; font-family: 'Comfortaa', cursive; font-size: 12.5px;
+    }
+    #filters input:focus, #filters select:focus { outline: none; border-color: var(--gold); }
+    #nome-input { width: 320px; max-width: 100%; }
+    #anno-select { font-weight: bold; }
+    #clear-btn {
+      background: none; border: 1px solid #555; color: #aaa; border-radius: 4px; padding: 6px 9px;
+      font-family: 'Comfortaa', cursive; cursor: pointer; font-size: 12px;
+    }
+    #clear-btn:hover { color: var(--gold); border-color: var(--gold); }
+    #print-btn {
+      margin-left: auto; background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px;
+      padding: 6px 12px; font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+    }
+    #print-btn:hover { background: var(--gold); color: #1e1e1e; }
+    #print-btn:disabled { opacity: .4; cursor: default; background: #2a2a2a; color: var(--gold); }
+
+    @media (max-width: 700px) {
+      #page-header { flex-direction: column; }
+      #nav-buttons { width: 100%; }
+      .nav-btn { flex: 1 1 40%; text-align: center; }
+      #filters label.lbl, #meta-info { display: none; }
+      #nome-input { flex: 1 1 100%; width: auto; }
+      #print-btn { margin-left: 0; }
+      #filters { padding: 6px 10px; gap: 6px; }
+    }
+
+    /* ---------- CONTENUTO ---------- */
+    #content { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; box-sizing: border-box; }
+    .wrap { max-width: 1150px; margin: 0 auto; }
+    .msg {
+      margin: 40px auto; max-width: 560px; text-align: center; color: var(--gold); border: 1px solid var(--gold);
+      border-radius: 6px; padding: 16px 20px; font-weight: bold; line-height: 1.6; background: #232323;
+    }
+    .msg small { display: block; color: #aaa; font-weight: normal; margin-top: 6px; }
+
+    .persona-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .persona-head h3 { margin: 0; font-size: 20px; color: var(--gold); }
+    .persona-head .sub { color: #bbb; font-size: 12.5px; margin-top: 4px; line-height: 1.6; }
+    .persona-head .anno-big { font-size: 13px; color: #aaa; text-align: right; }
+    .persona-head .anno-big b { font-size: 22px; color: var(--anno-a); display: block; }
+
+    h4.sec { color: var(--gold); font-size: 14px; margin: 22px 0 8px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+    h4.sec span { color: #999; font-weight: normal; font-size: 12px; }
+
+    /* Tessere */
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+    .tile { background: #262626; border: 1px solid #3a3a3a; border-radius: 6px; padding: 10px 12px; }
+    .tile .k { color: #aaa; font-size: 11.5px; }
+    .tile .v { font-size: 24px; font-weight: bold; color: #f0f0f0; margin: 4px 0 2px; }
+    .tile .v small { font-size: 13px; color: #aaa; font-weight: normal; }
+    .tile .p { font-size: 11.5px; color: #999; }
+    .tile .p .up { color: var(--ok); font-weight: bold; }
+    .tile .p .down { color: var(--ko); font-weight: bold; }
+
+    /* Tabelle */
+    table { font-family: 'Comfortaa', cursive; border-collapse: collapse; width: 100%; font-size: 12.5px; }
+    td, th { padding: 6px 8px; border: 1px solid #444; vertical-align: middle; }
+    th { background: #2a2a2a; color: #ccc; font-weight: bold; text-align: center; }
+    tbody tr:nth-child(even) td { background-color: #242424; }
+    tbody tr:nth-child(odd) td { background-color: #1f1f1f; }
+    td.c { text-align: center; }
+    td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .table-scroll { overflow-x: auto; }
+    tr.corso-row { cursor: pointer; }
+    tr.corso-row:hover td { background-color: #3a3520 !important; }
+    tr.corso-row td:first-child::before { content: '▸ '; color: var(--gold); }
+    tr.corso-row.open td:first-child::before { content: '▾ '; }
+    tr.det-row > td { background: #191919 !important; padding: 10px 12px; }
+    .corso-nome b { color: var(--gold); }
+    .corso-nome .t { display: block; color: #bbb; font-size: 11.5px; margin-top: 2px; }
+
+    .bar { position: relative; height: 8px; background: #333; border-radius: 4px; overflow: hidden; min-width: 70px; margin-top: 4px; }
+    .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--anno-a); }
+    .bar i.ok { background: var(--ok); }
+    .stato { font-weight: bold; white-space: nowrap; }
+    .stato.ok { color: var(--ok); }
+    .stato.ko { color: var(--ko); }
+    .stato.nd { color: #999; font-weight: normal; }
+
+    /* Manovre */
+    .ciclo-title { color: #ccc; font-size: 11.5px; font-weight: bold; margin: 10px 0 5px; text-transform: uppercase; letter-spacing: .03em; }
+    .ciclo-title:first-child { margin-top: 0; }
+    .man-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 12px; }
+    .man { font-size: 12px; line-height: 1.45; padding: 3px 0 3px 22px; position: relative; color: #ccc; }
+    .man::before { position: absolute; left: 2px; top: 3px; font-weight: bold; }
+    .man.si::before { content: '✔'; color: var(--ok); }
+    .man.no::before { content: '✘'; color: var(--ko); }
+    .man.si { color: #f0f0f0; }
+    .man .q { color: #999; font-size: 11px; }
+    .man-none { color: #999; font-size: 12px; }
+
+    /* Grafico mensile */
+    .legend { display: flex; gap: 16px; font-size: 12px; color: #ccc; margin-bottom: 6px; flex-wrap: wrap; }
+    .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+    .chart { display: grid; grid-template-columns: 34px repeat(12, 1fr); align-items: end; height: 170px; gap: 0 6px; position: relative; }
+    .chart .yax { align-self: stretch; position: relative; font-size: 10.5px; color: #888; }
+    .chart .yax span { position: absolute; right: 4px; transform: translateY(50%); }
+    .chart .grid { position: absolute; left: 34px; right: 0; border-top: 1px solid #333; pointer-events: none; }
+    .chart .grid.base { border-top-color: #666; }
+    .chart .col { display: flex; justify-content: center; align-items: flex-end; gap: 2px; height: 100%; position: relative; z-index: 1; cursor: default; }
+    .chart .col:hover { background: rgba(255,255,255,.04); }
+    .chart .b { width: 40%; max-width: 18px; border-radius: 4px 4px 0 0; min-height: 0; }
+    .chart .b.a { background: var(--anno-a); }
+    .chart .b.p { background: var(--anno-b); }
+    .xax { display: grid; grid-template-columns: 34px repeat(12, 1fr); gap: 0 6px; font-size: 10.5px; color: #999; text-align: center; margin-top: 4px; }
+    #tip {
+      position: fixed; z-index: 50; pointer-events: none; display: none; background: rgba(20,20,20,.95); border: 1px solid #555;
+      border-radius: 4px; padding: 6px 9px; font-size: 12px; line-height: 1.5; white-space: nowrap;
+    }
+    details.tabella summary { cursor: pointer; color: #aaa; font-size: 12px; margin-top: 8px; }
+    details.tabella table { margin-top: 6px; }
+
+    /* Attività */
+    .chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; color: #1e1e1e; white-space: nowrap; }
+    .chip.collettivo { background: #4fc3f7; }
+    .chip.individuale { background: #ce93d8; }
+    .chip.intervento { background: #ff8a65; }
+    .chip.altro { background: #bdbdbd; }
+    .att { background: #262626; border: 1px solid #3a3a3a; border-radius: 4px; margin-bottom: 6px; font-size: 12.5px; }
+    .att summary { list-style: none; cursor: pointer; padding: 8px 10px; display: grid; grid-template-columns: 150px 92px 1fr 70px; gap: 10px; align-items: center; }
+    .att summary::-webkit-details-marker { display: none; }
+    .att summary:hover { background: #3a3520; }
+    .att .d { font-weight: bold; }
+    .att .t { color: #ddd; }
+    .att .t small { display: block; color: #999; font-size: 11.5px; }
+    .att .o { text-align: right; font-weight: bold; color: var(--anno-a); white-space: nowrap; }
+    .att .body { padding: 4px 12px 10px; border-top: 1px solid #3a3a3a; color: #ccc; line-height: 1.55; font-size: 12px; }
+    .att .body b { color: #aaa; font-weight: bold; }
+    .att .body ul { margin: 2px 0 6px; padding-left: 18px; }
+    @media (max-width: 700px) {
+      .att summary { grid-template-columns: 1fr auto; }
+      .att summary .t { grid-column: 1 / -1; }
+      .att summary .ty { justify-self: end; }
+    }
+
+    .note-box { background: #2a2620; border: 1px solid #5a4a20; border-radius: 4px; padding: 10px 12px; font-size: 12px; line-height: 1.6; color: #ddd; margin-top: 18px; }
+    .note-box b { color: var(--warn); }
+    .note-box ul { margin: 4px 0 0; padding-left: 18px; }
+    .debug-box { background: #2a2020; border: 1px solid #a33; border-radius: 4px; padding: 10px; font-size: 12px; margin-bottom: 12px; line-height: 1.5; }
+    .debug-box b { color: #ffb74d; }
+    .debug-box code { color: #fff; }
+
+    .print-only { display: none; }
+
+    /* ---------- STAMPA ---------- */
+    @media print {
+      @page { size: A4; margin: 12mm; }
+      html, body { height: auto; background: #fff !important; color: #000 !important; display: block; }
+      #page-header, #filters, #tip, .no-print, details.tabella { display: none !important; }
+      .print-only { display: block; }
+      #content { overflow: visible; padding: 0; }
+      .print-title { font-size: 13px; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 10px; }
+      .persona-head h3, h4.sec, .corso-nome b { color: #000 !important; }
+      .persona-head .sub, .corso-nome .t, .tile .k, .tile .p, .man .q, h4.sec span { color: #444 !important; }
+      .persona-head .anno-big b { color: #000 !important; }
+      .tile, .att, .note-box { background: #fff !important; border-color: #999 !important; color: #000 !important; }
+      .tile .v { color: #000 !important; }
+      td, th { border-color: #999 !important; color: #000 !important; background: #fff !important; }
+      th { background: #eee !important; }
+      tr.det-row { display: table-row !important; }
+      tr.det-row > td, tbody tr td { background: #fff !important; }
+      .chart-block { break-inside: avoid; }
+      tr.corso-row:hover td { background: #fff !important; }
+      .ciclo-title, .man-none { color: #333 !important; }
+      .man .q { color: #555 !important; }
+      tr.corso-row td:first-child::before { content: '' !important; }
+      .man, .man.si { color: #000 !important; }
+      .att summary { padding: 4px 8px; }
+      .att .d, .att .t, .att .o, .att .body, .att .body b { color: #000 !important; }
+      .att .body { display: block !important; }
+      .chart .grid { border-top-color: #ccc !important; }
+      .chart .grid.base { border-top-color: #000 !important; }
+      .xax, .chart .yax, .legend { color: #333 !important; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .att, tr, .tile { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<header id="page-header">
+  <div>
+    <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
+    <h2>Report individuale del personale: <b id="periodo-label">—</b></h2>
+    <div id="meta-info">Dati caricati: <span id="last-update">—</span></div>
+  </div>
+  <div id="nav-buttons">
+    <button class="nav-btn" id="refresh-btn" type="button">⟳ Aggiorna</button>
+    <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page" id="btn-home">Homepage P.U.M.A.</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html" id="btn-mappa">Mappa Real Time</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/personaleodierno.html" id="btn-presenze">Presenze Odierne</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/mappariepilogocollettivi.html" id="btn-riepilogo">Riepilogo Globale</a>
+  </div>
+</header>
+
+<div id="filters">
+  <label class="lbl" for="nome-input">Nominativo</label>
+  <input id="nome-input" list="nomi-list" placeholder="Scrivi cognome o nome…" autocomplete="off" disabled>
+  <datalist id="nomi-list"></datalist>
+  <button id="clear-btn" type="button" title="Cancella">✕</button>
+  <label class="lbl" for="anno-select">Anno di riferimento</label>
+  <select id="anno-select" aria-label="Anno di riferimento"></select>
+  <button id="print-btn" type="button" disabled>🖨 Stampa</button>
+</div>
+
+<div id="content"><div class="wrap" id="report"><div class="msg">Caricamento dati…</div></div></div>
+<div id="tip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+/* =====================================================================
+   CONFIGURAZIONE
+   ===================================================================== */
+const SHEET_ID      = "1WHGKaawomU_jMuO6FnwzYidou-fmpc0ndeE0aiEMYP4"; // PUMA VVF Database Personale
+const GID_REG       = "2031805821";   // Registrazione_Attivita_Semplificata: una persona per riga
+const GID_PIANO     = "1495276384";   // Piano_Di_Sicurezza: un addestramento collettivo per riga
+const GID_MANOVRE   = "605866354";    // Manovre_PREVISTE: A2:F
+const GID_FORMAZIONE = "1631986002";  // Formazione: requisiti per corso
+const GID_ELENCO    = "84413100";     // Elenco_Filtrato: corsi in possesso di ogni persona
+
+// Elenco_Filtrato: si leggono SOLO queste colonne (e-mail, cellulare e codice fiscale non vengono mai mostrati)
+const COL_ELENCO = {
+  nome:      /cognome nome/i,
+  comando:   /appartenenza/i,
+  qualifica: /^qualifica$/i,
+  corsi:     /corsi in possesso/i
+};
+// Codice fiscale dentro "Cognome Nome - Codice Fiscale": serve solo a distinguere gli omonimi
+const RE_CF = /\b[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]\b/i;
+
+// Registrazione_Attivita_Semplificata: colonna trovata dall'intestazione; se manca, si usa la lettera.
+const COL_REG = {
+  cronologiche:  ['A', /informazioni cronologiche|timestamp/i],
+  appartenenza:  ['B', /appartenenza/i],
+  nome:          ['C', /personale partecipante|nominativo/i],
+  cosa:          ['D', /che cosa vuoi fare/i],
+  organizzatore: ['E', /organizzatore/i],
+  team:          ['F', /^team$|^squadra$/i],
+  ics:           ['G', /incident command/i],
+  dataColl:      ['H', /data addestramento collettivo/i],
+  attivita:      ['I', /^attivit[àa]$/i],
+  inizio:        ['J', /inizio/i],
+  fine:          ['K', /fine/i],
+  tipInd:        ['L', /tipologia addestramento individuale/i],
+  descr:         ['M', /^descrizione attivit/i],
+  catInt:        ['P', /categoria.*intervento/i],
+  descrInt:      ['Q', /breve descrizione/i],
+  numInt:        ['R', /numero intervento/i],
+  data:          ['V', /^data$/i]
+};
+// Colonne con le manovre svolte: tutte quelle "Attività addestrativa svolta (…)"
+const REG_MANOVRE = /attivit[àa] addestrativa svolta\s*\(/i;
+// Piano_Di_Sicurezza: colonne con le manovre previste
+const PIANO_MANOVRE = /^manovre\b.*previste/i;
+
+// Registrazioni da scartare (prove)
+const NOME_NON_REALE = /\b(test|prova|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;
+// Durata massima credibile di un'attività (ore): oltre, l'orario è considerato sbagliato
+const ORE_MAX = 168;
+// Duplicati in Piano_Di_Sicurezza: stesso giorno + Comando + squadra + tipologia → resta l'ultimo inserito
+const FILTRA_DUPLICATI = true;
+
+/* ===================================================================== */
+const URLP = new URLSearchParams(location.search);
+const DEBUG = URLP.has('debug');
+const ANNO_OGGI = new Date().getFullYear();
+const MESI_BREVI = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+const csvUrl = gid => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const isNA = v => /^#?N\/[AD]$|^#(REF|VALUE|ERROR|NAME)!?/i.test((v || '').trim());
+const val = v => { const t = String(v == null ? '' : v).trim(); return isNA(t) ? '' : t; };
+const letterIdx = l => l.toUpperCase().split('').reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1;
+const push = (m, k, v) => { if (!m.has(k)) m.set(k, []); m.get(k).push(v); };
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function normKey(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+}
+function comandoKey(s) {
+  let t = (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  t = t.replace(/vigili del fuoco|v\.?v\.?f\.?|\bcomando\b|\bprovinciale\b|\bdi\b|\bdel\b|\bdella\b|\bdei\b/g, ' ');
+  return t.replace(/[^a-z0-9]/g, '');
+}
+function squadraKey(s) {
+  return normKey((s || '').replace(/\bsquadra\b|\bsq\.?/gi, ' ')) || 'nonindicata';
+}
+function nomeComando(s) {
+  const t = (s || '').trim();
+  if (!t) return '';
+  if (/^(comando|direzione)/i.test(t)) return t;
+  return 'Comando ' + t;
+}
+
+// "15/01/2026", "15/01/2026 08:30:00", "2026-01-15T08:30", "Date(2026,0,15,8,30,0)"
+function parseDataOra(v) {
+  const t = (v || '').trim();
+  let m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:[\sT,]+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?)?/);
+  if (m) {
+    const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+    return { d: new Date(y, +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)), ora: m[4] != null };
+  }
+  m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[\sT]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m) return { d: new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)), ora: m[4] != null };
+  m = t.match(/Date\((\d{4}),(\d{1,2}),(\d{1,2})(?:,(\d{1,2}),(\d{1,2})(?:,(\d{1,2}))?)?/);
+  if (m) return { d: new Date(+m[1], +m[2], +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)), ora: m[4] != null };
+  return null;
+}
+const parseData = v => { const r = parseDataOra(v); return r ? new Date(r.d.getFullYear(), r.d.getMonth(), r.d.getDate()) : null; };
+const giornoKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fmtData = d => d.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+const fmtOra = d => d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+// Ore tra inizio e fine; null se mancano gli orari o la durata non è credibile
+function oreTra(inizio, fine) {
+  const a = parseDataOra(inizio), b = parseDataOra(fine);
+  if (!a || !b || !a.ora || !b.ora) return null;
+  const h = (b.d - a.d) / 3600000;
+  return h > 0 && h <= ORE_MAX ? h : null;
+}
+function fmtH(h) {
+  if (h == null) return '—';
+  const r = Math.round(h * 10) / 10;
+  return (Number.isInteger(r) ? r : r.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })) + ' h';
+}
+
+// "Ore Minime (in giorni)": durata di Google Sheets → 1 = 24 ore. Accetta anche "36:00:00".
+function parseOreMin(v) {
+  const t = val(v);
+  if (!t) return null;
+  let m = t.match(/^(\d+):(\d{2})(?::(\d{2}))?$/);
+  if (m) return +m[1] + +m[2] / 60 + (m[3] ? +m[3] / 3600 : 0);
+  m = t.replace(',', '.').match(/-?\d+(\.\d+)?/);
+  if (!m) return null;
+  const n = parseFloat(m[0]);
+  return n > 0 ? n * 24 : null;
+}
+// "Collettive (in %)": "50%", "50", "0,5" → 0.5
+function parsePct(v) {
+  const t = val(v);
+  if (!t) return null;
+  const m = t.replace(',', '.').match(/\d+(\.\d+)?/);
+  if (!m) return null;
+  let n = parseFloat(m[0]);
+  if (t.includes('%') || n > 1) n = n / 100;
+  return n >= 0 && n <= 1 ? n : null;
+}
+const siNo = v => /^(si|sì|s|true|vero|x|1|yes)$/i.test(val(v));
+
+/* =====================================================================
+   PERSONE: "COGNOME NOME - CODICE FISCALE" → nome visibile + chiave
+   ===================================================================== */
+function separaNome(raw) {
+  const t = val(raw).replace(/\s+/g, ' ');
+  const m = t.match(RE_CF);
+  const cf = m ? m[0].toUpperCase() : '';
+  const nome = (m ? t.replace(m[0], ' ') : t).replace(/\s*[-–|,;]\s*$/, '').replace(/^\s*[-–|,;]\s*/, '').replace(/\s+/g, ' ').trim();
+  return { nome, cf };
+}
+let NOME_A_CF = new Map();   // nome normalizzato → chiave CF (solo se il nome è unico)
+function chiavePersona(nome, cf) {
+  if (cf) return 'cf:' + cf;
+  const k = normKey(nome);
+  const c = NOME_A_CF.get(k);
+  return c && c !== '*' ? c : 'n:' + k;
+}
+function persona(key, nome) {
+  if (!PERSONE.has(key)) PERSONE.set(key, { key, grafie: new Map(), comandi: new Map(), qualifica: '', corsiPossesso: new Set(), corsiTxt: [], inElenco: false, att: [] });
+  const p = PERSONE.get(key);
+  if (nome) p.grafie.set(nome, (p.grafie.get(nome) || 0) + 1);
+  return p;
+}
+
+/* =====================================================================
+   DATI
+   ===================================================================== */
+let PERSONE = new Map();   // chiave nome → { nome, comandi: Map, att: [] }
+let CORSI = [];            // righe di Formazione
+let MANOVRE = [];          // righe di Manovre_PREVISTE
+let colReg = {}, colPiano = {}, colElenco = {}, diag = {};
+
+function scaricaCsv(gid, header) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvUrl(gid) + '&_=' + Date.now(), {
+      download: true, header, skipEmptyLines: true,
+      complete: r => resolve(r.data), error: err => reject(err)
+    });
+  });
+}
+
+function elaboraFormazione(rows) {
+  const hi = rows.findIndex(r => r.some(c => /^sigla$/i.test((c || '').trim())));
+  const head = hi >= 0 ? rows[hi].map(c => (c || '').trim()) : [];
+  const ix = re => head.findIndex(h => re.test(h));
+  const c = {
+    sigla: ix(/^sigla$/i), tipologia: ix(/^tipologia$/i), categoria: ix(/^categoria$/i), settore: ix(/^settore$/i),
+    delta: ix(/delta anni/i), oreMin: ix(/ore minime/i), coll: ix(/collettive/i),
+    soloReg: ix(/stampa solo registro/i), tipInt: ix(/tipologia\s*\(interventi\)/i)
+  };
+  const g = (r, k) => c[k] >= 0 ? val(r[c[k]]) : '';
+  CORSI = [];
+  rows.slice(hi + 1).forEach(r => {
+    const sigla = g(r, 'sigla'), tipologia = g(r, 'tipologia');
+    if (!sigla && !tipologia) return;
+    const corso = {
+      id: CORSI.length, sigla: sigla || tipologia, tipologia, categoria: g(r, 'categoria'), settore: g(r, 'settore'),
+      delta: Math.max(1, parseInt(g(r, 'delta'), 10) || 1),
+      oreMin: parseOreMin(g(r, 'oreMin')), collPct: parsePct(g(r, 'coll')),
+      soloRegistro: siNo(g(r, 'soloReg')),
+      tipInt: g(r, 'tipInt').split(/\n|;|,/).map(normKey).filter(k => k.length >= 3),
+      keys: new Set([normKey(sigla), normKey(tipologia), normKey(tipologia.replace(/\(.*?\)/g, ' '))].filter(k => k.length >= 2)),
+      previste: []
+    };
+    CORSI.push(corso);
+  });
+  diag.formazione = { intestazioni: hi + 1, corsi: CORSI.length, colonne: c };
+}
+
+function corsoDaChiave(k) {
+  return CORSI.find(c => c.keys.has(k)) || null;
+}
+
+function elaboraManovre(rows) {
+  MANOVRE = [];
+  let senzaCorso = 0;
+  rows.forEach(r => {
+    const a = val(r[0]), uid = val(r[1]), cod = val(r[2]), ciclo = val(r[3]), man = val(r[4]), full = val(r[5]);
+    if (!man && !full) return;
+    if (/associazione/i.test(a) || /^manovra$/i.test(man)) return;   // intestazione
+    const testo = full || [ciclo, cod, man].filter(Boolean).join(' ');
+    const m = {
+      corsoTxt: a, uid, codice: cod, ciclo, manovra: man || testo, testo,
+      kFull: normKey(testo), kMan: normKey(man),
+      reUid: uid && uid.length >= 2 ? new RegExp('(^|[^A-Za-z0-9])' + escRe(uid) + '($|[^A-Za-z0-9])', 'i') : null,
+      corso: corsoDaChiave(normKey(a))
+    };
+    if (m.corso) m.corso.previste.push(m); else senzaCorso++;
+    MANOVRE.push(m);
+  });
+  diag.manovre = { righe: MANOVRE.length, senzaCorso };
+}
+
+// Testo di tipologia → corsi di Formazione
+function trovaCorsi(testo) {
+  const out = new Set();
+  const t = val(testo);
+  if (!t) return out;
+  const tutto = corsoDaChiave(normKey(t));
+  if (tutto) { out.add(tutto); return out; }
+  t.split(/\n|;|,/).map(v => v.trim()).filter(Boolean).forEach(v => {
+    const k = normKey(v);
+    let c = corsoDaChiave(k) || corsoDaChiave(normKey(v.replace(/\(.*?\)/g, ' ')));
+    if (!c) {
+      let best = null, bl = 0;
+      CORSI.forEach(x => x.keys.forEach(kk => { if (kk.length >= 4 && k.includes(kk) && kk.length > bl) { best = x; bl = kk.length; } }));
+      c = best;
+    }
+    if (c) out.add(c);
+  });
+  return out;
+}
+
+// Testo delle manovre svolte → manovre previste riconosciute
+function trovaManovre(testo, corsiAtt) {
+  const out = new Set();
+  if (!testo) return out;
+  const nk = normKey(testo);
+  MANOVRE.forEach(m => {
+    if ((m.kFull.length >= 6 && nk.includes(m.kFull)) || (m.reUid && m.reUid.test(testo)) ||
+        (m.corso && corsiAtt.has(m.corso) && m.kMan.length >= 6 && nk.includes(m.kMan))) out.add(m);
+  });
+  return out;
+}
+
+function elaboraElenco(rows) {
+  const head = (rows[0] || []).map(h => (h || '').trim());
+  colElenco = {};
+  Object.entries(COL_ELENCO).forEach(([k, re]) => { colElenco[k] = head.findIndex(h => re.test(h)); });
+  PERSONE = new Map();
+  NOME_A_CF = new Map();
+  if (colElenco.nome < 0) { diag.elenco = { righe: rows.length, persone: 0, errore: 'colonna "Cognome Nome" non trovata' }; return; }
+  const g = (r, k) => colElenco[k] >= 0 ? val(r[colElenco[k]]) : '';
+  let n = 0, corsiNonTrovati = new Set();
+  rows.slice(1).forEach(r => {
+    const { nome, cf } = separaNome(r[colElenco.nome]);
+    if (nome.length < 3 || NOME_NON_REALE.test(nome)) return;
+    const key = cf ? 'cf:' + cf : 'n:' + normKey(nome);
+    const nk = normKey(nome);
+    if (cf) NOME_A_CF.set(nk, NOME_A_CF.has(nk) && NOME_A_CF.get(nk) !== key ? '*' : key);
+    const p = persona(key, nome);
+    p.inElenco = true; n++;
+    const com = nomeComando(g(r, 'comando'));
+    if (com) p.comandi.set(com, (p.comandi.get(com) || 0) + 100);   // l'Elenco vale più delle registrazioni
+    if (g(r, 'qualifica')) p.qualifica = g(r, 'qualifica');
+    g(r, 'corsi').split(/\n|;|,/).map(v => v.trim()).filter(Boolean).forEach(v => {
+      const c = trovaCorsi(v);
+      if (c.size) c.forEach(x => p.corsiPossesso.add(x));
+      else { p.corsiTxt.push(v); corsiNonTrovati.add(v); }
+    });
+  });
+  diag.elenco = { righe: rows.length - 1, persone: n, corsiNonTrovati: [...corsiNonTrovati] };
+}
+
+function elaboraPiano(piano) {
+  const headers = piano.length ? Object.keys(piano[0]) : [];
+  const trova = (regole, esclusi) => { for (const r of regole) { const h = headers.find(h => r.test(h) && !(esclusi && esclusi.test(h))); if (h) return h; } return null; };
+  colPiano = {
+    comando: trova([/organizzat/i, /^comando/i], /funzione|appartenenza/i),
+    squadra: trova([/^squadra$/i, /squadra/i], /sottosquadre/i),
+    tipologia: trova([/^tipologia addestramento/i, /tipologia/i]),
+    inizio: trova([/giorno ed ora inizio/i, /inizio/i]),
+    fine: trova([/giorno ed ora fine/i, /\bfine\b/i]),
+    descr: trova([/descrizione manovre/i, /descrizione/i]),
+    area: trova([/area di addestramento/i]),
+    manovre: headers.filter(h => PIANO_MANOVRE.test(h))
+  };
+  let lista = [];
+  piano.forEach((row, i) => {
+    const d = colPiano.inizio ? parseData(row[colPiano.inizio]) : null;
+    if (!d) return;
+    const com = val(row[colPiano.comando]), tip = val(row[colPiano.tipologia]);
+    if (/\btest\b/i.test(com + ' ' + tip)) return;
+    lista.push({
+      i, data: d, giorno: giornoKey(d), comandoKey: comandoKey(com) || 'nonindicato', comando: nomeComando(com),
+      squadra: val(row[colPiano.squadra]), tipologia: tip,
+      inizio: val(row[colPiano.inizio]), fine: val(row[colPiano.fine]),
+      ore: oreTra(row[colPiano.inizio], row[colPiano.fine]),
+      descr: val(row[colPiano.descr]), area: val(row[colPiano.area]),
+      manovre: colPiano.manovre.map(h => val(row[h])).filter(Boolean).join('\n')
+    });
+  });
+  let duplicati = 0;
+  if (FILTRA_DUPLICATI) {
+    const ultimo = new Map();
+    lista.forEach((a, i) => ultimo.set(`${a.giorno}|${a.comandoKey}|${squadraKey(a.squadra)}|${normKey(a.tipologia)}`, i));
+    const tenere = new Set(ultimo.values());
+    duplicati = lista.length - tenere.size;
+    lista = lista.filter((a, i) => tenere.has(i));
+  }
+  const idx3 = new Map(), idx2 = new Map();
+  lista.forEach(p => {
+    push(idx2, p.giorno + '|' + p.comandoKey, p);
+    if (p.squadra) push(idx3, p.giorno + '|' + p.comandoKey + '|' + squadraKey(p.squadra), p);
+  });
+  diag.piano = { righe: piano.length, validi: lista.length, duplicati };
+  return { idx3, idx2 };
+}
+
+function elaboraReg(reg, pianoIdx) {
+  const head = (reg[0] || []).map(h => (h || '').trim());
+  colReg = {};
+  Object.entries(COL_REG).forEach(([k, [lettera, re]]) => {
+    const i = head.findIndex(h => re.test(h));
+    colReg[k] = i >= 0 ? i : letterIdx(lettera);
+  });
+  // "fine" non deve prendere "Giorno ed Ora Inizio"... ma neanche altre colonne con "fine" nel testo
+  const iFine = head.findIndex(h => /giorno ed ora fine/i.test(h));
+  if (iFine >= 0) colReg.fine = iFine;
+  const iIni = head.findIndex(h => /giorno ed ora inizio/i.test(h));
+  if (iIni >= 0) colReg.inizio = iIni;
+  colReg.manovre = head.map((h, i) => REG_MANOVRE.test(h) ? i : -1).filter(i => i >= 0);
+  if (!colReg.manovre.length) colReg.manovre = [letterIdx('N'), letterIdx('O')];
+
+  let righe = 0, scartate = 0, senzaData = 0, collSenzaPiano = 0;
+  const g = (r, k) => val(r[colReg[k]]);
+  reg.slice(1).forEach(r => {
+    const { nome, cf } = separaNome(g(r, 'nome'));
+    if (!nome && !g(r, 'cronologiche')) return;
+    righe++;
+    if (nome.length < 3 || NOME_NON_REALE.test(nome)) { scartate++; return; }
+
+    const cosa = g(r, 'cosa');
+    let tipo;
+    if (/intervent/i.test(cosa) || (!cosa && (g(r, 'numInt') || g(r, 'catInt')))) tipo = 'intervento';
+    else if (/individual/i.test(cosa) || (!cosa && g(r, 'tipInd'))) tipo = 'individuale';
+    else if (/collettiv/i.test(cosa) || (!cosa && g(r, 'dataColl'))) tipo = 'collettivo';
+    else tipo = 'altro';
+
+    const data = tipo === 'collettivo'
+      ? (parseData(g(r, 'dataColl')) || parseData(g(r, 'data')) || parseData(g(r, 'inizio')) || parseData(g(r, 'cronologiche')))
+      : (parseData(g(r, 'inizio')) || parseData(g(r, 'data')) || parseData(g(r, 'dataColl')) || parseData(g(r, 'cronologiche')));
+    if (!data) { senzaData++; return; }
+
+    const a = {
+      tipo, data, anno: data.getFullYear(), giorno: giornoKey(data), cosa,
+      organizzatore: nomeComando(g(r, 'organizzatore')), team: g(r, 'team'), ics: g(r, 'ics'),
+      attivita: g(r, 'attivita'), descr: g(r, 'descr'),
+      inizio: g(r, 'inizio'), fine: g(r, 'fine'),
+      ore: oreTra(g(r, 'inizio'), g(r, 'fine')), oreDa: 'registrazione',
+      tipologia: '', manovreTxt: colReg.manovre.map(i => val(r[i])).filter(Boolean).join('\n'),
+      catInt: g(r, 'catInt'), descrInt: g(r, 'descrInt'), numInt: g(r, 'numInt'),
+      piano: null, pianiMultipli: false
+    };
+
+    if (tipo === 'collettivo') {
+      const k2 = a.giorno + '|' + comandoKey(g(r, 'organizzatore'));
+      let cand = (a.team && pianoIdx.idx3.get(k2 + '|' + squadraKey(a.team))) || pianoIdx.idx2.get(k2) || [];
+      if (cand.length > 1 && a.attivita) {
+        const ka = normKey(a.attivita);
+        const f = cand.filter(p => normKey(p.tipologia).includes(ka) || ka.includes(normKey(p.tipologia)));
+        if (f.length) cand = f;
+      }
+      if (cand.length) {
+        const p = cand[cand.length - 1];
+        a.piano = p; a.pianiMultipli = cand.length > 1;
+        a.tipologia = p.tipologia;
+        if (a.ore == null && p.ore != null) { a.ore = p.ore; a.oreDa = 'piano'; a.inizio = p.inizio; a.fine = p.fine; }
+        if (p.manovre) a.manovreTxt = [a.manovreTxt, p.manovre].filter(Boolean).join('\n');
+        if (!a.descr) a.descr = p.descr;
+      } else {
+        collSenzaPiano++;
+        a.tipologia = a.attivita;
+      }
+    } else if (tipo === 'individuale') {
+      a.tipologia = g(r, 'tipInd') || a.attivita;
+    } else if (tipo === 'altro') {
+      a.tipologia = g(r, 'tipInd') || a.attivita;
+    }
+
+    // Corsi di Formazione collegati
+    a.corsi = trovaCorsi(a.tipologia);
+    if (tipo === 'intervento' && a.catInt) {
+      const kc = normKey(a.catInt);
+      CORSI.forEach(c => { if (c.tipInt.some(k => kc.includes(k))) a.corsi.add(c); });
+    }
+    a.manovre = trovaManovre(a.manovreTxt, a.corsi);
+    a.manovre.forEach(m => { if (m.corso && tipo !== 'intervento') a.corsi.add(m.corso); });
+
+    const p = persona(chiavePersona(nome, cf), nome);
+    const app = nomeComando(g(r, 'appartenenza'));
+    if (app) p.comandi.set(app, (p.comandi.get(app) || 0) + 1);
+    p.att.push(a);
+  });
+  const piuFrequente = m => [...m.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] || '';
+  PERSONE.forEach(p => { p.nome = piuFrequente(p.grafie); p.comando = piuFrequente(p.comandi); });
+  diag.reg = { righe, scartate, senzaData, collSenzaPiano, persone: PERSONE.size };
+}
+
+/* =====================================================================
+   CARICAMENTO
+   ===================================================================== */
+const refreshBtn = document.getElementById('refresh-btn');
+const nomeInput = document.getElementById('nome-input');
+const annoSelect = document.getElementById('anno-select');
+const printBtn = document.getElementById('print-btn');
+const report = document.getElementById('report');
+let loading = false;
+const state = { persona: null, anno: parseInt(URLP.get('anno'), 10) || ANNO_OGGI, aperti: new Set() };
+
+async function caricaDati() {
+  if (loading) return;
+  loading = true;
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = '⟳ Caricamento…';
+  if (!state.persona) report.innerHTML = '<div class="msg">Caricamento dati…</div>';
+  try {
+    const [reg, piano, manovre, formazione, elenco] = await Promise.all([
+      scaricaCsv(GID_REG, false), scaricaCsv(GID_PIANO, true), scaricaCsv(GID_MANOVRE, false),
+      scaricaCsv(GID_FORMAZIONE, false), scaricaCsv(GID_ELENCO, false)
+    ]);
+    diag = {};
+    elaboraFormazione(formazione);
+    elaboraManovre(manovre);
+    elaboraElenco(elenco);
+    elaboraReg(reg, elaboraPiano(piano));
+    preparaNomi();
+    document.getElementById('last-update').textContent = new Date().toLocaleString('it-IT');
+    nomeInput.disabled = false;
+    if (state.persona) { state.persona = PERSONE.get(state.persona.key) || null; if (state.persona) nomeInput.value = state.persona.etichetta; }
+    else if (URLP.get('nome')) selezionaNome(URLP.get('nome'));
+    disegna();
+  } catch (err) {
+    console.error(err);
+    report.innerHTML = `<div class="msg">Errore nel caricamento dei dati. Riprova più tardi.
+      <small>Controlla che il file sia condiviso come "Chiunque abbia il link: Visualizzatore" e che i GID ${GID_REG}, ${GID_PIANO}, ${GID_MANOVRE}, ${GID_FORMAZIONE} e ${GID_ELENCO} siano giusti.</small></div>`;
+  } finally {
+    loading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = '⟳ Aggiorna';
+  }
+}
+
+let ETICHETTE_NOMI = new Map();   // testo nell'elenco → chiave persona
+function preparaNomi() {
+  const dl = document.getElementById('nomi-list');
+  const lista = [...PERSONE.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
+  const conta = new Map();
+  lista.forEach(p => conta.set(normKey(p.nome), (conta.get(normKey(p.nome)) || 0) + 1));
+  ETICHETTE_NOMI = new Map();
+  lista.forEach(p => {
+    let lab = p.nome;
+    if (conta.get(normKey(p.nome)) > 1) lab += ` (${p.comando || 'Comando non indicato'})`;
+    let i = 2; const base = lab;
+    while (ETICHETTE_NOMI.has(lab)) lab = `${base} ${i++}`;
+    ETICHETTE_NOMI.set(lab, p.key);
+    p.etichetta = lab;
+  });
+  dl.innerHTML = lista.map(p => `<option value="${esc(p.etichetta)}">${esc([p.qualifica, p.comando].filter(Boolean).join(' · '))}</option>`).join('');
+}
+
+function selezionaNome(testo) {
+  const t = (testo || '').trim();
+  const k = normKey(t);
+  if (!k) { state.persona = null; return; }
+  let p = PERSONE.get(ETICHETTE_NOMI.get(t));
+  if (!p) {
+    const c = [...PERSONE.values()].filter(x => normKey(x.etichetta) === k);
+    const c2 = c.length ? c : [...PERSONE.values()].filter(x => normKey(x.etichetta).startsWith(k));
+    if (c2.length === 1) p = c2[0];
+  }
+  state.persona = p || null;
+  state.ambiguo = !p && [...PERSONE.values()].filter(x => normKey(x.etichetta).startsWith(k)).length > 1;
+  if (p) nomeInput.value = p.etichetta;
+}
+
+function preparaAnni() {
+  const anni = new Set([ANNO_OGGI]);
+  if (state.persona) state.persona.att.forEach(a => anni.add(a.anno));
+  const lista = [...anni].sort((a, b) => b - a);
+  if (!lista.includes(state.anno)) state.anno = ANNO_OGGI;
+  annoSelect.innerHTML = lista.map(y => `<option value="${y}"${y === state.anno ? ' selected' : ''}>${y}</option>`).join('');
+}
+
+nomeInput.addEventListener('change', () => { selezionaNome(nomeInput.value); state.aperti.clear(); disegna(); });
+nomeInput.addEventListener('keydown', e => { if (e.key === 'Enter') { selezionaNome(nomeInput.value); disegna(); } });
+document.getElementById('clear-btn').addEventListener('click', () => { nomeInput.value = ''; state.persona = null; disegna(); nomeInput.focus(); });
+annoSelect.addEventListener('change', () => { state.anno = +annoSelect.value; disegna(); });
+printBtn.addEventListener('click', () => window.print());
+refreshBtn.addEventListener('click', caricaDati);
+
+/* =====================================================================
+   CALCOLI
+   ===================================================================== */
+const nonIntervento = a => a.tipo !== 'intervento';
+function somma(lista) {
+  const giorni = new Set(lista.map(a => a.giorno));
+  return {
+    n: lista.length, giorni: giorni.size,
+    ore: lista.reduce((s, a) => s + (a.ore || 0), 0),
+    senzaOre: lista.filter(a => a.ore == null).length
+  };
+}
+
+function riepilogoAnno(att, y) {
+  const lista = att.filter(a => a.anno === y);
+  const add = lista.filter(nonIntervento);
+  return {
+    tot: somma(add),
+    coll: somma(add.filter(a => a.tipo === 'collettivo')),
+    ind: somma(add.filter(a => a.tipo === 'individuale')),
+    altro: somma(add.filter(a => a.tipo === 'altro')),
+    int: somma(lista.filter(a => a.tipo === 'intervento')),
+    mesi: Array.from({ length: 12 }, (_, m) => add.filter(a => a.data.getMonth() === m).reduce((s, a) => s + (a.ore || 0), 0))
+  };
+}
+
+function riepilogoCorsi(p, y) {
+  const att = p.att;
+  const coinvolti = new Set(p.corsiPossesso);
+  att.forEach(a => a.corsi.forEach(c => { if (a.anno <= y && a.anno > y - c.delta) coinvolti.add(c); }));
+  return [...coinvolti].map(c => {
+    const nel = att.filter(a => a.corsi.has(c) && a.anno <= y && a.anno > y - c.delta);
+    const add = nel.filter(nonIntervento);
+    const coll = add.filter(a => a.tipo === 'collettivo');
+    const ore = add.reduce((s, a) => s + (a.ore || 0), 0);
+    const oreColl = coll.reduce((s, a) => s + (a.ore || 0), 0);
+    const oreAnno = add.filter(a => a.anno === y).reduce((s, a) => s + (a.ore || 0), 0);
+    const fatte = new Map();
+    nel.forEach(a => a.manovre.forEach(m => {
+      if (m.corso !== c) return;
+      const f = fatte.get(m) || { n: 0, ultima: null };
+      f.n++; if (!f.ultima || a.data > f.ultima) f.ultima = a.data;
+      fatte.set(m, f);
+    }));
+    const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
+    let stato = 'nd';
+    if (c.oreMin != null) stato = ore >= c.oreMin - 1e-6 && (collMin == null || oreColl >= collMin - 1e-6) ? 'ok' : 'ko';
+    return {
+      c, ore, oreColl, oreAnno, collMin, stato,
+      giorni: new Set(add.map(a => a.giorno)).size,
+      nAtt: add.length, nInt: nel.length - add.length, fatte,
+      dal: y - c.delta + 1, possesso: p.corsiPossesso.has(c)
+    };
+  }).sort((a, b) => (b.possesso - a.possesso) || (a.c.settore || '').localeCompare(b.c.settore || '', 'it') || a.c.sigla.localeCompare(b.c.sigla, 'it'));
+}
+
+/* =====================================================================
+   DISEGNO
+   ===================================================================== */
+function disegna() {
+  preparaAnni();
+  const p = state.persona, y = state.anno;
+  printBtn.disabled = !p;
+  document.getElementById('periodo-label').textContent = p ? `${p.nome} – ${y}` : String(y);
+  document.title = p ? `P.U.M.A. - Report ${p.nome} ${y}` : 'P.U.M.A. - Report individuale';
+
+  let html = DEBUG ? diagnostica() : '';
+  if (!p) {
+    const scritto = nomeInput.value.trim();
+    html += scritto && !nomeInput.disabled
+      ? state.ambiguo
+        ? `<div class="msg">Più persone corrispondono a «${esc(scritto)}»<small>Scegli il nome giusto dall'elenco che compare mentre scrivi (tra parentesi c'è il Comando).</small></div>`
+        : `<div class="msg">Nominativo non trovato: «${esc(scritto)}»<small>Scegli un nome dall'elenco che compare mentre scrivi.</small></div>`
+      : `<div class="msg">Scegli un nominativo e l'anno di riferimento<small>${PERSONE.size ? PERSONE.size.toLocaleString('it-IT') + ' persone in PUMA' : ''}</small></div>`;
+    report.innerHTML = html;
+    return;
+  }
+
+  const att = p.att;
+  const A = riepilogoAnno(att, y), P = riepilogoAnno(att, y - 1);
+  const corsi = riepilogoCorsi(p, y);
+  const ics = [...new Set(att.filter(a => a.anno === y).map(a => a.ics).filter(Boolean).flatMap(s => s.split(/,|\n|;/).map(t => t.trim())).filter(Boolean))];
+
+  html += `<div class="print-only print-title"><b>P.U.M.A.</b> – Report individuale del personale · stampato il ${new Date().toLocaleDateString('it-IT')}</div>
+  <div class="persona-head">
+    <div>
+      <h3>${esc(p.nome)}</h3>
+      <div class="sub">${[p.qualifica, p.comando || 'Comando di appartenenza non indicato'].filter(Boolean).map(esc).join(' · ')}
+        <br>Corsi in possesso: ${p.corsiPossesso.size || p.corsiTxt.length ? [...[...p.corsiPossesso].map(c => c.sigla), ...p.corsiTxt].map(esc).join(', ') : '<i>nessuno indicato in Elenco_Filtrato</i>'}${ics.length ? `<br>Funzioni ICS nell'anno: ${esc(ics.join(', '))}` : ''}</div>
+    </div>
+    <div class="anno-big">Anno di riferimento<b>${y}</b></div>
+  </div>`;
+
+  // Tessere
+  const confronto = (cur, prev, fmt) => {
+    const d = cur - prev;
+    const cls = d > 0.05 ? 'up' : d < -0.05 ? 'down' : '';
+    const segno = d > 0.05 ? '▲ ' : d < -0.05 ? '▼ ' : '';
+    return `${y - 1}: ${fmt(prev)}${cls ? ` · <span class="${cls}">${segno}${fmt(Math.abs(d))}</span>` : ''}`;
+  };
+  const nf = n => String(n);
+  const hf = h => fmtH(h);
+  html += `<h4 class="sec">Riepilogo ${y} <span>· confronto con il ${y - 1}</span></h4>
+  <div class="tiles">
+    <div class="tile"><div class="k">Ore di addestramento</div><div class="v">${fmtH(A.tot.ore)}</div><div class="p">${confronto(A.tot.ore, P.tot.ore, hf)}</div></div>
+    <div class="tile"><div class="k">Giorni di attività</div><div class="v">${A.tot.giorni}</div><div class="p">${confronto(A.tot.giorni, P.tot.giorni, nf)}</div></div>
+    <div class="tile"><div class="k">Addestramenti collettivi</div><div class="v">${A.coll.n} <small>· ${fmtH(A.coll.ore)}</small></div><div class="p">${confronto(A.coll.n, P.coll.n, nf)}</div></div>
+    <div class="tile"><div class="k">Addestramenti individuali</div><div class="v">${A.ind.n} <small>· ${fmtH(A.ind.ore)}</small></div><div class="p">${confronto(A.ind.n, P.ind.n, nf)}</div></div>
+    ${(() => { const req = corsi.filter(r => r.possesso && r.stato !== 'nd'); return req.length ? `<div class="tile"><div class="k">Requisiti ore raggiunti</div><div class="v" style="color:${req.every(r => r.stato === 'ok') ? 'var(--ok)' : 'var(--ko)'}">${req.filter(r => r.stato === 'ok').length} <small>/ ${req.length} corsi</small></div><div class="p">corsi in possesso con ore minime</div></div>` : ''; })()}
+    <div class="tile"><div class="k">Interventi registrati</div><div class="v">${A.int.n}</div><div class="p">${confronto(A.int.n, P.int.n, nf)}</div></div>
+  </div>`;
+  if (A.altro.n) html += `<div class="p" style="font-size:11.5px;color:#999;margin-top:6px">Altre attività registrate nel ${y}: ${A.altro.n} (${fmtH(A.altro.ore)}), comprese nelle ore totali.</div>`;
+
+  // Corsi
+  html += `<h4 class="sec">Requisiti per corso <span>· ore minime e manovre previste (Formazione e Manovre_PREVISTE) · clic su una riga per le manovre</span></h4>`;
+  if (!corsi.length) {
+    html += `<div class="man-none">Nessun corso in possesso e nessuna attività collegata a un corso di Formazione nel periodo.</div>`;
+  } else {
+    html += `<div class="table-scroll"><table><thead><tr>
+      <th>Corso</th><th>Periodo</th><th>Ore svolte / minime</th><th>di cui collettive</th><th>Manovre previste</th><th>Interventi</th><th>Stato</th>
+    </tr></thead><tbody>`;
+    corsi.forEach(r => {
+      const c = r.c, id = 'c' + c.id, aperto = state.aperti.has(id);
+      const pct = c.oreMin ? Math.min(100, r.ore / c.oreMin * 100) : 0;
+      const periodo = c.delta > 1 ? `${r.dal}–${y}<br><small style="color:#999">${c.delta} anni</small>` : String(y);
+      const nPrev = c.previste.length, nFatte = r.fatte.size;
+      const statoTxt = c.soloRegistro && r.stato === 'nd' ? '<span class="stato nd">solo registro</span>'
+        : r.stato === 'ok' ? '<span class="stato ok">✔ Raggiunto</span>'
+        : r.stato === 'ko' && !r.possesso ? '<span class="stato nd">—</span>'
+        : r.stato === 'ko' ? `<span class="stato ko">✘ Mancano ${fmtH(Math.max(0, c.oreMin - r.ore, r.collMin != null ? r.collMin - r.oreColl : 0))}</span>`
+        : '<span class="stato nd">nessun minimo</span>';
+      html += `<tr class="corso-row${aperto ? ' open' : ''}" data-id="${id}">
+        <td class="corso-nome"><b>${esc(c.sigla)}</b>${r.possesso ? '' : ' <span class="t" style="display:inline;color:var(--warn)">· non tra i corsi in possesso</span>'}${c.tipologia && c.tipologia !== c.sigla ? `<span class="t">${esc(c.tipologia)}</span>` : ''}${c.settore ? `<span class="t">Settore: ${esc(c.settore)}</span>` : ''}</td>
+        <td class="c">${periodo}</td>
+        <td class="n">${fmtH(r.ore)}${c.oreMin != null ? ` / ${fmtH(c.oreMin)}<div class="bar"><i class="${r.ore >= c.oreMin ? 'ok' : ''}" style="width:${pct}%"></i></div>` : ''}${c.delta > 1 ? `<div style="font-size:11px;color:#999">nel ${y}: ${fmtH(r.oreAnno)}</div>` : ''}</td>
+        <td class="n">${fmtH(r.oreColl)}${r.collMin != null ? ` / ${fmtH(r.collMin)}<div style="font-size:11px;color:#999">${Math.round(c.collPct * 100)}% del minimo</div>` : ''}</td>
+        <td class="c">${nPrev ? `<b style="color:${nFatte >= nPrev ? 'var(--ok)' : '#f0f0f0'}">${nFatte}</b> / ${nPrev}` : '—'}</td>
+        <td class="c">${r.nInt || '—'}</td>
+        <td class="c">${statoTxt}</td>
+      </tr>
+      <tr class="det-row" data-for="${id}" ${aperto ? '' : 'style="display:none"'}><td colspan="7">${dettaglioManovre(c, r)}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  // Grafico mensile
+  html += graficoMesi(A.mesi, P.mesi, y);
+
+  // Attività
+  const anno = att.filter(a => a.anno === y).sort((a, b) => b.data - a.data);
+  html += `<h4 class="sec">Attività del ${y} <span>· ${anno.length} registrazioni</span></h4>`;
+  html += anno.length ? anno.map(cardAttivita).join('') : `<div class="man-none">Nessuna attività registrata nel ${y}.</div>`;
+
+  // Note sui dati
+  const note = [];
+  const senzaOre = anno.filter(a => a.ore == null && a.tipo !== 'intervento').length;
+  if (senzaOre) note.push(`${senzaOre} attività senza orario di inizio/fine valido: contano come attività ma con 0 ore.`);
+  const senzaPiano = anno.filter(a => a.tipo === 'collettivo' && !a.piano).length;
+  if (senzaPiano) note.push(`${senzaPiano} addestramenti collettivi senza Piano di Sicurezza corrispondente (stesso giorno, Comando organizzatore e squadra).`);
+  const senzaCorso = [...new Set(anno.filter(a => a.tipo !== 'intervento' && !a.corsi.size && a.tipologia).map(a => a.tipologia))];
+  if (senzaCorso.length) note.push(`Tipologie non collegate a un corso di Formazione: ${senzaCorso.map(esc).join(' · ')}`);
+  if (p.corsiTxt.length) note.push(`Corsi in possesso non trovati in Formazione (colonna Sigla): ${p.corsiTxt.map(esc).join(' · ')}`);
+  if (!p.inElenco) note.push('Nominativo non presente in Elenco_Filtrato: i corsi in possesso non sono noti, sono mostrati solo i corsi delle attività svolte.');
+  if (note.length) html += `<div class="note-box"><b>Note sui dati</b><ul>${note.map(n => `<li>${n}</li>`).join('')}</ul></div>`;
+
+  report.innerHTML = html;
+  report.querySelectorAll('tr.corso-row').forEach(tr => tr.addEventListener('click', () => {
+    const id = tr.dataset.id, det = report.querySelector(`tr.det-row[data-for="${id}"]`);
+    const apri = !state.aperti.has(id);
+    apri ? state.aperti.add(id) : state.aperti.delete(id);
+    tr.classList.toggle('open', apri);
+    det.style.display = apri ? '' : 'none';
+  }));
+  attivaTooltip();
+}
+
+function dettaglioManovre(c, r) {
+  if (!c.previste.length) {
+    return `<div class="man-none">Nessuna manovra prevista per ${esc(c.sigla)} in Manovre_PREVISTE.</div>`;
+  }
+  const cicli = new Map();
+  c.previste.forEach(m => push(cicli, m.ciclo || '', m));
+  let h = '';
+  cicli.forEach((lista, ciclo) => {
+    if (cicli.size > 1 || ciclo) h += `<div class="ciclo-title">${ciclo ? 'Ciclo ' + esc(ciclo) : 'Senza ciclo'} · ${lista.filter(m => r.fatte.has(m)).length}/${lista.length}</div>`;
+    h += '<div class="man-grid">' + lista.map(m => {
+      const f = r.fatte.get(m);
+      return `<div class="man ${f ? 'si' : 'no'}">${m.codice ? `<b>${esc(m.codice)}</b> ` : ''}${esc(m.manovra)}${f ? ` <span class="q">· ${f.n}× · ultima ${f.ultima.toLocaleDateString('it-IT')}</span>` : ''}</div>`;
+    }).join('') + '</div>';
+  });
+  return h;
+}
+
+function graficoMesi(a, p, y) {
+  const max = Math.max(1, ...a, ...p);
+  const passo = [1, 2, 4, 5, 10, 20, 25, 50, 100].find(s => max / s <= 5) || Math.ceil(max / 5);
+  const top = Math.ceil(max / passo) * passo;
+  let h = `<div class="chart-block"><h4 class="sec">Ore di addestramento per mese</h4>
+  <div class="legend"><span><span class="dot" style="background:var(--anno-a)"></span>${y}</span><span><span class="dot" style="background:var(--anno-b)"></span>${y - 1}</span></div>
+  <div class="chart" role="img" aria-label="Ore per mese ${y} e ${y - 1}">`;
+  for (let v = 0; v <= top; v += passo) h += `<div class="grid${v === 0 ? ' base' : ''}" style="bottom:${v / top * 100}%"></div>`;
+  h += `<div class="yax">${Array.from({ length: top / passo + 1 }, (_, i) => `<span style="bottom:${i * passo / top * 100}%">${i * passo}</span>`).join('')}</div>`;
+  for (let m = 0; m < 12; m++) {
+    h += `<div class="col" data-tip="<b>${MESI_BREVI[m]}</b><br><span style='color:var(--anno-a)'>■</span> ${y}: ${fmtH(a[m])}<br><span style='color:var(--anno-b)'>■</span> ${y - 1}: ${fmtH(p[m])}">
+      <div class="b a" style="height:${a[m] / top * 100}%"></div><div class="b p" style="height:${p[m] / top * 100}%"></div></div>`;
+  }
+  h += `</div><div class="xax"><span></span>${MESI_BREVI.map(m => `<span>${m}</span>`).join('')}</div></div>
+  <details class="tabella"><summary>Mostra come tabella</summary><div class="table-scroll"><table><thead><tr><th>Anno</th>${MESI_BREVI.map(m => `<th>${m}</th>`).join('')}<th>Totale</th></tr></thead><tbody>
+    ${[[y, a], [y - 1, p]].map(([yy, v]) => `<tr><td class="c"><b>${yy}</b></td>${v.map(x => `<td class="n">${x ? Math.round(x * 10) / 10 : ''}</td>`).join('')}<td class="n"><b>${fmtH(v.reduce((s, x) => s + x, 0))}</b></td></tr>`).join('')}
+  </tbody></table></div></details>`;
+  return h;
+}
+
+const ETICHETTE = { collettivo: 'Collettivo', individuale: 'Individuale', intervento: 'Intervento', altro: 'Altro' };
+function cardAttivita(a) {
+  const orario = a.inizio && a.fine ? (() => {
+    const i = parseDataOra(a.inizio), f = parseDataOra(a.fine);
+    if (!i || !f || !i.ora || !f.ora) return '';
+    return giornoKey(i.d) === giornoKey(f.d) ? `${fmtOra(i.d)}–${fmtOra(f.d)}` : `${i.d.toLocaleDateString('it-IT')} ${fmtOra(i.d)} – ${f.d.toLocaleDateString('it-IT')} ${fmtOra(f.d)}`;
+  })() : '';
+  const corsi = [...a.corsi].map(c => c.sigla);
+  let titolo, sotto;
+  if (a.tipo === 'intervento') {
+    titolo = a.catInt || 'Intervento';
+    sotto = [a.numInt ? 'N. ' + a.numInt : '', a.descrInt].filter(Boolean).join(' · ');
+  } else {
+    titolo = a.tipologia || a.attivita || a.cosa || '—';
+    sotto = [a.tipo === 'collettivo' ? [a.organizzatore, a.team].filter(Boolean).join(' · ') : '', corsi.length ? 'Corso: ' + corsi.join(', ') : ''].filter(Boolean).join(' · ');
+  }
+  const man = [...a.manovre];
+  let body = '';
+  if (orario) body += `<b>Orario:</b> ${esc(orario)}${a.oreDa === 'piano' ? ' <i>(dal Piano di Sicurezza)</i>' : ''}<br>`;
+  if (a.ics) body += `<b>Funzione ICS:</b> ${esc(a.ics)}<br>`;
+  if (a.piano && a.piano.area) body += `<b>Area:</b> ${esc(a.piano.area)}<br>`;
+  if (a.tipo === 'collettivo' && !a.piano) body += `<span style="color:var(--warn)">Piano di Sicurezza non trovato.</span><br>`;
+  if (a.pianiMultipli) body += `<span style="color:#999">Più Piani di Sicurezza nello stesso giorno per questa squadra: usato il più recente.</span><br>`;
+  if (a.descr) body += `<b>Descrizione:</b> ${esc(a.descr)}<br>`;
+  if (man.length) body += `<b>Manovre riconosciute (${man.length}):</b><ul>${man.map(m => `<li>${esc(m.corso ? m.corso.sigla + ' · ' : '')}${m.codice ? esc(m.codice) + ' ' : ''}${esc(m.manovra)}</li>`).join('')}</ul>`;
+  else if (a.manovreTxt) body += `<b>Manovre indicate:</b> ${esc(a.manovreTxt).replace(/\n/g, '<br>')}<br>`;
+  return `<details class="att" style="border-left:4px solid ${a.tipo === 'collettivo' ? '#4fc3f7' : a.tipo === 'individuale' ? '#ce93d8' : a.tipo === 'intervento' ? '#ff8a65' : '#bdbdbd'}">
+    <summary><span class="d">${esc(fmtData(a.data))}</span><span class="ty"><span class="chip ${a.tipo}">${ETICHETTE[a.tipo]}</span></span>
+      <span class="t">${esc(titolo)}${sotto ? `<small>${esc(sotto)}</small>` : ''}</span><span class="o">${a.tipo === 'intervento' && a.ore == null ? '' : fmtH(a.ore)}</span></summary>
+    ${body ? `<div class="body">${body}</div>` : ''}
+  </details>`;
+}
+
+const tip = document.getElementById('tip');
+function attivaTooltip() {
+  report.querySelectorAll('[data-tip]').forEach(el => {
+    el.addEventListener('mousemove', e => {
+      tip.innerHTML = el.dataset.tip; tip.style.display = 'block';
+      const w = tip.offsetWidth;
+      tip.style.left = Math.min(e.clientX + 14, innerWidth - w - 8) + 'px';
+      tip.style.top = (e.clientY + 14) + 'px';
+    });
+    el.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+  });
+}
+window.addEventListener('beforeprint', () => report.querySelectorAll('details.att').forEach(d => d.open = true));
+
+function diagnostica() {
+  const lettera = i => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  return `<div class="debug-box"><b>Diagnostica</b><br>
+    Registrazioni: ${diag.reg?.righe} righe · ${diag.reg?.scartate} prove scartate · ${diag.reg?.senzaData} senza data · ${diag.reg?.collSenzaPiano} collettivi senza piano · ${diag.reg?.persone} persone<br>
+    Colonne registrazione: ${Object.entries(colReg).map(([k, v]) => `${k}=<code>${Array.isArray(v) ? v.map(lettera).join('+') : lettera(v)}</code>`).join(' ')}<br>
+    Piano: ${diag.piano?.righe} righe · ${diag.piano?.validi} validi · ${diag.piano?.duplicati} duplicati · colonne: ${Object.entries(colPiano).map(([k, v]) => `${k}=<code>${esc(Array.isArray(v) ? v.join(' + ') : v)}</code>`).join(' ')}<br>
+    Elenco_Filtrato: ${diag.elenco?.righe} righe · ${diag.elenco?.persone} persone${diag.elenco?.errore ? ' · <b>' + esc(diag.elenco.errore) + '</b>' : ''} · colonne: ${Object.entries(colElenco).map(([k, v]) => `${k}=<code>${v >= 0 ? lettera(v) : '—'}</code>`).join(' ')}${diag.elenco?.corsiNonTrovati?.length ? '<br>Corsi in possesso non trovati in Formazione: <code>' + esc(diag.elenco.corsiNonTrovati.join(' · ')) + '</code>' : ''}<br>
+    Formazione: intestazioni in riga ${diag.formazione?.intestazioni} · ${diag.formazione?.corsi} corsi<br>
+    Manovre_PREVISTE: ${diag.manovre?.righe} manovre · ${diag.manovre?.senzaCorso} con "Associazione Corso" non trovata in Formazione
+  </div>`;
+}
+
+caricaDati();
+</script>
+</body>
+</html>
