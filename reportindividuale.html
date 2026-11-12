@@ -302,7 +302,7 @@
       /* foglio bianco: niente tema scuro né sfondi in stampa */
       :root { color-scheme: light !important; }
       html, body, #content, .wrap, #report { background: #fff !important; }
-      @page { size: A4; margin: 12mm; }
+      @page { size: A4; margin: 5mm; }
       html, body { height: auto; background: #fff !important; color: #000 !important; display: block; }
       #page-header, #filters, #alfabeto, #tip, .no-print, details.tabella { display: none !important; }
       .print-only { display: block; }
@@ -321,11 +321,11 @@
       tbody.lib-cat .lib-h2 td { background: color-mix(in srgb, var(--cc) 18%, #fff) !important; }
       tbody.lib-cat .lib-h1 td, tbody.lib-cat .lib-h2 td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       table.libretto thead th { border-color: #000 !important; }
-      .lform-testa { margin-bottom: 8mm; }
-      .lf-emblema { display: block; margin: 0 auto 3mm; height: 20mm; width: auto; }
-      .lf-ente { text-align: center; font-weight: bold; font-size: 15px; line-height: 1.35; margin-bottom: 5mm; }
-      .lf-ente span { font-size: 13px; }
-      table.lf-tab { width: 100%; border-collapse: collapse; font-size: 11px; }
+      .lform-testa { margin-bottom: 3mm; }
+      .lf-emblema { display: block; margin: 0 auto 2mm; height: 15mm; width: auto; }
+      .lf-ente { text-align: center; font-weight: bold; font-size: 12px; line-height: 1.3; margin-bottom: 3mm; }
+      .lf-ente span { font-size: 11px; }
+      table.lf-tab { width: 100%; border-collapse: collapse; font-size: 9px; }
       table.lf-tab td { border: none !important; padding: 3px 6px; }
       table.lf-tab td.k { text-align: right; color: #333 !important; width: 16%; }
       table.lf-tab td.firma { border-bottom: 1px solid #000 !important; height: 18px; }
@@ -369,7 +369,20 @@
       tr.grp-row td span, tr.grp-row td span b { color: #fff !important; }
       .lib-cat.chiuso tr { display: table-row !important; }
       .lib-h1 td:first-child::before { content: '' !important; }
-      table.libretto { font-size: 10.5px; }
+      /* tabella a larghezza fissa: non esce dal foglio */
+      .wrap { max-width: none !important; }
+      .table-scroll { overflow: visible !important; }
+      table.libretto { font-size: 8px; table-layout: fixed; width: 100% !important; }
+      table.libretto th, table.libretto td { padding: 2px 4px !important; line-height: 1.3; word-wrap: break-word; overflow-wrap: anywhere; }
+      table.libretto th:nth-child(1) { width: 13% !important; }
+      table.libretto th:nth-child(2) { width: 11% !important; }
+      table.libretto th:nth-child(4), table.libretto th:nth-child(5) { width: 10% !important; }
+      table.libretto th:nth-child(6) { width: 6% !important; }
+      .lib-dt { white-space: normal !important; }
+      .lib-h1 td { font-size: 9.5px !important; }
+      #sez-lib h4.sec { font-size: 11px; margin: 2mm 0 2mm; padding-bottom: 2px; }
+      .lform-testa { margin-bottom: 3mm !important; }
+      .lf-bozza { font-size: 7.5px !important; margin-top: 1mm !important; }
       .lib-h1, .lib-h2 { break-after: avoid; }
     }
   </style>
