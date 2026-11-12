@@ -81,6 +81,73 @@
     }
     #print-btn:hover { background: var(--gold); color: #1e1e1e; }
     #print-btn:disabled { opacity: .4; cursor: default; background: #2a2a2a; color: var(--gold); }
+    #mail-btn {
+      background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px;
+      padding: 6px 12px; font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+    }
+    #mail-btn:hover { background: var(--gold); color: #1e1e1e; }
+    #mail-btn:disabled { opacity: .4; cursor: default; background: #2a2a2a; color: var(--gold); }
+
+    /* Finestra di invio */
+    .dlg-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .dlg-bg[hidden] { display: none; }
+    .dlg { background: #232323; border: 1px solid var(--gold); border-radius: 8px; padding: 18px 20px; width: 440px; max-width: 100%; box-sizing: border-box; font-size: 13px; line-height: 1.5; }
+    .dlg h3 { margin: 0 0 6px; color: var(--gold); font-size: 16px; }
+    .dlg p { margin: 0 0 12px; color: #bbb; font-size: 12.5px; }
+    .dlg label.chk { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 12px; cursor: pointer; }
+    .dlg label.chk input { accent-color: var(--gold); margin-top: 3px; }
+    .dlg label.campo { display: block; margin-bottom: 12px; }
+    .dlg label.campo small { color: #999; }
+    .dlg input[type=email] {
+      display: block; width: 100%; box-sizing: border-box; margin-top: 4px; background: #1e1e1e; color: #f0f0f0;
+      border: 1px solid #555; border-radius: 4px; padding: 7px 9px; font-family: 'Comfortaa', cursive; font-size: 13px;
+    }
+    .dlg input[type=email]:focus { outline: none; border-color: var(--gold); }
+    .inv-stato { min-height: 20px; font-size: 12.5px; margin-bottom: 10px; }
+    .inv-stato.ok { color: var(--ok); }
+    .inv-stato.ko { color: var(--ko); }
+    .inv-stato.wip { color: var(--gold); }
+    .dlg-btn { display: flex; justify-content: flex-end; gap: 8px; }
+    .dlg-btn button {
+      background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px; padding: 7px 14px;
+      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+    }
+    .dlg-btn button.primario { background: var(--gold); color: #1e1e1e; }
+    .dlg-btn button:disabled { opacity: .45; cursor: default; }
+
+    /* Copia del libretto da cui si crea il PDF (fuori schermo, stile come la stampa) */
+    .pdf-fuori { position: fixed; left: -10000px; top: 0; }
+    #pdf-export { width: 200mm; background: #fff; color: #000; font-family: 'Comfortaa', cursive; }
+    #pdf-export * { color: #000; }
+    #pdf-export .lf-emblema { display: block; margin: 0 auto 2mm; height: 15mm; width: auto; }
+    #pdf-export .lf-ente { text-align: center; font-weight: bold; font-size: 12px; line-height: 1.3; margin-bottom: 3mm; }
+    #pdf-export .lf-ente span { font-size: 11px; }
+    #pdf-export table.lf-tab { width: 100%; border-collapse: collapse; font-size: 9px; }
+    #pdf-export table.lf-tab td { border: none; padding: 3px 6px; background: #fff; }
+    #pdf-export table.lf-tab td.k { text-align: right; color: #333; width: 16%; }
+    #pdf-export table.lf-tab td.firma { border-bottom: 1px solid #000; height: 18px; }
+    #pdf-export .lf-bozza { text-align: right; font-size: 7.5px; color: #666; margin-top: 1mm; }
+    #pdf-export .lform-testa { margin-bottom: 3mm; }
+    #pdf-export h4.sec { font-size: 11px; margin: 2mm 0; padding-bottom: 2px; border-bottom: 1px solid #000; }
+    #pdf-export h4.sec span, #pdf-export .lib-min, #pdf-export .lib-anni { display: none; }
+    #pdf-export table.libretto { font-size: 8px; table-layout: fixed; width: 100%; border-collapse: collapse; }
+    #pdf-export table.libretto th, #pdf-export table.libretto td {
+      background: #fff !important; color: #000 !important; border: 1px solid #000 !important; padding: 2px 4px; line-height: 1.3; overflow-wrap: anywhere;
+    }
+    #pdf-export table.libretto th:nth-child(1) { width: 13%; }
+    #pdf-export table.libretto th:nth-child(2) { width: 11%; }
+    #pdf-export table.libretto th:nth-child(3) { width: auto; }
+    #pdf-export table.libretto th:nth-child(4), #pdf-export table.libretto th:nth-child(5) { width: 10%; }
+    #pdf-export table.libretto th:nth-child(6) { width: 6%; }
+    #pdf-export .lib-dt { white-space: normal; }
+    #pdf-export tbody.lib-cat td { border-color: var(--cc) !important; }
+    #pdf-export tbody.lib-cat .lib-h1 td { background: var(--c1) !important; font-size: 9.5px; font-weight: bold; }
+    #pdf-export tbody.lib-cat .lib-h2 td { background: var(--c2) !important; font-weight: bold; font-style: italic; }
+    #pdf-export .lib-h1 td:first-child::before { content: ''; }
+    #pdf-export .lib-sub td, #pdf-export .lib-tot td, #pdf-export .lib-gtot td { font-weight: bold; }
+    #pdf-export .lib-gtot td { border-top: 2px solid #000 !important; }
+    #pdf-export .logo { width: 13px; height: 13px; margin: -2px 4px -2px 0; }
+    #pdf-export tr { page-break-inside: avoid; }
 
     @media (max-width: 700px) {
       #page-header { flex-direction: column; }
@@ -302,7 +369,7 @@
       html, body, #content, .wrap, #report { background: #fff !important; }
       @page { size: A4; margin: 5mm; }
       html, body { height: auto; background: #fff !important; color: #000 !important; display: block; }
-      #page-header, #filters, #alfabeto, #tip, .no-print, details.tabella { display: none !important; }
+      #page-header, #filters, #alfabeto, #tip, .no-print, details.tabella, .dlg-bg, .pdf-fuori { display: none !important; }
       .print-only { display: block; }
       .solo-schermo, .persona-head, h4.sec span { display: none !important; }
       /* in stampa solo intestazione + tabella delle attività, bianca con bordi */
@@ -411,12 +478,26 @@
   <label class="lbl" for="anno-select">Anno di riferimento</label>
   <select id="anno-select" aria-label="Anno di riferimento"></select>
   <button id="print-btn" type="button" disabled>🖨 Stampa</button>
+  <button id="mail-btn" type="button" disabled>✉ Invia</button>
 </div>
 
 <div id="alfabeto" role="group" aria-label="Iniziale del cognome"></div>
 
 <div id="content"><div class="wrap" id="report"><div class="msg">Caricamento dati…</div></div></div>
 <div id="tip"></div>
+
+<div id="invio-dlg" class="dlg-bg" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="inv-titolo">
+    <h3 id="inv-titolo">✉ Invia il libretto via e-mail</h3>
+    <p id="inv-sotto"></p>
+    <label class="chk"><input type="checkbox" id="inv-persona" checked> <span id="inv-persona-lbl">All'e-mail registrata in PUMA del nominativo</span></label>
+    <label class="campo">Altro destinatario <small>(solo indirizzi @vigilfuoco.it)</small>
+      <input type="email" id="inv-altro" placeholder="nome.cognome@vigilfuoco.it" autocomplete="off">
+    </label>
+    <div id="inv-stato" class="inv-stato" role="status"></div>
+    <div class="dlg-btn"><button type="button" id="inv-annulla">Chiudi</button><button type="button" id="inv-invia" class="primario">✉ Invia</button></div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
@@ -430,6 +511,10 @@ const GID_MANOVRE   = "605866354";    // Manovre_PREVISTE: A2:F
 const GID_FORMAZIONE = "1631986002";  // Formazione: requisiti per corso
 const GID_ELENCO    = "84413100";     // Elenco_Filtrato: corsi in possesso di ogni persona
 const LOGHI_URL     = "https://gesaddvvf.github.io/PUMA/images/loghi/loghi.json";   // loghi delle tipologie
+// Invio via Gmail: URL /exec dell'app web Apps Script "InvioLibretto.gs" (vuoto = invio non attivo)
+const URL_INVIO_LIBRETTO = "";
+const DOMINI_INVIO = ["vigilfuoco.it"];     // indirizzi scritti a mano ammessi (lo script controlla di nuovo)
+const HTML2PDF_URL = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
 
 // Elenco_Filtrato: si leggono SOLO queste colonne (e-mail e cellulare non vengono letti)
 const COL_ELENCO = {
@@ -942,6 +1027,7 @@ const refreshBtn = document.getElementById('refresh-btn');
 const nomeInput = document.getElementById('nome-input');
 const annoSelect = document.getElementById('anno-select');
 const printBtn = document.getElementById('print-btn');
+const mailBtn = document.getElementById('mail-btn');
 const report = document.getElementById('report');
 let loading = false;
 const state = { persona: null, anno: parseInt(URLP.get('anno'), 10) || ANNO_OGGI, aperti: new Set(), chiusi: new Set(), lettera: null };
@@ -1283,6 +1369,7 @@ function disegna() {
   preparaAnni();
   const p = state.persona, y = state.anno;
   printBtn.disabled = !p;
+  mailBtn.disabled = !p;
   document.getElementById('periodo-label').textContent = p ? `${p.etichetta} – ${y}` : String(y);
   document.title = p ? `P.U.M.A. - Report ${p.nome} ${y}` : 'P.U.M.A. - Report individuale';
 
@@ -1551,6 +1638,120 @@ window.addEventListener('beforeprint', () => {
   if (lib && req) req.parentNode.insertBefore(lib, req);
 });
 window.addEventListener('afterprint', () => { if (state.persona) disegna(); });
+
+/* =====================================================================
+   INVIO VIA GMAIL: PDF uguale alla stampa → app web Apps Script
+   ===================================================================== */
+const dlg = document.getElementById('invio-dlg');
+const invStato = document.getElementById('inv-stato');
+const invInvia = document.getElementById('inv-invia');
+const invPersona = document.getElementById('inv-persona');
+const invAltro = document.getElementById('inv-altro');
+const cfDi = p => (p && p.key.startsWith('cf:')) ? p.key.slice(3) : '';
+const stato = (txt, cls) => { invStato.textContent = txt; invStato.className = 'inv-stato' + (cls ? ' ' + cls : ''); };
+
+function apriInvio() {
+  const p = state.persona;
+  if (!p) return;
+  document.getElementById('inv-sotto').textContent = `Libretto di Formazione ${state.anno} di ${p.etichetta}, in PDF come la stampa.`;
+  const haCf = !!cfDi(p);
+  invPersona.disabled = !haCf;
+  invPersona.checked = haCf;
+  document.getElementById('inv-persona-lbl').textContent = haCf
+    ? "All'e-mail registrata in PUMA del nominativo"
+    : "E-mail del nominativo non disponibile (manca il codice fiscale)";
+  invAltro.value = '';
+  invInvia.disabled = !URL_INVIO_LIBRETTO;
+  if (!URL_INVIO_LIBRETTO) stato("Invio non ancora attivo: manca l'indirizzo dello script di invio (URL_INVIO_LIBRETTO).", 'ko');
+  else stato('');
+  dlg.hidden = false;
+}
+function chiudiInvio() { if (!invInvia.dataset.busy) dlg.hidden = true; }
+
+function caricaHtml2pdf() {
+  if (window.html2pdf) return Promise.resolve();
+  return new Promise((ok, ko) => {
+    const sc = document.createElement('script');
+    sc.src = HTML2PDF_URL;
+    sc.onload = ok;
+    sc.onerror = () => ko(new Error('libreria per il PDF non caricata'));
+    document.head.appendChild(sc);
+  });
+}
+// tinta chiara del colore di categoria (html2canvas non conosce color-mix)
+function schiarisci(hex, quota) {
+  const m = String(hex).trim().match(/^#?([0-9a-f]{6})$/i);
+  if (!m) return '#ffffff';
+  const n = parseInt(m[1], 16), c = [n >> 16, (n >> 8) & 255, n & 255];
+  return '#' + c.map(v => Math.round(v * quota + 255 * (1 - quota)).toString(16).padStart(2, '0')).join('');
+}
+async function creaPdfLibretto() {
+  await caricaHtml2pdf();
+  const testa = report.querySelector('.lform-testa'), lib = report.querySelector('#sez-lib');
+  if (!testa || !lib || !lib.querySelector('table')) throw new Error('nessuna attività da inviare per questo anno');
+  const box = document.createElement('div');
+  box.id = 'pdf-export';
+  const t = testa.cloneNode(true); t.classList.remove('print-only'); box.appendChild(t);
+  const l = lib.cloneNode(true); l.removeAttribute('id'); box.appendChild(l);
+  box.querySelectorAll('tbody.lib-cat').forEach(tb => {
+    tb.classList.remove('chiuso');
+    const cc = tb.style.getPropertyValue('--cc') || '#9e9e9e';
+    tb.style.setProperty('--c1', schiarisci(cc, 0.45));
+    tb.style.setProperty('--c2', schiarisci(cc, 0.18));
+  });
+  const fuori = document.createElement('div');
+  fuori.className = 'pdf-fuori';
+  fuori.appendChild(box);
+  document.body.appendChild(fuori);
+  try {
+    const opt = {
+      margin: 5, filename: 'libretto.pdf',
+      image: { type: 'jpeg', quality: 0.92 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' }
+    };
+    const uri = await html2pdf().set(opt).from(box).outputPdf('datauristring');
+    return uri.slice(uri.indexOf(',') + 1);
+  } finally {
+    fuori.remove();
+  }
+}
+
+async function inviaLibretto() {
+  const p = state.persona;
+  const altro = invAltro.value.trim().toLowerCase();
+  const persona = invPersona.checked && !invPersona.disabled;
+  if (!persona && !altro) return stato("Scegli almeno un destinatario.", 'ko');
+  if (altro && !(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(altro) && DOMINI_INVIO.some(d => altro.endsWith('@' + d)))) {
+    return stato('Indirizzo non ammesso: solo ' + DOMINI_INVIO.map(d => '@' + d).join(', ') + '.', 'ko');
+  }
+  invInvia.disabled = true; invInvia.dataset.busy = '1';
+  try {
+    stato('Preparo il PDF…', 'wip');
+    const pdf = await creaPdfLibretto();
+    stato('Invio in corso…', 'wip');
+    const r = await fetch(URL_INVIO_LIBRETTO, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // richiesta semplice: niente preflight CORS
+      body: JSON.stringify({ cf: cfDi(p), anno: state.anno, nominativo: p.nome, persona, altro, pdf })
+    });
+    const j = await r.json();
+    if (j.ok) stato('Inviato a: ' + (j.destinatari || []).join(', '), 'ok');
+    else stato(j.errore || 'Invio non riuscito.', 'ko');
+  } catch (err) {
+    console.error(err);
+    stato('Invio non riuscito: ' + (err && err.message ? err.message : err), 'ko');
+  } finally {
+    delete invInvia.dataset.busy;
+    invInvia.disabled = !URL_INVIO_LIBRETTO;
+  }
+}
+mailBtn.addEventListener('click', apriInvio);
+invInvia.addEventListener('click', inviaLibretto);
+document.getElementById('inv-annulla').addEventListener('click', chiudiInvio);
+dlg.addEventListener('mousedown', e => { if (e.target === dlg) chiudiInvio(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !dlg.hidden) chiudiInvio(); });
 
 function diagnostica() {
   const lettera = i => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
