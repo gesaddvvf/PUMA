@@ -528,6 +528,11 @@ const REG_MANOVRE = /attivit[àa] addestrativa svolta\s*\(/i;
 // Piano_Di_Sicurezza: colonne con le manovre previste
 const PIANO_MANOVRE = /^manovre\b.*previste/i;
 
+// Corsi che hanno TUTTI (in possesso anche se non scritti in Elenco_Filtrato)
+const CORSI_DI_TUTTI = ['SAF (Speleo Alpino Fluviale) Competenze primarie', 'TPSS (Tecniche di Primo Soccorso Sanitario)'];
+// Corsi da contare come un altro: tipologia registrata → tipologia del libretto
+const CORSI_EQUIVALENTI = { 'SAF (Speleo Alpino Fluviale) SAF1A': 'SAF (Speleo Alpino Fluviale) Competenze primarie' };
+
 // Registrazioni da scartare (prove)
 const NOME_NON_REALE = /\b(test\d*|prova\d*|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;   // anche TEST1, TEST2, TEST3…
 // Durata massima credibile di un'attività (ore): oltre, l'orario è considerato sbagliato
@@ -657,6 +662,9 @@ function persona(key, nome) {
 let PERSONE = new Map();   // chiave nome → { nome, comandi: Map, att: [] }
 let CORSI = [];            // righe di Formazione (un corso = una Tipologia)
 let CATEGORIE = [];        // colonna Categoria di Formazione, nell'ordine del foglio
+let EQUIVALENTE = new Map(); // corso → corso con cui si conta (es. SAF1A → Competenze primarie)
+let DI_TUTTI = [];           // corsi in possesso di tutti
+const equivalente = c => (c && EQUIVALENTE.get(c)) || c;
 let LOGHI = new Map();     // nome tipologia normalizzato → SVG del logo
 
 // Loghi delle tipologie (gli stessi della Mappa Real Time); se non si caricano la pagina funziona lo stesso
@@ -712,19 +720,23 @@ function elaboraFormazione(rows) {
   CORSI.forEach(x => { const k = normKey(x.categoria); if (!ordCat.has(k)) ordCat.set(k, ordCat.size); });
   CORSI.forEach(x => { x.ordine = ordCat.get(normKey(x.categoria)) * 1e6 + Math.min(x.sovra, 999) * 1e3 + x.id; });
   CATEGORIE = [...new Set(CORSI.map(x => x.categoria))];
+  const perNome = n => CORSI.find(x => normKey(x.tipologia) === normKey(n));
+  EQUIVALENTE = new Map();
+  Object.entries(CORSI_EQUIVALENTI).forEach(([da, a]) => { const c1 = perNome(da), c2 = perNome(a); if (c1 && c2) EQUIVALENTE.set(c1, c2); });
+  DI_TUTTI = CORSI_DI_TUTTI.map(perNome).filter(Boolean);
   diag.formazione = { intestazioni: hi + 1, corsi: CORSI.length, colonne: c };
 }
 
 function corsiDaSigla(t) {
   const k = normKey(t);
   if (!k) return [];
-  const perSigla = CORSI.filter(c => normKey(c.sigla) === k);
+  const perSigla = [...new Set(CORSI.filter(c => normKey(c.sigla) === k).map(equivalente))];
   if (perSigla.length) return perSigla;
   const c = corsoDaChiave(k);
   return c ? [c] : [];
 }
 function corsoDaChiave(k) {
-  return CORSI.find(c => c.keys.has(k)) || null;
+  return equivalente(CORSI.find(c => c.keys.has(k))) || null;
 }
 
 function elaboraManovre(rows) {
@@ -796,7 +808,7 @@ function trovaCorsi(testo) {
     if (!c) {
       let best = null, bl = 0;
       CORSI.forEach(x => x.keys.forEach(kk => { if (kk.length >= 6 && k.includes(kk) && kk.length > bl) { best = x; bl = kk.length; } }));
-      c = best;
+      c = equivalente(best);
     }
     if (c) out.add(c);
   });
@@ -991,7 +1003,7 @@ function elaboraReg(reg, pianoIdx) {
     p.att.push(a);
   });
   const piuFrequente = m => [...m.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] || '';
-  PERSONE.forEach(p => { p.nome = piuFrequente(p.grafie); p.comando = piuFrequente(p.comandi); });
+  PERSONE.forEach(p => { p.nome = piuFrequente(p.grafie); p.comando = piuFrequente(p.comandi); DI_TUTTI.forEach(c => p.corsiPossesso.add(c)); });
   const perTipo = {};
   PERSONE.forEach(p => p.att.forEach(a => { perTipo[a.tipo] = (perTipo[a.tipo] || 0) + 1; }));
   diag.reg = { righe, scartate, senzaData, collSenzaPiano, nonAttivita, perTipo, persone: PERSONE.size };
