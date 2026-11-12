@@ -412,10 +412,9 @@
       .table-scroll { overflow: visible !important; }
       table.libretto { font-size: 8px; table-layout: fixed; width: 100% !important; }
       table.libretto th, table.libretto td { padding: 2px 4px !important; line-height: 1.3; word-wrap: break-word; overflow-wrap: anywhere; }
-      table.libretto th:nth-child(1) { width: 13% !important; }
-      table.libretto th:nth-child(2) { width: 11% !important; }
-      table.libretto th:nth-child(4), table.libretto th:nth-child(5) { width: 10% !important; }
-      table.libretto th:nth-child(6) { width: 6% !important; }
+      table.libretto th:nth-child(1) { width: 14% !important; }
+      table.libretto th:nth-child(3), table.libretto th:nth-child(4) { width: 10% !important; }
+      table.libretto th:nth-child(5) { width: 6% !important; }
       .lib-dt { white-space: normal !important; }
       .logo { width: 13px !important; height: 13px !important; margin: -2px 4px -2px 0 !important; }
       .logo svg * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -1587,34 +1586,34 @@ function gruppiTipo(righe) {
 }
 function rigaLibretto(a, catSezione) {
   const d = datiRiga(a, catSezione);
-  return `<tr class="lib-row${d.prima ? ' lib-prima' : ''}"><td>${esc(d.comando)}</td><td>${esc(d.tipo)}</td>
+  return `<tr class="lib-row${d.prima ? ' lib-prima' : ''}"><td>${esc(d.comando)}</td>
     <td class="lib-desc">${d.righe.map(esc).join('\n')}</td>
     <td class="lib-dt">${esc(d.dalle)}</td><td class="lib-dt">${esc(d.alle)}</td><td class="n">${d.ore}</td></tr>`;
 }
 function tabellaLibretto(cats, A, requisiti) {
   let h = `<div class="table-scroll"><table class="libretto"><thead><tr>
-    <th style="width:14%">Comando</th><th style="width:12%">Tipologia</th><th>Descrizione attività</th><th style="width:11%">Dalle ore</th><th style="width:11%">Alle ore</th><th style="width:7%">Ore</th></tr></thead>`;
+    <th style="width:15%">Comando</th><th>Descrizione attività</th><th style="width:12%">Dalle ore</th><th style="width:12%">Alle ore</th><th style="width:7%">Ore</th></tr></thead>`;
   cats.forEach(c => {
     const k = normKey(c.label);
     h += `<tbody class="lib-cat${state.chiusi.has(k) ? ' chiuso' : ''}" data-cat="${k}" style="--cc:${coloreCategoria(c.label)}">
-      <tr class="lib-h1"><td colspan="5">${esc(c.label)}</td><td class="n">${fmtHM(c.tot)}</td></tr>`;
+      <tr class="lib-h1"><td colspan="4">${esc(c.label)}</td><td class="n">${fmtHM(c.tot)}</td></tr>`;
     c.tip.forEach(t => {
-      h += `<tr class="lib-h2"><td colspan="6">${logoHtml(t.label)}${esc(t.label)}${t.dal != null ? ` <span class="lib-anni">· ${t.dal}–${state.anno} (conta anche ${state.anno - t.dal === 1 ? "l'anno precedente" : 'gli anni precedenti'})</span>` : ''}</td></tr>`;
+      h += `<tr class="lib-h2"><td colspan="5">${logoHtml(t.label)}${esc(t.label)}${t.dal != null ? ` <span class="lib-anni">· ${t.dal}–${state.anno} (conta anche ${state.anno - t.dal === 1 ? "l'anno precedente" : 'gli anni precedenti'})</span>` : ''}</td></tr>`;
       gruppiTipo(t.righe).forEach(g => {
-        h += `<tr class="lib-h3"><td colspan="6">${esc(g.titolo)}</td></tr>` + g.righe.map(a => rigaLibretto(a)).join('') +
-          `<tr class="lib-sub3"><td colspan="5">${esc(g.sub)}</td><td class="n">${fmtHM(g.ore)}</td></tr>`;
+        h += `<tr class="lib-h3"><td colspan="5">${esc(g.titolo)}</td></tr>` + g.righe.map(a => rigaLibretto(a)).join('') +
+          `<tr class="lib-sub3"><td colspan="4">${esc(g.sub)}</td><td class="n">${fmtHM(g.ore)}</td></tr>`;
       });
-      h += `<tr class="lib-sub"><td colspan="5">Subtotale ${esc(t.label)}</td><td class="n">${fmtHM(t.ore)}</td></tr>`;
+      h += `<tr class="lib-sub"><td colspan="4">Subtotale ${esc(t.label)}</td><td class="n">${fmtHM(t.ore)}</td></tr>`;
     });
     if (c.int.length) {
-      h += `<tr class="lib-h2"><td colspan="6">${logoHtml('Intervento')}Intervento</td></tr>` + c.int.map(a => rigaLibretto(a, c.intCat.get(a))).join('') +
-        `<tr class="lib-sub"><td colspan="5">Subtotale interventi</td><td class="n">${fmtHM(c.oreInt)}</td></tr>`;
+      h += `<tr class="lib-h2"><td colspan="5">${logoHtml('Intervento')}Intervento</td></tr>` + c.int.map(a => rigaLibretto(a, c.intCat.get(a))).join('') +
+        `<tr class="lib-sub"><td colspan="4">Subtotale interventi</td><td class="n">${fmtHM(c.oreInt)}</td></tr>`;
     }
     const rq = requisiti && requisiti.get(c.label);
     const nota = rq && rq.minTot ? ` <span class="lib-min ${rq.stato}">· richieste ${fmtHM(rq.minTot)}${rq.anniPrima ? ' (' + rq.dal + '–' + state.anno + ')' : ''} ${rq.stato === 'ok' ? '✔' : '✘'}</span>` : '';
-    h += `<tr class="lib-tot"><td colspan="5">Totale Categoria${nota}</td><td class="n">${fmtHM(c.tot)}</td></tr></tbody>`;
+    h += `<tr class="lib-tot"><td colspan="4">Totale Categoria${nota}</td><td class="n">${fmtHM(c.tot)}</td></tr></tbody>`;
   });
-  h += `<tbody><tr class="lib-gtot"><td colspan="5">Totale anno ${state.anno}, ogni attività contata una sola volta: addestramenti ${fmtHM(A.tot.ore)} · interventi ${fmtHM(A.int.ore)}</td>
+  h += `<tbody><tr class="lib-gtot"><td colspan="4">Totale anno ${state.anno}, ogni attività contata una sola volta: addestramenti ${fmtHM(A.tot.ore)} · interventi ${fmtHM(A.int.ore)}</td>
     <td class="n">${fmtHM(A.tot.ore + A.int.ore)}</td></tr></tbody></table></div>`;
   return h;
 }
@@ -1755,30 +1754,30 @@ async function creaPdfLibretto() {
     const col = coloreCategoria(c.label), cc = rgbDi(col), c1 = rgbDi(schiarisci(col, 0.45)), c2 = rgbDi(schiarisci(col, 0.18)), c3 = rgbDi(schiarisci(col, 0.07));
     const S = extra => Object.assign({ lineColor: cc }, extra || {});
     const totale = (testo, v, extra) => body.push([
-      { content: testo, colSpan: 5, styles: S(Object.assign({ halign: 'right', fontStyle: 'bold' }, extra)) },
+      { content: testo, colSpan: 4, styles: S(Object.assign({ halign: 'right', fontStyle: 'bold' }, extra)) },
       { content: fmtHM(v), styles: S(Object.assign({ halign: 'right', fontStyle: 'bold' }, extra)) }
     ]);
     const tipologia = (label, extra) => {
       const logo = loghiPng.get(label);
-      body.push([{ content: testoPdf(label + (extra || '')), colSpan: 6, logo, alias: 'logo_' + normKey(label),
+      body.push([{ content: testoPdf(label + (extra || '')), colSpan: 5, logo, alias: 'logo_' + normKey(label),
         styles: S({ fillColor: c2, fontStyle: 'bolditalic', cellPadding: { top: 1, bottom: 1, right: 1, left: logo ? 5.6 : 1 } }) }]);
     };
     const attivita = (a, cs) => {
       const d = datiRiga(a, cs);
       const base = S(d.prima ? { textColor: [115, 115, 115] } : {});
-      body.push([d.comando, d.tipo, d.righe.join('\n'), d.dalle, d.alle, d.ore].map((v, i) => ({
+      body.push([d.comando, d.righe.join('\n'), d.dalle, d.alle, d.ore].map((v, i) => ({
         content: testoPdf(v),
-        styles: Object.assign({}, base, i === 5 ? { halign: 'right' } : i >= 3 ? { halign: 'center' } : {})
+        styles: Object.assign({}, base, i === 4 ? { halign: 'right' } : i >= 2 ? { halign: 'center' } : {})
       })));
     };
     body.push([
-      { content: testoPdf(c.label), colSpan: 5, styles: S({ fillColor: c1, fontStyle: 'bold', fontSize: 8.5 }) },
+      { content: testoPdf(c.label), colSpan: 4, styles: S({ fillColor: c1, fontStyle: 'bold', fontSize: 8.5 }) },
       { content: fmtHM(c.tot), styles: S({ fillColor: c1, fontStyle: 'bold', fontSize: 8.5, halign: 'right' }) }
     ]);
     c.tip.forEach(t => {
       tipologia(t.label, t.dal != null ? `   ${t.dal}-${y} (conta anche l'anno precedente)` : '');
       gruppiTipo(t.righe).forEach(g => {
-        body.push([{ content: g.titolo, colSpan: 6, styles: S({ fontStyle: 'italic', fillColor: c3, cellPadding: { top: 0.8, bottom: 0.8, right: 1, left: 3 } }) }]);
+        body.push([{ content: g.titolo, colSpan: 5, styles: S({ fontStyle: 'italic', fillColor: c3, cellPadding: { top: 0.8, bottom: 0.8, right: 1, left: 3 } }) }]);
         g.righe.forEach(a => attivita(a));
         totale(g.sub, g.ore, { fontStyle: 'italic' });
       });
@@ -1792,18 +1791,18 @@ async function creaPdfLibretto() {
     totale('Totale Categoria', c.tot);
   });
   body.push([
-    { content: `Totale anno ${y}, ogni attività contata una sola volta: addestramenti ${fmtHM(A.tot.ore)} - interventi ${fmtHM(A.int.ore)}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
+    { content: `Totale anno ${y}, ogni attività contata una sola volta: addestramenti ${fmtHM(A.tot.ore)} - interventi ${fmtHM(A.int.ore)}`, colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
     { content: fmtHM(A.tot.ore + A.int.ore), styles: { halign: 'right', fontStyle: 'bold' } }
   ]);
 
   doc.autoTable({
     startY: yy, margin: { left: M, right: M, top: M, bottom: 8 },
-    head: [['Comando', 'Tipologia', 'Descrizione attività', 'Dalle ore', 'Alle ore', 'Ore']],
+    head: [['Comando', 'Descrizione attività', 'Dalle ore', 'Alle ore', 'Ore']],
     body, theme: 'grid',
     styles: { font: 'helvetica', fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.2,
       textColor: [0, 0, 0], fillColor: [255, 255, 255], valign: 'top', overflow: 'linebreak' },
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', lineWidth: 0.3 },
-    columnStyles: { 0: { cellWidth: 26 }, 1: { cellWidth: 22 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 20 }, 4: { cellWidth: 20 }, 5: { cellWidth: 12 } },
+    columnStyles: { 0: { cellWidth: 28 }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 21 }, 3: { cellWidth: 21 }, 4: { cellWidth: 12 } },
     rowPageBreak: 'avoid', showHead: 'everyPage',
     didDrawCell: d => {
       if (d.section === 'body' && d.cell.raw && d.cell.raw.logo) {
