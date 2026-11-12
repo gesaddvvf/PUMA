@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>P.U.M.A. - Report individuale (in costruzione)</title>
+  <title>P.U.M.A. - Report individuale</title>
   <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -294,14 +294,6 @@
     .drop .opt.solo-reg small::after { content: ' · non in Elenco_Filtrato'; color: #777; }
     .drop .vuoto { padding: 10px; color: #999; font-size: 12px; }
 
-    /* Pagina in costruzione */
-    #wip-banner {
-      flex-shrink: 0; text-align: center; padding: 7px 12px; font-size: 12.5px; font-weight: bold; color: #1e1e1e;
-      background: repeating-linear-gradient(135deg, #ffd700 0 18px, #f0c400 18px 36px);
-      border-bottom: 1px solid #444;
-    }
-    #wip-banner span { background: rgba(255,255,255,.85); padding: 2px 10px; border-radius: 3px; }
-    .wip-print { display: none; }
 
     /* ---------- STAMPA ---------- */
     @media print {
@@ -345,8 +337,6 @@
       table.req tr.corso-row td:first-child::before { content: '' !important; }
       .sub-n, .corso-nome .t { color: #444 !important; }
       .lib-min, .lib-min.ok, .lib-min.ko { color: #000 !important; }
-      #wip-banner { display: none !important; }
-      .wip-print { display: inline; font-weight: bold; }
       #content { overflow: visible; padding: 0; }
       .print-title { font-size: 13px; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 10px; }
       .persona-head h3, h4.sec, .corso-nome b { color: #000 !important; }
@@ -410,8 +400,6 @@
     <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/mappariepilogocollettivi.html" id="btn-riepilogo">Riepilogo Globale</a>
   </div>
 </header>
-
-<div id="wip-banner" role="status"><span>🚧 Pagina in costruzione – i dati e i calcoli sono in verifica 🚧</span></div>
 
 <div id="filters">
   <label class="lbl" for="nome-input">Nominativo</label>
@@ -1327,7 +1315,7 @@ function disegna() {
       <tr><td class="k">Luogo e Data</td><td>${esc(luogo ? luogo + ', ' : '')}${timbro}</td><td class="k">Firma</td><td class="firma"></td></tr>
       <tr><td colspan="2"></td><td class="k">Visto del Funzionario</td><td class="firma"></td></tr>
     </table>
-    <div class="lf-bozza">Generato da P.U.M.A. – pagina in costruzione, dati in verifica</div>
+    <div class="lf-bozza">Generato da P.U.M.A.</div>
   </div>
   <div class="persona-head">
     <div>
