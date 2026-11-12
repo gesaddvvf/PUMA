@@ -306,6 +306,7 @@
       .lib-gtot td { border-top: 2px solid #000 !important; }
       tr.lib-prima td { color: #000 !important; }
       .lform-testa { margin-bottom: 8mm; }
+      .lf-emblema { display: block; margin: 0 auto 3mm; height: 20mm; width: auto; }
       .lf-ente { text-align: center; font-weight: bold; font-size: 15px; line-height: 1.35; margin-bottom: 5mm; }
       .lf-ente span { font-size: 13px; }
       table.lf-tab { width: 100%; border-collapse: collapse; font-size: 11px; }
@@ -1256,6 +1257,7 @@ function disegna() {
   const ente = (p.comando || 'Comando').toUpperCase();
   const luogo = (p.comando || '').replace(/^comando\s+(vv\.?\s*f\.?\s*)?(di\s+)?/i, '');
   html += `<div class="print-only lform-testa">
+    <img class="lf-emblema" src="https://gesaddvvf.github.io/PUMA/images/emblema_italia.png" alt="Emblema della Repubblica Italiana">
     <div class="lf-ente">VIGILI DEL FUOCO<br>${esc(ente)}<br><span>LIBRETTO DI FORMAZIONE INDIVIDUALE</span></div>
     <table class="lf-tab">
       <tr><td class="k">Anno</td><td><b>${y}</b></td><td class="k">Nominativo</td><td><b>${esc(p.etichetta)}</b></td></tr>
