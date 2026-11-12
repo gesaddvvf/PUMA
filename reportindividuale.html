@@ -344,7 +344,6 @@
       #sez-req, .note-box, .lib-min, .lib-anni { display: none !important; }
       table.libretto td, table.libretto th { background: #fff !important; color: #000 !important; border: 1px solid #000 !important; }
       table.libretto thead th { font-weight: bold; }
-      table.libretto thead { display: table-row-group; }   /* intestazione solo sul primo foglio */
       .lib-h1 td { font-size: 11.5px !important; font-weight: bold !important; text-transform: none; }
       .lib-h2 td { font-weight: bold !important; font-style: italic; }
       .lib-sub td, .lib-tot td, .lib-gtot td { font-weight: bold !important; }
@@ -1780,7 +1779,7 @@ async function creaPdfLibretto() {
       textColor: [0, 0, 0], fillColor: [255, 255, 255], valign: 'top', overflow: 'linebreak' },
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', lineWidth: 0.3 },
     columnStyles: { 0: { cellWidth: 26 }, 1: { cellWidth: 22 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 20 }, 4: { cellWidth: 20 }, 5: { cellWidth: 12 } },
-    rowPageBreak: 'avoid', showHead: 'firstPage',
+    rowPageBreak: 'avoid', showHead: 'everyPage',
     didDrawCell: d => {
       if (d.section === 'body' && d.cell.raw && d.cell.raw.logo) {
         const s = 3.6;
