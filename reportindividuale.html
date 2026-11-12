@@ -238,6 +238,17 @@
     .lib-tot td { background: #353535 !important; text-align: right; font-weight: bold; color: #f0f0f0; }
     .lib-gtot td { background: #2a2a2a !important; text-align: right; font-weight: bold; color: var(--gold); border-top: 2px solid var(--gold); }
 
+    /* Colore per categoria (--cc) */
+    tbody.lib-cat td { border-color: color-mix(in srgb, var(--cc) 55%, #444); }
+    tbody.lib-cat .lib-h1 td { background: color-mix(in srgb, var(--cc) 38%, #1e1e1e) !important; color: #fff; border-color: var(--cc); }
+    tbody.lib-cat .lib-h1 td:first-child { border-left: 5px solid var(--cc); }
+    tbody.lib-cat .lib-h2 td { background: color-mix(in srgb, var(--cc) 16%, #1e1e1e) !important; border-left: 5px solid var(--cc); }
+    tbody.lib-cat .lib-row td:first-child, tbody.lib-cat .lib-sub td:first-child, tbody.lib-cat .lib-tot td:first-child { border-left: 5px solid var(--cc); }
+    tbody.lib-cat .lib-tot td { border-bottom: 2px solid var(--cc); }
+    table.req tr[style*="--cc"] > td:first-child { border-left: 5px solid var(--cc); }
+    table.req tr.cat-row td { background: color-mix(in srgb, var(--cc) 30%, #1e1e1e) !important; }
+    table.req tr.cat-row td:first-child b { color: #fff; }
+
     .note-box { background: #2a2620; border: 1px solid #5a4a20; border-radius: 4px; padding: 10px 12px; font-size: 12px; line-height: 1.6; color: #ddd; margin-top: 18px; }
     .note-box b { color: var(--warn); }
     .note-box ul { margin: 4px 0 0; padding-left: 18px; }
@@ -305,6 +316,11 @@
       .lib-sub td, .lib-tot td, .lib-gtot td { font-weight: bold !important; }
       .lib-gtot td { border-top: 2px solid #000 !important; }
       tr.lib-prima td { color: #000 !important; }
+      tbody.lib-cat td { border-color: var(--cc) !important; }
+      tbody.lib-cat .lib-h1 td { background: color-mix(in srgb, var(--cc) 45%, #fff) !important; color: #000 !important; }
+      tbody.lib-cat .lib-h2 td { background: color-mix(in srgb, var(--cc) 18%, #fff) !important; }
+      tbody.lib-cat .lib-h1 td, tbody.lib-cat .lib-h2 td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      table.libretto thead th { border-color: #000 !important; }
       .lform-testa { margin-bottom: 8mm; }
       .lf-emblema { display: block; margin: 0 auto 3mm; height: 20mm; width: auto; }
       .lf-ente { text-align: center; font-weight: bold; font-size: 15px; line-height: 1.35; margin-bottom: 5mm; }
@@ -646,6 +662,20 @@ function elaboraManovre(rows) {
     MANOVRE.push(m);
   });
   diag.manovre = { righe: MANOVRE.length, senzaCorso };
+}
+
+// Colore fisso per ogni Categoria (bordi, intestazione e righe tipologia)
+const COLORI_CATEGORIA = [
+  [/^saf/, '#ff9800'], [/^ssa/, '#29b6f6'], [/^usar/, '#8d6e63'], [/^tpss/, '#e53935'],
+  [/^oso/, '#7e57c2'], [/^tas/, '#43a047'], [/^cfbt/, '#c2185b'], [/^nbcr/, '#fdd835'],
+  [/^apr/, '#26a69a'], [/^cinofil|k9/, '#9e9d24'], [/^patentiterrestr/, '#5c6bc0'],
+  [/^macchinemovimento|^mmt/, '#78909c'], [/^patentinautic/, '#00838f'],
+  [/^formazionegenerale/, '#bdbdbd'], [/^varie/, '#9e9e9e']
+];
+function coloreCategoria(nome) {
+  const k = normKey(nome);
+  const c = COLORI_CATEGORIA.find(([re]) => re.test(k));
+  return c ? c[1] : '#9e9e9e';
 }
 
 // Livelli del raggruppamento: Settore (es. SAF) → Categoria → Tipologia
@@ -1311,7 +1341,8 @@ function disegna() {
     settori.forEach(st => {
       const pct = st.minTot ? Math.min(100, st.tot / st.minTot * 100) : 0;
       const prevTot = st.req.reduce((t, r) => t + r.c.previste.length, 0), fatteTot = st.req.reduce((t, r) => t + r.fatte.size, 0);
-      req += `<tr class="cat-row">
+      const cc = coloreCategoria(st.nome);
+      req += `<tr class="cat-row" style="--cc:${cc}">
         <td><b>${esc(st.nome)}</b><span class="t">addestramenti ${fmtH(st.oreAdd)} (${st.add.length}) + interventi ${fmtH(st.oreInt)} (${st.int.length})</span></td>
         <td class="c">${st.anniPrima ? `${st.dal}–${y}` : y}</td>
         <td class="n"><b>${fmtH(st.tot)}</b>${st.minTot ? ` / ${fmtH(st.minTot)}<div class="bar"><i class="${st.stato === 'ok' ? 'ok' : ''}" style="width:${pct}%"></i></div>` : ''}${st.anniPrima ? `<div class="sub-n">nel ${y}: ${fmtH(st.totAnno)}</div>` : ''}</td>
@@ -1325,7 +1356,7 @@ function disegna() {
         const ruolo = !r.possesso ? '<span class="stato nd">non in possesso</span>'
           : c.oreMin ? `<span class="stato nd">concorre al minimo</span>`
           : c.soloRegistro ? '<span class="stato nd">solo registro</span>' : '<span class="stato nd">nessun minimo</span>';
-        req += `<tr class="corso-row${aperto ? ' open' : ''}" data-id="${id}">
+        req += `<tr class="corso-row${aperto ? ' open' : ''}" data-id="${id}" style="--cc:${cc}">
           <td class="corso-nome">${esc(c.nome)}<span class="t">${[c.sigla ? 'Sigla ' + esc(c.sigla) : '', c.anniPrima ? 'conta anche ' + (c.anniPrima === 1 ? "l'anno precedente" : c.anniPrima + ' anni precedenti') : ''].filter(Boolean).join(' · ')}</span></td>
           <td class="c">${c.anniPrima ? `${r.dal}–${y}` : y}</td>
           <td class="n">${fmtH(r.ore)}${c.oreMin != null ? ` <span class="sub-n">· minimo ${fmtH(c.oreMin)}</span>` : ''}</td>
@@ -1333,16 +1364,16 @@ function disegna() {
           <td class="c">${nPrev ? `<b style="color:${nFatte >= nPrev ? 'var(--ok)' : 'inherit'}">${nFatte}</b> / ${nPrev}` : '—'}</td>
           <td class="c">${ruolo}</td>
         </tr>
-        <tr class="det-row" data-for="${id}" ${aperto ? '' : 'style="display:none"'}><td colspan="6">${dettaglioManovre(c, r)}</td></tr>`;
+        <tr class="det-row" data-for="${id}" style="--cc:${cc};${aperto ? '' : 'display:none'}"><td colspan="6">${dettaglioManovre(c, r)}</td></tr>`;
       });
       const concorre = st.minTot ? '<span class="stato nd">concorre al minimo</span>' : '<span class="stato nd">—</span>';
       if (st.senzaTip.length) {
-        req += `<tr class="voce-row"><td>Attività con sola categoria<span class="t">registrate senza tipologia · ${st.senzaTip.length} attività</span></td>
+        req += `<tr class="voce-row" style="--cc:${cc}"><td>Attività con sola categoria<span class="t">registrate senza tipologia · ${st.senzaTip.length} attività</span></td>
           <td class="c">${y}</td><td class="n">${fmtH(st.oreSenzaTip)}</td>
           <td class="n">${fmtH(st.senzaTip.filter(a => a.tipo === 'collettivo').reduce((t, a) => t + (a.ore || 0), 0))}</td><td class="c">—</td><td class="c">${concorre}</td></tr>`;
       }
       if (st.int.length || st.minTot) {
-        req += `<tr class="voce-row"><td>Interventi<span class="t">${st.int.length === 1 ? '1 intervento' : st.int.length + ' interventi'}${st.int.length ? ' · ' + esc(st.nome) : ''}</span></td>
+        req += `<tr class="voce-row" style="--cc:${cc}"><td>Interventi<span class="t">${st.int.length === 1 ? '1 intervento' : st.int.length + ' interventi'}${st.int.length ? ' · ' + esc(st.nome) : ''}</span></td>
           <td class="c">${y}</td><td class="n">${fmtH(st.oreInt)}</td><td class="c">—</td><td class="c">—</td><td class="c">${concorre}</td></tr>`;
       }
     });
@@ -1463,7 +1494,7 @@ function tabellaLibretto(cats, A, requisiti) {
     <th style="width:14%">Comando</th><th style="width:12%">Tipologia</th><th>Descrizione attività</th><th style="width:11%">Dalle ore</th><th style="width:11%">Alle ore</th><th style="width:7%">Ore</th></tr></thead>`;
   cats.forEach(c => {
     const k = normKey(c.label);
-    h += `<tbody class="lib-cat${state.chiusi.has(k) ? ' chiuso' : ''}" data-cat="${k}">
+    h += `<tbody class="lib-cat${state.chiusi.has(k) ? ' chiuso' : ''}" data-cat="${k}" style="--cc:${coloreCategoria(c.label)}">
       <tr class="lib-h1"><td colspan="5">${esc(c.label)}</td><td class="n">${fmtHM(c.tot)}</td></tr>`;
     c.tip.forEach(t => {
       h += `<tr class="lib-h2"><td colspan="6">${esc(t.label)}${t.dal != null ? ` <span class="lib-anni">· ${t.dal}–${state.anno} (conta anche ${state.anno - t.dal === 1 ? "l'anno precedente" : 'gli anni precedenti'})</span>` : ''}</td></tr>` + t.righe.map(a => rigaLibretto(a)).join('') +
