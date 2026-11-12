@@ -286,6 +286,11 @@
     tbody.lib-cat .lib-h2 td { background: color-mix(in srgb, var(--cc) 16%, #1e1e1e) !important; border-left: 5px solid var(--cc); }
     tbody.lib-cat .lib-row td:first-child, tbody.lib-cat .lib-sub td:first-child, tbody.lib-cat .lib-tot td:first-child { border-left: 5px solid var(--cc); }
     tbody.lib-cat .lib-tot td { border-bottom: 2px solid var(--cc); }
+    .lib-h3 td { background: color-mix(in srgb, var(--cc, #888) 7%, #1e1e1e) !important; font-style: italic; color: #ddd; padding-left: 18px !important; }
+    tbody.lib-cat .lib-h3 td { border-left: 5px solid var(--cc); }
+    .lib-sub3 td { text-align: right; font-style: italic; color: #bbb; background: #222 !important; }
+    .lib-sub3 td.n { color: #f0f0f0; }
+    tbody.lib-cat .lib-sub3 td:first-child { border-left: 5px solid var(--cc); }
     table.req tr[style*="--cc"] > td:first-child { border-left: 5px solid var(--cc); }
     table.req tr.cat-row td { background: color-mix(in srgb, var(--cc) 30%, #1e1e1e) !important; }
     table.req tr.cat-row td:first-child b { color: #fff; }
@@ -352,6 +357,8 @@
       tbody.lib-cat td { border-color: var(--cc) !important; }
       tbody.lib-cat .lib-h1 td { background: color-mix(in srgb, var(--cc) 45%, #fff) !important; color: #000 !important; }
       tbody.lib-cat .lib-h2 td { background: color-mix(in srgb, var(--cc) 18%, #fff) !important; }
+      tbody.lib-cat .lib-h3 td { background: color-mix(in srgb, var(--cc) 7%, #fff) !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .lib-sub3 td { background: #fff !important; color: #000 !important; font-weight: normal !important; }
       tbody.lib-cat .lib-h1 td, tbody.lib-cat .lib-h2 td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       table.libretto thead th { border-color: #000 !important; }
       .lform-testa { margin-bottom: 3mm; }
@@ -1568,6 +1575,16 @@ function datiRiga(a, catSezione) {
     dalle: fmtDataOra(a.inizio) || a.data.toLocaleDateString('it-IT'), alle: fmtDataOra(a.fine), ore: a.ore == null ? '—' : fmtHM(a.ore)
   };
 }
+// Dentro una tipologia: prima i collettivi, poi gli individuali (poi le altre attività), ognuno con subtotale
+const GRUPPI_TIPO = [['collettivo', 'Addestramenti collettivi', 'Subtotale collettivi'],
+                     ['individuale', 'Addestramenti individuali', 'Subtotale individuali'],
+                     ['altro', 'Altre attività', 'Subtotale altre attività']];
+function gruppiTipo(righe) {
+  return GRUPPI_TIPO.map(([tipo, titolo, sub]) => {
+    const r = righe.filter(a => (a.tipo === 'collettivo' || a.tipo === 'individuale' ? a.tipo : 'altro') === tipo);
+    return { tipo, titolo, sub, righe: r, ore: r.reduce((t, a) => t + (a.ore || 0), 0) };
+  }).filter(g => g.righe.length);
+}
 function rigaLibretto(a, catSezione) {
   const d = datiRiga(a, catSezione);
   return `<tr class="lib-row${d.prima ? ' lib-prima' : ''}"><td>${esc(d.comando)}</td><td>${esc(d.tipo)}</td>
@@ -1582,12 +1599,16 @@ function tabellaLibretto(cats, A, requisiti) {
     h += `<tbody class="lib-cat${state.chiusi.has(k) ? ' chiuso' : ''}" data-cat="${k}" style="--cc:${coloreCategoria(c.label)}">
       <tr class="lib-h1"><td colspan="5">${esc(c.label)}</td><td class="n">${fmtHM(c.tot)}</td></tr>`;
     c.tip.forEach(t => {
-      h += `<tr class="lib-h2"><td colspan="6">${logoHtml(t.label)}${esc(t.label)}${t.dal != null ? ` <span class="lib-anni">· ${t.dal}–${state.anno} (conta anche ${state.anno - t.dal === 1 ? "l'anno precedente" : 'gli anni precedenti'})</span>` : ''}</td></tr>` + t.righe.map(a => rigaLibretto(a)).join('') +
-        `<tr class="lib-sub"><td colspan="5">Subtotale</td><td class="n">${fmtHM(t.ore)}</td></tr>`;
+      h += `<tr class="lib-h2"><td colspan="6">${logoHtml(t.label)}${esc(t.label)}${t.dal != null ? ` <span class="lib-anni">· ${t.dal}–${state.anno} (conta anche ${state.anno - t.dal === 1 ? "l'anno precedente" : 'gli anni precedenti'})</span>` : ''}</td></tr>`;
+      gruppiTipo(t.righe).forEach(g => {
+        h += `<tr class="lib-h3"><td colspan="6">${esc(g.titolo)}</td></tr>` + g.righe.map(a => rigaLibretto(a)).join('') +
+          `<tr class="lib-sub3"><td colspan="5">${esc(g.sub)}</td><td class="n">${fmtHM(g.ore)}</td></tr>`;
+      });
+      h += `<tr class="lib-sub"><td colspan="5">Subtotale ${esc(t.label)}</td><td class="n">${fmtHM(t.ore)}</td></tr>`;
     });
     if (c.int.length) {
       h += `<tr class="lib-h2"><td colspan="6">${logoHtml('Intervento')}Intervento</td></tr>` + c.int.map(a => rigaLibretto(a, c.intCat.get(a))).join('') +
-        `<tr class="lib-sub"><td colspan="5">Subtotale</td><td class="n">${fmtHM(c.oreInt)}</td></tr>`;
+        `<tr class="lib-sub"><td colspan="5">Subtotale interventi</td><td class="n">${fmtHM(c.oreInt)}</td></tr>`;
     }
     const rq = requisiti && requisiti.get(c.label);
     const nota = rq && rq.minTot ? ` <span class="lib-min ${rq.stato}">· richieste ${fmtHM(rq.minTot)}${rq.anniPrima ? ' (' + rq.dal + '–' + state.anno + ')' : ''} ${rq.stato === 'ok' ? '✔' : '✘'}</span>` : '';
@@ -1731,7 +1752,7 @@ async function creaPdfLibretto() {
   // --- tabella: Categoria → Tipologia → attività → Subtotale → Intervento → Subtotale → Totale Categoria
   const body = [];
   cats.forEach(c => {
-    const col = coloreCategoria(c.label), cc = rgbDi(col), c1 = rgbDi(schiarisci(col, 0.45)), c2 = rgbDi(schiarisci(col, 0.18));
+    const col = coloreCategoria(c.label), cc = rgbDi(col), c1 = rgbDi(schiarisci(col, 0.45)), c2 = rgbDi(schiarisci(col, 0.18)), c3 = rgbDi(schiarisci(col, 0.07));
     const S = extra => Object.assign({ lineColor: cc }, extra || {});
     const totale = (testo, v, extra) => body.push([
       { content: testo, colSpan: 5, styles: S(Object.assign({ halign: 'right', fontStyle: 'bold' }, extra)) },
@@ -1756,13 +1777,17 @@ async function creaPdfLibretto() {
     ]);
     c.tip.forEach(t => {
       tipologia(t.label, t.dal != null ? `   ${t.dal}-${y} (conta anche l'anno precedente)` : '');
-      t.righe.forEach(a => attivita(a));
-      totale('Subtotale', t.ore);
+      gruppiTipo(t.righe).forEach(g => {
+        body.push([{ content: g.titolo, colSpan: 6, styles: S({ fontStyle: 'italic', fillColor: c3, cellPadding: { top: 0.8, bottom: 0.8, right: 1, left: 3 } }) }]);
+        g.righe.forEach(a => attivita(a));
+        totale(g.sub, g.ore, { fontStyle: 'italic' });
+      });
+      totale(testoPdf('Subtotale ' + t.label), t.ore);
     });
     if (c.int.length) {
       tipologia('Intervento');
       c.int.forEach(a => attivita(a, c.intCat.get(a)));
-      totale('Subtotale', c.oreInt);
+      totale('Subtotale interventi', c.oreInt);
     }
     totale('Totale Categoria', c.tot);
   });
