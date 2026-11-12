@@ -288,6 +288,9 @@
 
     /* ---------- STAMPA ---------- */
     @media print {
+      /* foglio bianco: niente tema scuro né sfondi in stampa */
+      :root { color-scheme: light !important; }
+      html, body, #content, .wrap, #report { background: #fff !important; }
       @page { size: A4; margin: 12mm; }
       html, body { height: auto; background: #fff !important; color: #000 !important; display: block; }
       #page-header, #filters, #alfabeto, #tip, .no-print, details.tabella { display: none !important; }
@@ -344,7 +347,6 @@
       .chart .grid { border-top-color: #ccc !important; }
       .chart .grid.base { border-top-color: #000 !important; }
       .xax, .chart .yax, .legend { color: #333 !important; }
-      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .att, tr, .tile { break-inside: avoid; }
       tr.grp-row td { background: #777 !important; color: #fff !important; }
       tr.grp-row td span, tr.grp-row td span b { color: #fff !important; }
