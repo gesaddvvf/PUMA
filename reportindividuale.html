@@ -291,7 +291,15 @@
       #page-header, #filters, #alfabeto, #tip, .no-print, details.tabella { display: none !important; }
       .print-only { display: block; }
       .solo-schermo, .persona-head, h4.sec span { display: none !important; }
-      #sez-req { break-before: page; }
+      /* in stampa solo intestazione + tabella delle attività, bianca con bordi */
+      #sez-req, .note-box, .lib-min, .lib-anni { display: none !important; }
+      table.libretto td, table.libretto th { background: #fff !important; color: #000 !important; border: 1px solid #000 !important; }
+      table.libretto thead th { font-weight: bold; }
+      .lib-h1 td { font-size: 11.5px !important; font-weight: bold !important; text-transform: none; }
+      .lib-h2 td { font-weight: bold !important; font-style: italic; }
+      .lib-sub td, .lib-tot td, .lib-gtot td { font-weight: bold !important; }
+      .lib-gtot td { border-top: 2px solid #000 !important; }
+      tr.lib-prima td { color: #000 !important; }
       .lform-testa { margin-bottom: 8mm; }
       .lf-ente { text-align: center; font-weight: bold; font-size: 15px; line-height: 1.35; margin-bottom: 5mm; }
       .lf-ente span { font-size: 13px; }
@@ -339,12 +347,7 @@
       tr.grp-row td { background: #777 !important; color: #fff !important; }
       tr.grp-row td span, tr.grp-row td span b { color: #fff !important; }
       .lib-cat.chiuso tr { display: table-row !important; }
-      .lib-h1 td { background: #777 !important; color: #fff !important; }
       .lib-h1 td:first-child::before { content: '' !important; }
-      .lib-h2 td { background: #c8c8c8 !important; }
-      .lib-sub td { background: #eee !important; }
-      .lib-tot td { background: #d8d8d8 !important; }
-      .lib-gtot td { background: #bbb !important; border-top: 2px solid #000 !important; }
       table.libretto { font-size: 10.5px; }
       .lib-h1, .lib-h2 { break-after: avoid; }
     }
