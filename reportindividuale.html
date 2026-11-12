@@ -552,7 +552,7 @@ const REG_MANOVRE = /attivit[àa] addestrativa svolta\s*\(/i;
 const PIANO_MANOVRE = /^manovre\b.*previste/i;
 
 // Registrazioni da scartare (prove)
-const NOME_NON_REALE = /\b(test|prova|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;
+const NOME_NON_REALE = /\b(test\d*|prova\d*|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;   // anche TEST1, TEST2, TEST3…
 // Durata massima credibile di un'attività (ore): oltre, l'orario è considerato sbagliato
 const ORE_MAX = 168;
 // Duplicati in Piano_Di_Sicurezza: stesso giorno + Comando + squadra + tipologia → resta l'ultimo inserito
@@ -886,7 +886,7 @@ function elaboraPiano(piano) {
     const d = colPiano.inizio ? parseData(row[colPiano.inizio]) : null;
     if (!d) return;
     const com = val(row[colPiano.comando]), tip = val(row[colPiano.tipologia]);
-    if (/\btest\b/i.test(com + ' ' + tip)) return;
+    if (/\btest\d*\b/i.test(com + ' ' + tip)) return;
     lista.push({
       i, data: d, giorno: giornoKey(d), comandoKey: comandoKey(com) || 'nonindicato', comando: nomeComando(com),
       squadra: val(row[colPiano.squadra]), tipologia: tip,

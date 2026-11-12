@@ -339,7 +339,7 @@ const COL_REG = { data: 'H', data2: 'A', data3: 'A', nome: 'C', comando: 'E', sq
 const NASCONDI = /e-?mail|codice fiscale|\bc\.?f\.?\b|telefon|cellulare|indirizzo di posta/i;
 
 // Registrazioni da scartare (prove): nome vuoto, "test", "prova", "xxx"...
-const NOME_NON_REALE = /\b(test|prova|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;
+const NOME_NON_REALE = /\b(test\d*|prova\d*|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;   // anche TEST1, TEST2, TEST3…
 
 const LOGHI_URL = "https://gesaddvvf.github.io/PUMA/images/loghi/loghi.json";
 
@@ -645,7 +645,7 @@ function elabora(piano, reg) {
     if (!d) { senzaData++; return; }
     const comandoRaw = colonne.comando ? (row[colonne.comando] || '').trim() : '';
     const tip = colonne.tipologia ? (row[colonne.tipologia] || '').trim() : '';
-    if (/\btest\b/i.test(comandoRaw + ' ' + tip)) { prove++; return; }   // righe di prova
+    if (/\btest\d*\b/i.test(comandoRaw + ' ' + tip)) { prove++; return; }   // righe di prova
     const c = colonne.coordinate ? parseCoord(row[colonne.coordinate]) : null;
     if (!c) senzaCoord++;
     const squadra = colonne.squadra && !isNA(row[colonne.squadra]) ? (row[colonne.squadra] || '').trim() : '';
