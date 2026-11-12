@@ -203,7 +203,17 @@
       .att summary .ty { justify-self: end; }
     }
 
-    /* Settori nella tabella requisiti */
+    /* Categorie nella tabella requisiti */
+    tr.cat-row td { background: #3a3a3a !important; color: #f0f0f0; padding: 7px 8px; }
+    tr.cat-row td:first-child b { color: var(--gold); font-size: 13.5px; }
+    tr.cat-row .t, .corso-nome .t { display: block; color: #aaa; font-size: 11px; font-weight: normal; margin-top: 2px; }
+    tr.corso-row td:first-child { padding-left: 20px; }
+    .sub-n { color: #999; font-size: 11px; font-weight: normal; }
+    div.sub-n { margin-top: 2px; }
+    .lib-min { font-weight: normal; font-size: 11.5px; color: #ccc; }
+    .lib-min.ok { color: var(--ok); }
+    .lib-min.ko { color: var(--ko); }
+
     tr.grp-row td { background: #3a3a3a !important; color: var(--gold); font-size: 13px; padding: 7px 10px; }
     tr.grp-row td > b { font-size: 14px; }
     tr.grp-row td span { float: right; color: #ddd; font-size: 12px; font-weight: normal; }
@@ -280,6 +290,25 @@
       html, body { height: auto; background: #fff !important; color: #000 !important; display: block; }
       #page-header, #filters, #alfabeto, #tip, .no-print, details.tabella { display: none !important; }
       .print-only { display: block; }
+      .solo-schermo, .persona-head, h4.sec span { display: none !important; }
+      #sez-req { break-before: page; }
+      .lform-testa { margin-bottom: 8mm; }
+      .lf-ente { text-align: center; font-weight: bold; font-size: 15px; line-height: 1.35; margin-bottom: 5mm; }
+      .lf-ente span { font-size: 13px; }
+      table.lf-tab { width: 100%; border-collapse: collapse; font-size: 11px; }
+      table.lf-tab td { border: none !important; padding: 3px 6px; }
+      table.lf-tab td.k { text-align: right; color: #333 !important; width: 16%; }
+      table.lf-tab td.firma { border-bottom: 1px solid #000 !important; height: 18px; }
+      .lf-bozza { text-align: right; font-size: 9px; color: #666; margin-top: 2mm; }
+      tr.cat-row td { background: #d0d0d0 !important; color: #000 !important; }
+      tr.cat-row td b, tr.cat-row .t { color: #000 !important; }
+      .stato.ok { color: #1b5e20 !important; }
+      .stato.ko { color: #b71c1c !important; }
+      .stato.nd { color: #444 !important; }
+      table.req tr.det-row { display: none !important; }
+      table.req tr.corso-row td:first-child::before { content: '' !important; }
+      .sub-n, .corso-nome .t { color: #444 !important; }
+      .lib-min, .lib-min.ok, .lib-min.ko { color: #000 !important; }
       #wip-banner { display: none !important; }
       .wip-print { display: inline; font-weight: bold; }
       #content { overflow: visible; padding: 0; }
@@ -291,7 +320,7 @@
       .tile .v { color: #000 !important; }
       td, th { border-color: #999 !important; color: #000 !important; background: #fff !important; }
       th { background: #eee !important; }
-      tr.det-row { display: table-row !important; }
+
       tr.det-row > td, tbody tr td { background: #fff !important; }
       .chart-block { break-inside: avoid; }
       tr.corso-row:hover td { background: #fff !important; }
@@ -830,7 +859,7 @@ function elaboraReg(reg, pianoIdx) {
     a.cats = tipo === 'intervento' ? splitCategorie(a.catInt).map(infoCategoria) : [];
     a.manovre = trovaManovre(a.manovreTxt, a.corsi);
     // una manovra riconosciuta collega l'attività al suo corso solo se la sigla è di un corso solo
-    a.manovre.forEach(m => { if (m.corsi.length === 1 && tipo !== 'intervento') a.corsi.add(m.corsi[0]); });
+    if (!a.corsi.size) a.manovre.forEach(m => { if (m.corsi.length === 1 && tipo !== 'intervento') a.corsi.add(m.corsi[0]); });
     if (!a.corsi.size && tipo !== 'intervento') a.categoria = trovaCategoria(a.tipologia);
 
     const p = persona(chiavePersona(nome, cf), nome);
@@ -1088,20 +1117,48 @@ function riepilogoCorsi(p, y) {
 }
 
 // Settori: corsi + ore di addestramento e interventi dell'anno
+// Requisiti per Categoria (es. SAF):
+//   ore svolte   = addestramenti della categoria + interventi della categoria (come "Totale Categoria" del libretto)
+//   ore richieste = somma delle "Ore Minime" dei corsi in possesso della categoria
+//   collettive   = somma delle quote collettive richieste dai corsi in possesso
+//   periodo      = il più lungo tra i "Delta anni" dei corsi in possesso (es. AVANZATO -1 → anche l'anno prima)
 function riepilogoSettori(att, corsi, y) {
   const ordine = new Map();
   [...CORSI].sort((a, b) => a.ordine - b.ordine).forEach(c => { const s = settoreDi(c); if (!ordine.has(s)) ordine.set(s, c.ordine); });
   const settori = new Map();
-  const get = s => { if (!settori.has(s)) settori.set(s, { nome: s, ordine: ordine.has(s) ? ordine.get(s) : 9e9, righe: [], add: new Set(), int: new Set() }); return settori.get(s); };
+  const get = s => { if (!settori.has(s)) settori.set(s, { nome: s, ordine: ordine.has(s) ? ordine.get(s) : 9e9, righe: [] }); return settori.get(s); };
   corsi.forEach(r => get(settoreDi(r.c)).righe.push(r));
-  att.filter(a => a.anno === y).forEach(a => {
-    if (a.tipo === 'intervento') a.cats.forEach(i => i.settori.forEach(s => get(s).int.add(a)));
-    else if (a.corsi.size) a.corsi.forEach(c => get(settoreDi(c)).add.add(a));
-    else if (a.categoria) get(a.categoria).add.add(a);
+  // categorie con soli interventi o attività senza corso
+  att.forEach(a => {
+    if (a.anno > y) return;
+    if (a.tipo === 'intervento') a.cats.forEach(i => { if (a.anno === y) get(i.label); });
+    else if (!a.corsi.size && a.categoria && a.anno === y) get(a.categoria);
   });
-  const ore = set => [...set].reduce((t, a) => t + (a.ore || 0), 0);
-  return [...settori.values()].map(s => ({ ...s, oreAdd: ore(s.add), oreInt: ore(s.int) }))
-    .sort((a, b) => a.ordine - b.ordine || a.nome.localeCompare(b.nome, 'it'));
+  const ore = l => l.reduce((t, a) => t + (a.ore || 0), 0);
+  return [...settori.values()].map(st => {
+    const req = st.righe.filter(r => r.possesso && r.c.oreMin);
+    // ogni attività conta nel periodo della sua tipologia (Delta anni), come nel libretto; interventi: solo l'anno scelto
+    const anniPrima = Math.max(0, ...st.righe.map(r => r.c.anniPrima));
+    const dal = y - anniPrima;
+    const base = a => [...(a.corsiTip.size ? a.corsiTip : a.corsi)].filter(c => settoreDi(c) === st.nome);
+    const add = att.filter(a => {
+      if (a.tipo === 'intervento' || a.anno > y) return false;
+      const cc = base(a);
+      if (cc.length) return cc.some(c => a.anno >= y - c.anniPrima);
+      return !a.corsi.size && a.categoria === st.nome && a.anno === y;
+    });
+    const int = att.filter(a => a.tipo === 'intervento' && a.anno === y && a.cats.some(i => i.label === st.nome));
+    const oreAdd = ore(add), oreInt = ore(int), oreColl = ore(add.filter(a => a.tipo === 'collettivo'));
+    const tot = oreAdd + oreInt;
+    const minTot = req.reduce((t, r) => t + r.c.oreMin, 0);
+    const collMinTot = req.reduce((t, r) => t + (r.c.collPct ? r.c.oreMin * r.c.collPct : 0), 0);
+    let stato = 'nd';
+    if (minTot > 0) stato = tot >= minTot - 1e-6 && oreColl >= collMinTot - 1e-6 ? 'ok' : 'ko';
+    const manca = Math.max(0, minTot - tot, collMinTot - oreColl);
+    const anno = l => ore(l.filter(a => a.anno === y));
+    return { ...st, req, anniPrima, dal, add, int, oreAdd, oreInt, oreColl, tot, minTot, collMinTot, stato, manca,
+      totAnno: anno(add) + anno(int) };
+  }).sort((a, b) => a.ordine - b.ordine || a.nome.localeCompare(b.nome, 'it'));
 }
 
 // Libretto: Categoria → Tipologia → attività (subtotale) → Interventi (subtotale) → Totale Categoria
@@ -1186,7 +1243,19 @@ function disegna() {
   const corsi = riepilogoCorsi(p, y);
   const ics = [...new Set(att.filter(a => a.anno === y).map(a => a.ics).filter(Boolean).flatMap(s => s.split(/,|\n|;/).map(t => t.trim())).filter(Boolean))];
 
-  html += `<div class="print-only print-title"><b>P.U.M.A.</b> – Report individuale del personale <span class="wip-print">(IN COSTRUZIONE – BOZZA)</span> · stampato il ${new Date().toLocaleDateString('it-IT')}</div>
+  const ora = new Date(), due = n => String(n).padStart(2, '0');
+  const timbro = `${due(ora.getDate())}/${due(ora.getMonth() + 1)}/${ora.getFullYear()} ${due(ora.getHours())}.${due(ora.getMinutes())}.${due(ora.getSeconds())}`;
+  const ente = (p.comando || 'Comando').toUpperCase();
+  const luogo = (p.comando || '').replace(/^comando\s+(vv\.?\s*f\.?\s*)?(di\s+)?/i, '');
+  html += `<div class="print-only lform-testa">
+    <div class="lf-ente">VIGILI DEL FUOCO<br>${esc(ente)}<br><span>LIBRETTO DI FORMAZIONE INDIVIDUALE</span></div>
+    <table class="lf-tab">
+      <tr><td class="k">Anno</td><td><b>${y}</b></td><td class="k">Nominativo</td><td><b>${esc(p.etichetta)}</b></td></tr>
+      <tr><td class="k">Luogo e Data</td><td>${esc(luogo ? luogo + ', ' : '')}${timbro}</td><td class="k">Firma</td><td class="firma"></td></tr>
+      <tr><td colspan="2"></td><td class="k">Visto del Funzionario</td><td class="firma"></td></tr>
+    </table>
+    <div class="lf-bozza">Generato da P.U.M.A. – pagina in costruzione, dati in verifica</div>
+  </div>
   <div class="persona-head">
     <div>
       <h3>${esc(p.etichetta)}</h3>
@@ -1205,60 +1274,69 @@ function disegna() {
   };
   const nf = n => String(n);
   const hf = h => fmtH(h);
-  html += `<h4 class="sec">Riepilogo ${y} <span>· confronto con il ${y - 1}</span></h4>
+  html += `<div class="solo-schermo"><h4 class="sec">Riepilogo ${y} <span>· confronto con il ${y - 1}</span></h4>
   <div class="tiles">
     <div class="tile"><div class="k">Ore di addestramento</div><div class="v">${fmtH(A.tot.ore)}</div><div class="p">${confronto(A.tot.ore, P.tot.ore, hf)}</div></div>
     <div class="tile"><div class="k">Giorni di attività</div><div class="v">${A.tot.giorni}</div><div class="p">${confronto(A.tot.giorni, P.tot.giorni, nf)}</div></div>
     <div class="tile"><div class="k">Addestramenti collettivi</div><div class="v">${A.coll.n} <small>· ${fmtH(A.coll.ore)}</small></div><div class="p">${confronto(A.coll.n, P.coll.n, nf)}</div></div>
     <div class="tile"><div class="k">Addestramenti individuali</div><div class="v">${A.ind.n} <small>· ${fmtH(A.ind.ore)}</small></div><div class="p">${confronto(A.ind.n, P.ind.n, nf)}</div></div>
-    ${(() => { const req = corsi.filter(r => r.possesso && r.stato !== 'nd'); return req.length ? `<div class="tile"><div class="k">Requisiti ore raggiunti</div><div class="v" style="color:${req.every(r => r.stato === 'ok') ? 'var(--ok)' : 'var(--ko)'}">${req.filter(r => r.stato === 'ok').length} <small>/ ${req.length} corsi</small></div><div class="p">corsi in possesso con ore minime</div></div>` : ''; })()}
+    ${(() => { const cr = riepilogoSettori(att, corsi, y).filter(st => st.stato !== 'nd'); return cr.length ? `<div class="tile"><div class="k">Requisiti ore raggiunti</div><div class="v" style="color:${cr.every(st => st.stato === 'ok') ? 'var(--ok)' : 'var(--ko)'}">${cr.filter(st => st.stato === 'ok').length} <small>/ ${cr.length} categorie</small></div><div class="p">addestramenti + interventi vs somma ore minime</div></div>` : ''; })()}
     <div class="tile"><div class="k">Interventi registrati</div><div class="v">${A.int.n}${A.int.ore ? ` <small>· ${fmtH(A.int.ore)}</small>` : ''}</div><div class="p">${confronto(A.int.n, P.int.n, nf)}</div></div>
   </div>`;
   if (A.altro.n) html += `<div class="p" style="font-size:11.5px;color:#999;margin-top:6px">Altre attività registrate nel ${y}: ${A.altro.n} (${fmtH(A.altro.ore)}), comprese nelle ore totali.</div>`;
+  html += `</div>`;
 
-  // Corsi, raggruppati per settore
+  // Requisiti, per categoria
   const settori = riepilogoSettori(att, corsi, y);
-  html += `<h4 class="sec">Requisiti per categoria e corso <span>· ore minime e manovre previste (Formazione e Manovre_PREVISTE) · clic su un corso per le manovre</span></h4>`;
+  const statoCat = st => st.stato === 'ok' ? '<span class="stato ok">✔ Raggiunto</span>'
+    : st.stato === 'ko' ? `<span class="stato ko">✘ Mancano ${fmtH(st.manca)}</span>`
+    : '<span class="stato nd">nessun minimo</span>';
+  let req = `<h4 class="sec">Requisiti per categoria ${y} <span>· ore svolte = addestramenti + interventi · ore richieste = somma delle ore minime dei corsi in possesso · clic su un corso per le manovre</span></h4>`;
   if (!settori.length) {
-    html += `<div class="man-none">Nessun corso in possesso e nessuna attività collegata a un corso di Formazione nel periodo.</div>`;
+    req += `<div class="man-none">Nessun corso in possesso e nessuna attività collegata a un corso di Formazione nel periodo.</div>`;
   } else {
-    html += `<div class="table-scroll"><table><thead><tr>
-      <th>Corso</th><th>Periodo</th><th>Ore svolte / minime</th><th>di cui collettive</th><th>Manovre previste</th><th>Stato</th>
+    req += `<div class="table-scroll"><table class="req"><thead><tr>
+      <th>Categoria / corso</th><th>Periodo</th><th>Ore svolte / richieste</th><th>di cui collettive</th><th>Manovre previste</th><th>Stato</th>
     </tr></thead><tbody>`;
     settori.forEach(st => {
-    html += `<tr class="grp-row"><td colspan="6"><b>${esc(st.nome)}</b><span>Addestramento ${y}: <b>${fmtH(st.oreAdd)}</b> (${st.add.size} attività) · Interventi ${y}: <b>${st.int.size}</b>${st.int.size ? ` (${fmtH(st.oreInt)})` : ''}</span></td></tr>`;
-    if (!st.righe.length) html += `<tr><td colspan="6" class="man-none" style="padding-left:18px">Nessun corso di questa categoria in possesso o con attività nel periodo.</td></tr>`;
-    st.righe.forEach(r => {
-      const c = r.c, id = 'c' + c.id, aperto = state.aperti.has(id);
-      const pct = c.oreMin ? Math.min(100, r.ore / c.oreMin * 100) : 0;
-      const periodo = c.anniPrima ? `${r.dal}–${y}<br><small style="color:#999">anche ${c.anniPrima === 1 ? "l'anno precedente" : 'i ' + c.anniPrima + ' anni precedenti'}</small>` : String(y);
-      const nPrev = c.previste.length, nFatte = r.fatte.size;
-      const statoTxt = c.soloRegistro && r.stato === 'nd' ? '<span class="stato nd">solo registro</span>'
-        : r.stato === 'ok' ? '<span class="stato ok">✔ Raggiunto</span>'
-        : r.stato === 'ko' && !r.possesso ? '<span class="stato nd">—</span>'
-        : r.stato === 'ko' ? `<span class="stato ko">✘ Mancano ${fmtH(Math.max(0, c.oreMin - r.ore, r.collMin != null ? r.collMin - r.oreColl : 0))}</span>`
-        : '<span class="stato nd">nessun minimo</span>';
-      html += `<tr class="corso-row${aperto ? ' open' : ''}" data-id="${id}">
-        <td class="corso-nome"><b>${esc(c.nome)}</b>${r.possesso ? '' : ' <span class="t" style="display:inline;color:var(--warn)">· non tra i corsi in possesso</span>'}<span class="t">${c.sigla ? 'Sigla ' + esc(c.sigla) + ' · ' : ''}Livello ${c.sovra === 999 ? '—' : c.sovra}</span></td>
-        <td class="c">${periodo}</td>
-        <td class="n">${fmtH(r.ore)}${c.oreMin != null ? ` / ${fmtH(c.oreMin)}<div class="bar"><i class="${r.ore >= c.oreMin ? 'ok' : ''}" style="width:${pct}%"></i></div>` : ''}${c.anniPrima ? `<div style="font-size:11px;color:#999">nel ${y}: ${fmtH(r.oreAnno)}</div>` : ''}</td>
-        <td class="n">${fmtH(r.oreColl)}${r.collMin != null ? ` / ${fmtH(r.collMin)}<div style="font-size:11px;color:#999">${Math.round(c.collPct * 100)}% del minimo</div>` : ''}</td>
-        <td class="c">${nPrev ? `<b style="color:${nFatte >= nPrev ? 'var(--ok)' : '#f0f0f0'}">${nFatte}</b> / ${nPrev}` : '—'}</td>
-        <td class="c">${statoTxt}</td>
-      </tr>
-      <tr class="det-row" data-for="${id}" ${aperto ? '' : 'style="display:none"'}><td colspan="6">${dettaglioManovre(c, r)}</td></tr>`;
+      const pct = st.minTot ? Math.min(100, st.tot / st.minTot * 100) : 0;
+      const prevTot = st.req.reduce((t, r) => t + r.c.previste.length, 0), fatteTot = st.req.reduce((t, r) => t + r.fatte.size, 0);
+      req += `<tr class="cat-row">
+        <td><b>${esc(st.nome)}</b><span class="t">addestramenti ${fmtH(st.oreAdd)} (${st.add.length}) + interventi ${fmtH(st.oreInt)} (${st.int.length})</span></td>
+        <td class="c">${st.anniPrima ? `${st.dal}–${y}` : y}</td>
+        <td class="n"><b>${fmtH(st.tot)}</b>${st.minTot ? ` / ${fmtH(st.minTot)}<div class="bar"><i class="${st.stato === 'ok' ? 'ok' : ''}" style="width:${pct}%"></i></div>` : ''}${st.anniPrima ? `<div class="sub-n">nel ${y}: ${fmtH(st.totAnno)}</div>` : ''}</td>
+        <td class="n">${fmtH(st.oreColl)}${st.collMinTot ? ` / ${fmtH(st.collMinTot)}` : ''}</td>
+        <td class="c">${prevTot ? `<b style="color:${fatteTot >= prevTot ? 'var(--ok)' : 'inherit'}">${fatteTot}</b> / ${prevTot}` : '—'}</td>
+        <td class="c">${statoCat(st)}</td>
+      </tr>`;
+      st.righe.forEach(r => {
+        const c = r.c, id = 'c' + c.id, aperto = state.aperti.has(id);
+        const nPrev = c.previste.length, nFatte = r.fatte.size;
+        const ruolo = !r.possesso ? '<span class="stato nd">non in possesso</span>'
+          : c.oreMin ? `<span class="stato nd">concorre al minimo</span>`
+          : c.soloRegistro ? '<span class="stato nd">solo registro</span>' : '<span class="stato nd">nessun minimo</span>';
+        req += `<tr class="corso-row${aperto ? ' open' : ''}" data-id="${id}">
+          <td class="corso-nome">${esc(c.nome)}<span class="t">${c.sigla ? 'Sigla ' + esc(c.sigla) + ' · ' : ''}Livello ${c.sovra === 999 ? '—' : c.sovra}${c.anniPrima ? ' · conta anche ' + (c.anniPrima === 1 ? "l'anno precedente" : c.anniPrima + ' anni precedenti') : ''}</span></td>
+          <td class="c">${c.anniPrima ? `${r.dal}–${y}` : y}</td>
+          <td class="n">${fmtH(r.ore)}${c.oreMin != null ? ` <span class="sub-n">· minimo ${fmtH(c.oreMin)}</span>` : ''}</td>
+          <td class="n">${fmtH(r.oreColl)}${r.collMin != null ? ` <span class="sub-n">· ${Math.round(c.collPct * 100)}% = ${fmtH(r.collMin)}</span>` : ''}</td>
+          <td class="c">${nPrev ? `<b style="color:${nFatte >= nPrev ? 'var(--ok)' : 'inherit'}">${nFatte}</b> / ${nPrev}` : '—'}</td>
+          <td class="c">${ruolo}</td>
+        </tr>
+        <tr class="det-row" data-for="${id}" ${aperto ? '' : 'style="display:none"'}><td colspan="6">${dettaglioManovre(c, r)}</td></tr>`;
+      });
     });
-    });
-    html += `</tbody></table></div>`;
+    req += `</tbody></table></div>`;
   }
+  html += `<div id="sez-req">${req}</div>`;
 
   // Grafico mensile
-  html += graficoMesi(A.mesi, P.mesi, y);
+  html += `<div class="solo-schermo">${graficoMesi(A.mesi, P.mesi, y)}</div>`;
 
   // Libretto
   const anno = att.filter(a => a.anno === y);
-  html += `<h4 class="sec">Libretto di formazione ${y} <span>· per categoria e tipologia · gli interventi con più categorie compaiono in ognuna · clic su una categoria per chiuderla</span></h4>`;
-  html += anno.length ? tabellaLibretto(costruisciLibretto(att, y), A) : `<div class="man-none">Nessuna attività registrata nel ${y}.</div>`;
+  html += `<div id="sez-lib"><h4 class="sec">Libretto di formazione ${y} <span>· per categoria e tipologia · gli interventi con più categorie compaiono in ognuna · clic su una categoria per chiuderla</span></h4>` +
+    (anno.length ? tabellaLibretto(costruisciLibretto(att, y), A, new Map(settori.map(st => [st.nome, st]))) : `<div class="man-none">Nessuna attività registrata nel ${y}.</div>`) + `</div>`;
 
   // Note sui dati
   const note = [];
@@ -1326,7 +1404,7 @@ function graficoMesi(a, p, y) {
   return h;
 }
 
-const TIPO_LIBRETTO = { collettivo: 'Addestramento collettivo', individuale: 'Addestramento', intervento: 'Intervento' };
+const TIPO_LIBRETTO = { collettivo: 'Addestramento collettivo', individuale: 'Addestramento individuale', intervento: 'Intervento' };
 function fmtDataOra(v) {
   const r = parseDataOra(v);
   if (!r) return '';
@@ -1360,7 +1438,7 @@ function rigaLibretto(a, catSezione) {
     <td class="lib-desc">${righe.filter(Boolean).map(esc).join('\n')}</td>
     <td class="lib-dt">${esc(dalle)}</td><td class="lib-dt">${esc(fmtDataOra(a.fine))}</td><td class="n">${a.ore == null ? '—' : fmtHM(a.ore)}</td></tr>`;
 }
-function tabellaLibretto(cats, A) {
+function tabellaLibretto(cats, A, requisiti) {
   let h = `<div class="table-scroll"><table class="libretto"><thead><tr>
     <th style="width:14%">Comando</th><th style="width:12%">Tipologia</th><th>Descrizione attività</th><th style="width:11%">Dalle ore</th><th style="width:11%">Alle ore</th><th style="width:7%">Ore</th></tr></thead>`;
   cats.forEach(c => {
@@ -1375,7 +1453,9 @@ function tabellaLibretto(cats, A) {
       h += `<tr class="lib-h2"><td colspan="6">Intervento</td></tr>` + c.int.map(a => rigaLibretto(a, c.intCat.get(a))).join('') +
         `<tr class="lib-sub"><td colspan="5">Subtotale</td><td class="n">${fmtHM(c.oreInt)}</td></tr>`;
     }
-    h += `<tr class="lib-tot"><td colspan="5">Totale Categoria</td><td class="n">${fmtHM(c.tot)}</td></tr></tbody>`;
+    const rq = requisiti && requisiti.get(c.label);
+    const nota = rq && rq.minTot ? ` <span class="lib-min ${rq.stato}">· richieste ${fmtHM(rq.minTot)}${rq.anniPrima ? ' (' + rq.dal + '–' + state.anno + ')' : ''} ${rq.stato === 'ok' ? '✔' : '✘'}</span>` : '';
+    h += `<tr class="lib-tot"><td colspan="5">Totale Categoria${nota}</td><td class="n">${fmtHM(c.tot)}</td></tr></tbody>`;
   });
   h += `<tbody><tr class="lib-gtot"><td colspan="5">Totale anno ${state.anno}, ogni attività contata una sola volta: addestramenti ${fmtHM(A.tot.ore)} · interventi ${fmtHM(A.int.ore)}</td>
     <td class="n">${fmtHM(A.tot.ore + A.int.ore)}</td></tr></tbody></table></div>`;
@@ -1394,7 +1474,11 @@ function attivaTooltip() {
     el.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
   });
 }
-window.addEventListener('beforeprint', () => report.querySelectorAll('details.att').forEach(d => d.open = true));
+window.addEventListener('beforeprint', () => {
+  const lib = document.getElementById('sez-lib'), req = document.getElementById('sez-req');
+  if (lib && req) req.parentNode.insertBefore(lib, req);
+});
+window.addEventListener('afterprint', () => { if (state.persona) disegna(); });
 
 function diagnostica() {
   const lettera = i => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
