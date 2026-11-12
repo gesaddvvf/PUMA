@@ -1322,7 +1322,7 @@ function disegna() {
           : c.oreMin ? `<span class="stato nd">concorre al minimo</span>`
           : c.soloRegistro ? '<span class="stato nd">solo registro</span>' : '<span class="stato nd">nessun minimo</span>';
         req += `<tr class="corso-row${aperto ? ' open' : ''}" data-id="${id}">
-          <td class="corso-nome">${esc(c.nome)}<span class="t">${c.sigla ? 'Sigla ' + esc(c.sigla) + ' · ' : ''}Livello ${c.sovra === 999 ? '—' : c.sovra}${c.anniPrima ? ' · conta anche ' + (c.anniPrima === 1 ? "l'anno precedente" : c.anniPrima + ' anni precedenti') : ''}</span></td>
+          <td class="corso-nome">${esc(c.nome)}<span class="t">${[c.sigla ? 'Sigla ' + esc(c.sigla) : '', c.anniPrima ? 'conta anche ' + (c.anniPrima === 1 ? "l'anno precedente" : c.anniPrima + ' anni precedenti') : ''].filter(Boolean).join(' · ')}</span></td>
           <td class="c">${c.anniPrima ? `${r.dal}–${y}` : y}</td>
           <td class="n">${fmtH(r.ore)}${c.oreMin != null ? ` <span class="sub-n">· minimo ${fmtH(c.oreMin)}</span>` : ''}</td>
           <td class="n">${fmtH(r.oreColl)}${r.collMin != null ? ` <span class="sub-n">· ${Math.round(c.collPct * 100)}% = ${fmtH(r.collMin)}</span>` : ''}</td>
