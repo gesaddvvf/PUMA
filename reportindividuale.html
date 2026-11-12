@@ -208,6 +208,8 @@
     tr.cat-row td:first-child b { color: var(--gold); font-size: 13.5px; }
     tr.cat-row .t, .corso-nome .t { display: block; color: #aaa; font-size: 11px; font-weight: normal; margin-top: 2px; }
     tr.corso-row td:first-child { padding-left: 20px; }
+    tr.voce-row td:first-child { padding-left: 32px; font-style: italic; }
+    tr.voce-row .t { display: block; color: #aaa; font-size: 11px; font-style: normal; margin-top: 2px; }
     .sub-n { color: #999; font-size: 11px; font-weight: normal; }
     div.sub-n { margin-top: 2px; }
     .lib-min { font-weight: normal; font-size: 11.5px; color: #ccc; }
@@ -1159,7 +1161,8 @@ function riepilogoSettori(att, corsi, y) {
     if (minTot > 0) stato = tot >= minTot - 1e-6 && oreColl >= collMinTot - 1e-6 ? 'ok' : 'ko';
     const manca = Math.max(0, minTot - tot, collMinTot - oreColl);
     const anno = l => ore(l.filter(a => a.anno === y));
-    return { ...st, req, anniPrima, dal, add, int, oreAdd, oreInt, oreColl, tot, minTot, collMinTot, stato, manca,
+    const senzaTip = add.filter(a => !a.corsi.size);
+    return { ...st, req, anniPrima, dal, add, int, senzaTip, oreSenzaTip: ore(senzaTip), oreAdd, oreInt, oreColl, tot, minTot, collMinTot, stato, manca,
       totAnno: anno(add) + anno(int) };
   }).sort((a, b) => a.ordine - b.ordine || a.nome.localeCompare(b.nome, 'it'));
 }
@@ -1328,6 +1331,16 @@ function disegna() {
         </tr>
         <tr class="det-row" data-for="${id}" ${aperto ? '' : 'style="display:none"'}><td colspan="6">${dettaglioManovre(c, r)}</td></tr>`;
       });
+      const concorre = st.minTot ? '<span class="stato nd">concorre al minimo</span>' : '<span class="stato nd">—</span>';
+      if (st.senzaTip.length) {
+        req += `<tr class="voce-row"><td>Attività con sola categoria<span class="t">registrate senza tipologia · ${st.senzaTip.length} attività</span></td>
+          <td class="c">${y}</td><td class="n">${fmtH(st.oreSenzaTip)}</td>
+          <td class="n">${fmtH(st.senzaTip.filter(a => a.tipo === 'collettivo').reduce((t, a) => t + (a.ore || 0), 0))}</td><td class="c">—</td><td class="c">${concorre}</td></tr>`;
+      }
+      if (st.int.length || st.minTot) {
+        req += `<tr class="voce-row"><td>Interventi<span class="t">${st.int.length === 1 ? '1 intervento' : st.int.length + ' interventi'}${st.int.length ? ' · ' + esc(st.nome) : ''}</span></td>
+          <td class="c">${y}</td><td class="n">${fmtH(st.oreInt)}</td><td class="c">—</td><td class="c">—</td><td class="c">${concorre}</td></tr>`;
+      }
     });
     req += `</tbody></table></div>`;
   }
