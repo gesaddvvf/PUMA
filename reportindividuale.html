@@ -238,6 +238,12 @@
     .lib-tot td { background: #353535 !important; text-align: right; font-weight: bold; color: #f0f0f0; }
     .lib-gtot td { background: #2a2a2a !important; text-align: right; font-weight: bold; color: var(--gold); border-top: 2px solid var(--gold); }
 
+    /* Loghi delle tipologie */
+    .logo { display: inline-block; width: 22px; height: 22px; vertical-align: middle; margin: -3px 7px -3px 0; flex-shrink: 0; }
+    .logo svg { width: 100%; height: 100%; display: block; }
+    .corso-nome .logo { float: left; width: 26px; height: 26px; margin: 1px 8px 0 0; }
+    tr.voce-row .logo { float: left; width: 22px; height: 22px; margin: 2px 8px 0 0; font-style: normal; }
+
     /* Colore per categoria (--cc) */
     tbody.lib-cat td { border-color: color-mix(in srgb, var(--cc) 55%, #444); }
     tbody.lib-cat .lib-h1 td { background: color-mix(in srgb, var(--cc) 38%, #1e1e1e) !important; color: #fff; border-color: var(--cc); }
@@ -379,6 +385,8 @@
       table.libretto th:nth-child(4), table.libretto th:nth-child(5) { width: 10% !important; }
       table.libretto th:nth-child(6) { width: 6% !important; }
       .lib-dt { white-space: normal !important; }
+      .logo { width: 13px !important; height: 13px !important; margin: -2px 4px -2px 0 !important; }
+      .logo svg * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .lib-h1 td { font-size: 9.5px !important; }
       #sez-lib h4.sec { font-size: 11px; margin: 2mm 0 2mm; padding-bottom: 2px; }
       .lform-testa { margin-bottom: 3mm !important; }
@@ -433,6 +441,7 @@ const GID_PIANO     = "1495276384";   // Piano_Di_Sicurezza: un addestramento co
 const GID_MANOVRE   = "605866354";    // Manovre_PREVISTE: A2:F
 const GID_FORMAZIONE = "1631986002";  // Formazione: requisiti per corso
 const GID_ELENCO    = "84413100";     // Elenco_Filtrato: corsi in possesso di ogni persona
+const LOGHI_URL     = "https://gesaddvvf.github.io/PUMA/images/loghi/loghi.json";   // loghi delle tipologie
 
 // Elenco_Filtrato: si leggono SOLO queste colonne (e-mail e cellulare non vengono letti)
 const COL_ELENCO = {
@@ -598,6 +607,17 @@ function persona(key, nome) {
 let PERSONE = new Map();   // chiave nome → { nome, comandi: Map, att: [] }
 let CORSI = [];            // righe di Formazione (un corso = una Tipologia)
 let CATEGORIE = [];        // colonna Categoria di Formazione, nell'ordine del foglio
+let LOGHI = new Map();     // nome tipologia normalizzato → SVG del logo
+
+// Loghi delle tipologie (gli stessi della Mappa Real Time); se non si caricano la pagina funziona lo stesso
+const loghiPronti = fetch(LOGHI_URL, { cache: 'no-cache' })
+  .then(r => r.ok ? r.json() : {})
+  .then(d => Object.values(d).forEach(l => { if (l && l.svg) { LOGHI.set(normKey(l.nome), l.svg); if (l.sigla) LOGHI.set('sigla:' + normKey(l.sigla), l.svg); } }))
+  .catch(err => console.warn('Loghi non caricati:', err));
+function logoHtml(nome) {
+  const svg = LOGHI.get(normKey(nome)) || LOGHI.get(normKey((nome || '').replace(/\(.*?\)/g, ' ')));
+  return svg ? `<span class="logo" aria-hidden="true">${svg}</span>` : '';
+}
 let MANOVRE = [];          // righe di Manovre_PREVISTE
 let colReg = {}, colPiano = {}, colElenco = {}, diag = {};
 
@@ -949,7 +969,7 @@ async function caricaDati() {
   try {
     const [reg, piano, manovre, formazione, elenco] = await Promise.all([
       scaricaCsv(GID_REG, false), scaricaCsv(GID_PIANO, true), scaricaCsv(GID_MANOVRE, false),
-      scaricaCsv(GID_FORMAZIONE, false), scaricaCsv(GID_ELENCO, false)
+      scaricaCsv(GID_FORMAZIONE, false), scaricaCsv(GID_ELENCO, false), loghiPronti
     ]);
     diag = {};
     elaboraFormazione(formazione);
@@ -1370,7 +1390,7 @@ function disegna() {
           : c.oreMin ? `<span class="stato nd">concorre al minimo</span>`
           : c.soloRegistro ? '<span class="stato nd">solo registro</span>' : '<span class="stato nd">nessun minimo</span>';
         req += `<tr class="corso-row${aperto ? ' open' : ''}" data-id="${id}" style="--cc:${cc}">
-          <td class="corso-nome">${esc(c.nome)}<span class="t">${[c.sigla ? 'Sigla ' + esc(c.sigla) : '', c.anniPrima ? 'conta anche ' + (c.anniPrima === 1 ? "l'anno precedente" : c.anniPrima + ' anni precedenti') : ''].filter(Boolean).join(' · ')}</span></td>
+          <td class="corso-nome">${logoHtml(c.nome)}${esc(c.nome)}<span class="t">${[c.sigla ? 'Sigla ' + esc(c.sigla) : '', c.anniPrima ? 'conta anche ' + (c.anniPrima === 1 ? "l'anno precedente" : c.anniPrima + ' anni precedenti') : ''].filter(Boolean).join(' · ')}</span></td>
           <td class="c">${c.anniPrima ? `${r.dal}–${y}` : y}</td>
           <td class="n">${fmtH(r.ore)}${c.oreMin != null ? ` <span class="sub-n">· minimo ${fmtH(c.oreMin)}</span>` : ''}</td>
           <td class="n">${fmtH(r.oreColl)}${r.collMin != null ? ` <span class="sub-n">· ${Math.round(c.collPct * 100)}% = ${fmtH(r.collMin)}</span>` : ''}</td>
@@ -1386,7 +1406,7 @@ function disegna() {
           <td class="n">${fmtH(st.senzaTip.filter(a => a.tipo === 'collettivo').reduce((t, a) => t + (a.ore || 0), 0))}</td><td class="c">—</td><td class="c">${concorre}</td></tr>`;
       }
       if (st.int.length || st.minTot) {
-        req += `<tr class="voce-row" style="--cc:${cc}"><td>Interventi<span class="t">${st.int.length === 1 ? '1 intervento' : st.int.length + ' interventi'}${st.int.length ? ' · ' + esc(st.nome) : ''}</span></td>
+        req += `<tr class="voce-row" style="--cc:${cc}"><td>${logoHtml('Intervento')}Interventi<span class="t">${st.int.length === 1 ? '1 intervento' : st.int.length + ' interventi'}${st.int.length ? ' · ' + esc(st.nome) : ''}</span></td>
           <td class="c">${y}</td><td class="n">${fmtH(st.oreInt)}</td><td class="c">—</td><td class="c">—</td><td class="c">${concorre}</td></tr>`;
       }
     });
@@ -1510,11 +1530,11 @@ function tabellaLibretto(cats, A, requisiti) {
     h += `<tbody class="lib-cat${state.chiusi.has(k) ? ' chiuso' : ''}" data-cat="${k}" style="--cc:${coloreCategoria(c.label)}">
       <tr class="lib-h1"><td colspan="5">${esc(c.label)}</td><td class="n">${fmtHM(c.tot)}</td></tr>`;
     c.tip.forEach(t => {
-      h += `<tr class="lib-h2"><td colspan="6">${esc(t.label)}${t.dal != null ? ` <span class="lib-anni">· ${t.dal}–${state.anno} (conta anche ${state.anno - t.dal === 1 ? "l'anno precedente" : 'gli anni precedenti'})</span>` : ''}</td></tr>` + t.righe.map(a => rigaLibretto(a)).join('') +
+      h += `<tr class="lib-h2"><td colspan="6">${logoHtml(t.label)}${esc(t.label)}${t.dal != null ? ` <span class="lib-anni">· ${t.dal}–${state.anno} (conta anche ${state.anno - t.dal === 1 ? "l'anno precedente" : 'gli anni precedenti'})</span>` : ''}</td></tr>` + t.righe.map(a => rigaLibretto(a)).join('') +
         `<tr class="lib-sub"><td colspan="5">Subtotale</td><td class="n">${fmtHM(t.ore)}</td></tr>`;
     });
     if (c.int.length) {
-      h += `<tr class="lib-h2"><td colspan="6">Intervento</td></tr>` + c.int.map(a => rigaLibretto(a, c.intCat.get(a))).join('') +
+      h += `<tr class="lib-h2"><td colspan="6">${logoHtml('Intervento')}Intervento</td></tr>` + c.int.map(a => rigaLibretto(a, c.intCat.get(a))).join('') +
         `<tr class="lib-sub"><td colspan="5">Subtotale</td><td class="n">${fmtHM(c.oreInt)}</td></tr>`;
     }
     const rq = requisiti && requisiti.get(c.label);
