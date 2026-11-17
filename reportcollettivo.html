@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P.U.M.A. - Report collettivo</title>
+  <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --gold: #ffd700;
+      --arancio: #ef6c00;
+      --anno-a: #4fc3f7;
+      --ok: #66bb6a;
+      --man: #fdd835;
+      --quasi: #ffa726;
+      --ko: #ef5350;
+      --nd: #9e9e9e;
+      --warn: #ffb74d;
+    }
+    * { scrollbar-width: thin; scrollbar-color: #555 #1e1e1e; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #1e1e1e; }
+    ::-webkit-scrollbar-thumb { background-color: #555; border-radius: 5px; border: 2px solid #1e1e1e; }
+    ::-webkit-scrollbar-thumb:hover { background-color: var(--gold); }
+
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body { font-family: 'Comfortaa', cursive; background-color: #1e1e1e; color: #f0f0f0; display: flex; flex-direction: column; }
+
+    /* ---------- HEADER ---------- */
+    #page-header {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+      background-color: #1e1e1e; border-bottom: 1px solid #444; padding: 10px 16px; box-sizing: border-box; flex-shrink: 0;
+    }
+    #page-header h1 { font-size: 16px; color: var(--gold); margin: 0 0 2px 0; font-weight: bold; display: flex; align-items: center; gap: 6px; }
+    #page-header .puma-icon { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+    #page-header .subtitle-divider { color: #666; }
+    #page-header h2 { font-size: 13px; color: #ccc; font-weight: normal; margin: 0; }
+    #page-header h2 b { color: var(--gold); }
+    #meta-info { font-size: 11.5px; color: #999; margin-top: 4px; }
+    #nav-buttons { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .nav-btn {
+      display: inline-block; background-color: #2a2a2a; color: var(--gold);
+      border: 1px solid var(--gold); border-radius: 4px; padding: 8px 14px;
+      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 13px;
+      text-decoration: none; transition: background-color 0.15s, color 0.15s;
+    }
+    .nav-btn:hover { background-color: var(--gold); color: #1e1e1e; }
+    button.nav-btn { cursor: pointer; }
+    button.nav-btn:disabled { opacity: 0.6; cursor: wait; }
+    #refresh-btn.nav-btn { background-color: #c62828; color: #fff; border-color: #c62828; }
+    #refresh-btn.nav-btn:hover { background-color: #e53935; border-color: #e53935; color: #fff; }
+    #refresh-btn.nav-btn:disabled { background-color: #7f1d1d; border-color: #7f1d1d; }
+    /* Report Individuale / Collettivo: arancioni */
+    #btn-report.nav-btn, #btn-collettivo.nav-btn { background-color: #ef6c00; color: #fff; border-color: #ef6c00; }
+    #btn-report.nav-btn:hover, #btn-collettivo.nav-btn:hover { background-color: #fb8c00; border-color: #fb8c00; color: #fff; }
+
+    /* ---------- FILTRI ---------- */
+    #filters {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 8px 16px; border-bottom: 1px solid #444; background-color: #232323; font-size: 12.5px; flex-shrink: 0;
+    }
+    #filters label.lbl { color: #aaa; }
+    #filters select {
+      background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px;
+      padding: 6px 8px; font-family: 'Comfortaa', cursive; font-size: 12.5px; max-width: 100%;
+    }
+    #filters select:focus { outline: none; border-color: var(--arancio); }
+    #ente-select { min-width: 230px; }
+    #settore-select { min-width: 250px; }
+    #anno-select { font-weight: bold; }
+    .seg { display: inline-flex; border: 1px solid var(--arancio); border-radius: 4px; overflow: hidden; }
+    .seg button {
+      background: #1e1e1e; color: #ffb74d; border: none; padding: 6px 12px; font-family: 'Comfortaa', cursive;
+      font-weight: bold; font-size: 12.5px; cursor: pointer;
+    }
+    .seg button + button { border-left: 1px solid var(--arancio); }
+    .seg button.on { background: var(--arancio); color: #fff; }
+    label.chk-f { display: inline-flex; align-items: center; gap: 6px; color: #ccc; cursor: pointer; }
+    label.chk-f input { accent-color: var(--arancio); }
+    .azioni { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+    .azioni button {
+      background: #2a2a2a; color: #ffb74d; border: 1px solid var(--arancio); border-radius: 4px;
+      padding: 6px 12px; font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+    }
+    .azioni button:hover { background: var(--arancio); color: #fff; }
+    .azioni button:disabled { opacity: .4; cursor: default; background: #2a2a2a; color: #ffb74d; }
+
+    @media (max-width: 700px) {
+      #page-header { flex-direction: column; }
+      #nav-buttons { width: 100%; }
+      .nav-btn { flex: 1 1 40%; text-align: center; }
+      #filters label.lbl, #meta-info { display: none; }
+      #filters select { flex: 1 1 100%; }
+      .azioni { margin-left: 0; width: 100%; }
+      .azioni button { flex: 1 1 30%; }
+      #filters { padding: 6px 10px; gap: 6px; }
+    }
+
+    /* ---------- CONTENUTO ---------- */
+    #content { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; box-sizing: border-box; }
+    .wrap { max-width: 1250px; margin: 0 auto; }
+    .msg {
+      margin: 40px auto; max-width: 600px; text-align: center; color: #ffb74d; border: 1px solid var(--arancio);
+      border-radius: 6px; padding: 16px 20px; font-weight: bold; line-height: 1.6; background: #232323;
+    }
+    .msg small { display: block; color: #aaa; font-weight: normal; margin-top: 6px; }
+
+    .ente-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .ente-head h3 { margin: 0; font-size: 20px; color: #ffb74d; }
+    .ente-head h3 span { color: #f0f0f0; font-size: 15px; font-weight: normal; }
+    .ente-head .sub { color: #bbb; font-size: 12.5px; margin-top: 5px; line-height: 1.7; }
+    .ente-head .sub b { color: #f0f0f0; }
+    .ente-head .sub .manca { color: #888; font-style: italic; }
+    .ente-head .anno-big { font-size: 13px; color: #aaa; text-align: right; }
+    .ente-head .anno-big b { font-size: 22px; color: var(--anno-a); display: block; }
+
+    h4.sec { color: #ffb74d; font-size: 14px; margin: 22px 0 8px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+    h4.sec span { color: #999; font-weight: normal; font-size: 12px; }
+
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .tile { background: #262626; border: 1px solid #3a3a3a; border-radius: 6px; padding: 10px 12px; border-top: 3px solid var(--tc, #3a3a3a); }
+    .tile .k { color: #aaa; font-size: 11.5px; }
+    .tile .v { font-size: 24px; font-weight: bold; color: #f0f0f0; margin: 4px 0 2px; }
+    .tile .v small { font-size: 13px; color: #aaa; font-weight: normal; }
+    .tile .p { font-size: 11.5px; color: #999; }
+
+    .legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 11.5px; color: #ccc; margin: 10px 0 4px; }
+    .pallino { display: inline-block; width: 11px; height: 11px; border-radius: 50%; vertical-align: -1px; margin-right: 5px; background: var(--sc, var(--nd)); }
+
+    table { font-family: 'Comfortaa', cursive; border-collapse: collapse; width: 100%; font-size: 12px; }
+    td, th { padding: 5px 7px; border: 1px solid #444; vertical-align: middle; }
+    th { background: #2a2a2a; color: #ccc; font-weight: bold; text-align: center; font-size: 11.5px; }
+    tbody tr:nth-child(even) td { background-color: #242424; }
+    tbody tr:nth-child(odd) td { background-color: #1f1f1f; }
+    td.c { text-align: center; }
+    td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .table-scroll { overflow-x: auto; }
+    .sub-n { display: block; color: #999; font-size: 10.5px; font-weight: normal; margin-top: 1px; }
+    td.nome a { color: #f0f0f0; text-decoration: none; font-weight: bold; }
+    td.nome a:hover { color: #ffb74d; text-decoration: underline; }
+    td.nome .cf { display: block; color: #888; font-size: 10.5px; font-weight: normal; }
+    tr.grp td { background: color-mix(in srgb, var(--cc, #ef6c00) 30%, #1e1e1e) !important; color: #fff; font-weight: bold; font-size: 12.5px; border-left: 5px solid var(--cc, #ef6c00); }
+    tr.grp td span { font-weight: normal; color: #ddd; font-size: 11.5px; }
+    tr.tot td { background: #303030 !important; font-weight: bold; }
+    tr.persona td:first-child { border-left: 5px solid var(--sc, var(--nd)); }
+    .stato { font-weight: bold; white-space: nowrap; color: var(--sc, var(--nd)); }
+    .bar { position: relative; height: 6px; background: #333; border-radius: 3px; overflow: hidden; min-width: 60px; margin-top: 3px; }
+    .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--sc, var(--anno-a)); }
+    .ok-t { color: var(--ok); font-weight: bold; }
+    .vuoto { color: #999; font-size: 12px; padding: 8px 0; }
+
+    /* Direzione: riepilogo per Comando */
+    table.riep tbody tr { cursor: pointer; }
+    table.riep tbody tr:hover td { background: #3a3020 !important; }
+    table.riep tr.tot { cursor: default; }
+    .mini { display: flex; height: 9px; border-radius: 3px; overflow: hidden; background: #333; min-width: 90px; }
+    .mini i { display: block; height: 100%; }
+    .com-sez { margin-top: 26px; }
+    .com-sez h4.sec { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 15px; }
+    .com-sez h4.sec small { color: #bbb; font-weight: normal; font-size: 12px; }
+
+    .note-box { background: #2a2620; border: 1px solid #5a4a20; border-radius: 4px; padding: 10px 12px; font-size: 12px; line-height: 1.6; color: #ddd; margin-top: 18px; }
+    .note-box b { color: var(--warn); }
+    .note-box ul { margin: 4px 0 0; padding-left: 18px; }
+
+    /* Finestra di invio */
+    .dlg-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .dlg-bg[hidden] { display: none; }
+    .dlg { background: #232323; border: 1px solid var(--arancio); border-radius: 8px; padding: 18px 20px; width: 470px; max-width: 100%; box-sizing: border-box; font-size: 13px; line-height: 1.5; max-height: 92vh; overflow-y: auto; }
+    .dlg h3 { margin: 0 0 6px; color: #ffb74d; font-size: 16px; }
+    .dlg p { margin: 0 0 12px; color: #bbb; font-size: 12.5px; }
+    .dlg label.chk { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; cursor: pointer; }
+    .dlg label.chk input { accent-color: var(--arancio); margin-top: 3px; }
+    .dlg label.chk small { display: block; color: #999; }
+    .dlg label.chk.off { color: #777; cursor: default; }
+    .dlg label.campo { display: block; margin: 4px 0 12px; }
+    .dlg label.campo small { color: #999; }
+    .dlg input[type=email] {
+      display: block; width: 100%; box-sizing: border-box; margin-top: 4px; background: #1e1e1e; color: #f0f0f0;
+      border: 1px solid #555; border-radius: 4px; padding: 7px 9px; font-family: 'Comfortaa', cursive; font-size: 13px;
+    }
+    .dlg input[type=email]:focus { outline: none; border-color: var(--arancio); }
+    .inv-stato { min-height: 20px; font-size: 12.5px; margin-bottom: 10px; }
+    .inv-stato.ok { color: var(--ok); }
+    .inv-stato.ko { color: var(--ko); }
+    .inv-stato.wip { color: #ffb74d; }
+    .dlg-btn { display: flex; justify-content: flex-end; gap: 8px; }
+    .dlg-btn button {
+      background: #2a2a2a; color: #ffb74d; border: 1px solid var(--arancio); border-radius: 4px; padding: 7px 14px;
+      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+    }
+    .dlg-btn button.primario { background: var(--arancio); color: #fff; }
+    .dlg-btn button:disabled { opacity: .45; cursor: default; }
+
+    .print-only { display: none; }
+
+    /* ---------- STAMPA ---------- */
+    @media print {
+      :root { color-scheme: light !important; }
+      @page { size: A4 landscape; margin: 6mm; }
+      html, body, #content, .wrap, #report { background: #fff !important; color: #000 !important; height: auto; display: block; }
+      #page-header, #filters, .dlg-bg, .solo-schermo, .ente-head { display: none !important; }
+      .print-only { display: block; }
+      #content { overflow: visible; padding: 0; }
+      .wrap { max-width: none; }
+      .table-scroll { overflow: visible !important; }
+      .p-testa { text-align: center; margin-bottom: 3mm; }
+      .p-testa img { height: 14mm; }
+      .p-testa .e { font-weight: bold; font-size: 12px; line-height: 1.35; }
+      .p-testa table { width: 100%; font-size: 9.5px; margin-top: 2mm; }
+      .p-testa td { border: none !important; padding: 2px 6px; text-align: left; }
+      .p-testa td.k { text-align: right; color: #333 !important; width: 15%; }
+      .p-testa td.firma { border-bottom: 1px solid #000 !important; }
+      table { font-size: 8.5px; }
+      td, th { border: 1px solid #000 !important; color: #000 !important; background: #fff !important; padding: 2px 4px; }
+      th { background: #eee !important; }
+      tr.grp td { background: #ddd !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tr.grp td span, .sub-n, td.nome .cf { color: #333 !important; }
+      td.nome a { color: #000 !important; }
+      .stato { color: #000 !important; }
+      .pallino, tr.persona td:first-child, .mini i, .bar i { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tr.persona td:first-child { border-left: 4px solid var(--sc) !important; }
+      .bar { display: none; }
+      h4.sec { color: #000 !important; border-color: #000; }
+      h4.sec span, h4.sec small { color: #333 !important; }
+      .tile, .note-box { background: #fff !important; color: #000 !important; border-color: #999 !important; }
+      .tile .v, .tile .k, .tile .p { color: #000 !important; }
+      .legenda { color: #000 !important; }
+      tr { break-inside: avoid; }
+      .com-sez { break-inside: auto; }
+    }
+  </style>
+</head>
+<body>
+<header id="page-header">
+  <div>
+    <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
+    <h2>Report collettivo di settore: <b id="periodo-label">—</b></h2>
+    <div id="meta-info">Dati caricati: <span id="last-update">—</span></div>
+  </div>
+  <div id="nav-buttons">
+    <button class="nav-btn" id="refresh-btn" type="button">⟳ Aggiorna</button>
+    <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page" id="btn-home">Homepage P.U.M.A.</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/trainingmaprealtime.html" id="btn-mappa">Mappa Real Time</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/personaleodierno.html" id="btn-presenze">Presenze Odierne</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/mappariepilogocollettivi.html" id="btn-riepilogo">Riepilogo Globale</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/reportindividuale.html" id="btn-report">Report Individuale</a>
+  </div>
+</header>
+
+<div id="filters">
+  <span class="seg" role="group" aria-label="Tipo di report">
+    <button type="button" data-tipo="comando" class="on">Comando</button><button type="button" data-tipo="direzione">Direzione</button>
+  </span>
+  <select id="ente-select" aria-label="Comando o Direzione" disabled><option>Caricamento…</option></select>
+  <label class="lbl" for="settore-select">Settore</label>
+  <select id="settore-select" aria-label="Settore" disabled></select>
+  <label class="lbl" for="anno-select">Anno</label>
+  <select id="anno-select" aria-label="Anno di riferimento"></select>
+  <label class="chk-f" title="Mostra anche chi non ha corsi né attività nel settore"><input type="checkbox" id="tutti-chk"> Tutto il personale</label>
+  <span class="azioni">
+    <button id="print-btn" type="button" disabled>🖨 Stampa</button>
+    <button id="pdf-btn" type="button" disabled>⬇ PDF</button>
+    <button id="mail-btn" type="button" disabled>✉ Invia a ROP / ROR</button>
+  </span>
+</div>
+
+<div id="content"><div class="wrap" id="report"><div class="msg">Caricamento dati…</div></div></div>
+
+<div id="invio-dlg" class="dlg-bg" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="inv-titolo">
+    <h3 id="inv-titolo">✉ Invia il report collettivo</h3>
+    <p id="inv-sotto"></p>
+    <div id="inv-dest"></div>
+    <label class="campo">Altro destinatario <small>(solo indirizzi @vigilfuoco.it)</small>
+      <input type="email" id="inv-altro" placeholder="nome.cognome@vigilfuoco.it" autocomplete="off">
+    </label>
+    <div id="inv-stato" class="inv-stato" role="status"></div>
+    <div class="dlg-btn"><button type="button" id="inv-annulla">Chiudi</button><button type="button" id="inv-invia" class="primario">✉ Invia</button></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+/* =====================================================================
+   CONFIGURAZIONE
+   ===================================================================== */
+const SHEET_ID      = "1WHGKaawomU_jMuO6FnwzYidou-fmpc0ndeE0aiEMYP4"; // PUMA VVF Database Personale
+const GID_REG       = "2031805821";   // Registrazione_Attivita_Semplificata: una persona per riga
+const GID_PIANO     = "1495276384";   // Piano_Di_Sicurezza: un addestramento collettivo per riga
+const GID_MANOVRE   = "605866354";    // Manovre_PREVISTE: A2:F
+const GID_FORMAZIONE = "1631986002";  // Formazione: requisiti per corso
+const GID_ELENCO    = "84413100";     // Elenco_Filtrato: corsi in possesso di ogni persona
+const LOGHI_URL     = "https://gesaddvvf.github.io/PUMA/images/loghi/loghi.json";   // loghi delle tipologie
+// Invio via Gmail: URL /exec dell'app web Apps Script "InvioReportCollettivo.gs" (vuoto = invio non attivo)
+const URL_INVIO_COLLETTIVO = "";
+const DOMINI_INVIO = ["vigilfuoco.it"];     // indirizzi scritti a mano ammessi (lo script controlla di nuovo)
+// PDF scritto direttamente (non è una "fotografia" della pagina: non dipende da zoom e schermo)
+const JSPDF_URL     = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+const AUTOTABLE_URL = "https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js";
+const EMBLEMA_URL   = "https://gesaddvvf.github.io/PUMA/images/emblema_italia.png";
+
+// Elenco_Filtrato: si leggono SOLO queste colonne (e-mail e cellulare non vengono letti)
+const COL_ELENCO = {
+  nome:      /cognome nome/i,
+  comando:   /appartenenza/i,
+  qualifica: /^qualifica$/i,
+  corsi:     /corsi in possesso/i
+};
+// Codice fiscale dentro "Cognome Nome - Codice Fiscale": identifica la persona (anche tra omonimi)
+const RE_CF = /\b[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]\b/i;
+
+// Registrazione_Attivita_Semplificata: colonna trovata dall'intestazione; se manca, si usa la lettera.
+const COL_REG = {
+  cronologiche:  ['A', /informazioni cronologiche|timestamp/i],
+  appartenenza:  ['B', /appartenenza/i],
+  nome:          ['C', /personale partecipante|nominativo/i],
+  cosa:          ['D', /che cosa vuoi fare/i],
+  organizzatore: ['E', /organizzatore/i],
+  team:          ['F', /^team$|^squadra$/i],
+  ics:           ['G', /incident command/i],
+  dataColl:      ['H', /data addestramento collettivo/i],
+  attivita:      ['I', /^attivit[àa]$/i],
+  inizio:        ['J', /inizio/i],
+  fine:          ['K', /fine/i],
+  tipInd:        ['L', /tipologia addestramento individuale/i],
+  descr:         ['M', /^descrizione attivit/i],
+  catInt:        ['P', /categoria.*intervento/i],
+  descrInt:      ['Q', /breve descrizione/i],
+  numInt:        ['R', /numero intervento/i],
+  data:          ['V', /^data$/i]
+};
+// Colonne con le manovre svolte: tutte quelle "Attività addestrativa svolta (…)"
+const REG_MANOVRE = /attivit[àa] addestrativa svolta\s*\(/i;
+// Piano_Di_Sicurezza: colonne con le manovre previste
+const PIANO_MANOVRE = /^manovre\b.*previste/i;
+
+// Corsi che hanno TUTTI (in possesso anche se non scritti in Elenco_Filtrato)
+const CORSI_DI_TUTTI = ['SAF (Speleo Alpino Fluviale) Competenze primarie', 'TPSS (Tecniche di Primo Soccorso Sanitario)'];
+// Corsi da contare come un altro: tipologia registrata → tipologia del libretto
+const CORSI_EQUIVALENTI = { 'SAF (Speleo Alpino Fluviale) SAF1A': 'SAF (Speleo Alpino Fluviale) Competenze primarie' };
+
+// Registrazioni da scartare (prove)
+const NOME_NON_REALE = /\b(test\d*|prova\d*|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;   // anche TEST1, TEST2, TEST3…
+// Durata massima credibile di un'attività (ore): oltre, l'orario è considerato sbagliato
+const ORE_MAX = 168;
+// Duplicati in Piano_Di_Sicurezza: stesso giorno + Comando + squadra + tipologia → resta l'ultimo inserito
+const FILTRA_DUPLICATI = true;
+
+/* ===================================================================== */
+const URLP = new URLSearchParams(location.search);
+const DEBUG = URLP.has('debug');
+const ANNO_OGGI = new Date().getFullYear();
+const MESI_BREVI = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+const csvUrl = gid => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const isNA = v => /^#?N\/[AD]$|^#(REF|VALUE|ERROR|NAME)!?/i.test((v || '').trim());
+const val = v => { const t = String(v == null ? '' : v).trim(); return isNA(t) ? '' : t; };
+const letterIdx = l => l.toUpperCase().split('').reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1;
+const push = (m, k, v) => { if (!m.has(k)) m.set(k, []); m.get(k).push(v); };
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function normKey(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+}
+function comandoKey(s) {
+  let t = (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  t = t.replace(/vigili del fuoco|v\.?v\.?f\.?|\bcomando\b|\bprovinciale\b|\bdi\b|\bdel\b|\bdella\b|\bdei\b/g, ' ');
+  t = t.replace(/[^a-z0-9]/g, '');
+  // "Direzione Regionale Emilia-Romagna" = "Direzione Emilia Romagna" = "Direzione Interregionale …"
+  if (t.includes('direzione')) t = 'direzione' + t.replace(/direzione|interregionale|regionale/g, '');
+  return t;
+}
+function squadraKey(s) {
+  return normKey((s || '').replace(/\bsquadra\b|\bsq\.?|\bteam\b/gi, ' ')) || 'nonindicata';
+}
+function nomeComando(s) {
+  const t = (s || '').trim();
+  if (!t) return '';
+  if (/^(comando|direzione)/i.test(t)) return t;
+  return 'Comando ' + t;
+}
+
+// "15/01/2026", "15/01/2026 08:30:00", "2026-01-15T08:30", "Date(2026,0,15,8,30,0)"
+function parseDataOra(v) {
+  const t = (v || '').trim();
+  let m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:[\sT,]+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?)?/);
+  if (m) {
+    const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+    return { d: new Date(y, +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)), ora: m[4] != null };
+  }
+  m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[\sT]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m) return { d: new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)), ora: m[4] != null };
+  m = t.match(/Date\((\d{4}),(\d{1,2}),(\d{1,2})(?:,(\d{1,2}),(\d{1,2})(?:,(\d{1,2}))?)?/);
+  if (m) return { d: new Date(+m[1], +m[2], +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)), ora: m[4] != null };
+  return null;
+}
+const parseData = v => { const r = parseDataOra(v); return r ? new Date(r.d.getFullYear(), r.d.getMonth(), r.d.getDate()) : null; };
+const giornoKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fmtData = d => d.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+const fmtOra = d => d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+// Ore tra inizio e fine; null se mancano gli orari o la durata non è credibile
+function oreTra(inizio, fine) {
+  const a = parseDataOra(inizio), b = parseDataOra(fine);
+  if (!a || !b || !a.ora || !b.ora) return null;
+  const h = (b.d - a.d) / 3600000;
+  return h > 0 && h <= ORE_MAX ? h : null;
+}
+// Ore in formato hh:mm, come nel libretto (12:00, 108:00)
+function fmtHM(h) {
+  if (h == null) return '—';
+  const m = Math.round(h * 60);
+  return Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+}
+const fmtH = h => h == null ? '—' : fmtHM(h) + ' h';
+
+// "Ore Minime (in giorni)": durata di Google Sheets → 1 = 24 ore. Accetta anche "36:00:00".
+function parseOreMin(v) {
+  const t = val(v);
+  if (!t) return null;
+  let m = t.match(/^(\d+):(\d{2})(?::(\d{2}))?$/);
+  if (m) return +m[1] + +m[2] / 60 + (m[3] ? +m[3] / 3600 : 0);
+  m = t.replace(',', '.').match(/-?\d+(\.\d+)?/);
+  if (!m) return null;
+  const n = parseFloat(m[0]);
+  return n > 0 ? n * 24 : null;
+}
+// "Collettive (in %)": "50%", "50", "0,5" → 0.5
+function parsePct(v) {
+  const t = val(v);
+  if (!t) return null;
+  const m = t.replace(',', '.').match(/\d+(\.\d+)?/);
+  if (!m) return null;
+  let n = parseFloat(m[0]);
+  if (t.includes('%') || n > 1) n = n / 100;
+  return n >= 0 && n <= 1 ? n : null;
+}
+const siNo = v => /^(si|sì|s|true|vero|x|1|yes)$/i.test(val(v));
+
+/* =====================================================================
+   PERSONE: "COGNOME NOME - CODICE FISCALE" → nome visibile + chiave
+   ===================================================================== */
+function separaNome(raw) {
+  const t = val(raw).replace(/\s+/g, ' ');
+  const m = t.match(RE_CF);
+  const cf = m ? m[0].toUpperCase() : '';
+  const nome = (m ? t.replace(m[0], ' ') : t).replace(/\s*[-–|,;]\s*$/, '').replace(/^\s*[-–|,;]\s*/, '').replace(/\s+/g, ' ').trim();
+  return { nome, cf };
+}
+let NOME_A_CF = new Map();   // nome normalizzato → chiave CF (solo se il nome è unico)
+function chiavePersona(nome, cf) {
+  if (cf) return 'cf:' + cf;
+  const k = normKey(nome);
+  const c = NOME_A_CF.get(k);
+  return c && c !== '*' ? c : 'n:' + k;
+}
+function persona(key, nome) {
+  if (!PERSONE.has(key)) PERSONE.set(key, { key, grafie: new Map(), originali: new Map(), originaleElenco: '', comandi: new Map(), qualifica: '', corsiPossesso: new Set(), corsiTxt: [], inElenco: false, att: [] });
+  const p = PERSONE.get(key);
+  if (nome) p.grafie.set(nome, (p.grafie.get(nome) || 0) + 1);
+  return p;
+}
+
+/* =====================================================================
+   DATI
+   ===================================================================== */
+let PERSONE = new Map();   // chiave nome → { nome, comandi: Map, att: [] }
+let CORSI = [];            // righe di Formazione (un corso = una Tipologia)
+let CATEGORIE = [];        // colonna Categoria di Formazione, nell'ordine del foglio
+let EQUIVALENTE = new Map(); // corso → corso con cui si conta (es. SAF1A → Competenze primarie)
+let DI_TUTTI = [];           // corsi in possesso di tutti
+const equivalente = c => (c && EQUIVALENTE.get(c)) || c;
+let LOGHI = new Map();     // nome tipologia normalizzato → SVG del logo
+
+// Loghi delle tipologie (gli stessi della Mappa Real Time); se non si caricano la pagina funziona lo stesso
+const loghiPronti = fetch(LOGHI_URL, { cache: 'no-cache' })
+  .then(r => r.ok ? r.json() : {})
+  .then(d => Object.values(d).forEach(l => { if (l && l.svg) { LOGHI.set(normKey(l.nome), l.svg); if (l.sigla) LOGHI.set('sigla:' + normKey(l.sigla), l.svg); } }))
+  .catch(err => console.warn('Loghi non caricati:', err));
+function logoHtml(nome) {
+  const svg = LOGHI.get(normKey(nome)) || LOGHI.get(normKey((nome || '').replace(/\(.*?\)/g, ' ')));
+  return svg ? `<span class="logo" aria-hidden="true">${svg}</span>` : '';
+}
+let MANOVRE = [];          // righe di Manovre_PREVISTE
+let colReg = {}, colPiano = {}, colElenco = {}, diag = {};
+
+function scaricaCsv(gid, header) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvUrl(gid) + '&_=' + Date.now(), {
+      download: true, header, skipEmptyLines: true,
+      complete: r => resolve(r.data), error: err => reject(err)
+    });
+  });
+}
+
+function elaboraFormazione(rows) {
+  const hi = rows.findIndex(r => r.some(c => /^sigla$/i.test((c || '').trim())));
+  const head = hi >= 0 ? rows[hi].map(c => (c || '').trim()) : [];
+  const ix = re => head.findIndex(h => re.test(h));
+  const c = {
+    sigla: ix(/^sigla$/i), tipologia: ix(/^tipologia$/i), categoria: ix(/^categoria$/i), prof: ix(/corsi\s*\(profilazione\)/i),
+    delta: ix(/delta anni/i), oreMin: ix(/ore minime/i), coll: ix(/collettive/i),
+    soloReg: ix(/stampa solo registro/i), sovra: ix(/sovraordinazione/i)
+  };
+  const g = (r, k) => c[k] >= 0 ? val(r[c[k]]) : '';
+  CORSI = [];
+  rows.slice(hi + 1).forEach(r => {
+    const sigla = g(r, 'sigla'), tipologia = g(r, 'tipologia');
+    if (!tipologia) return;
+    const corso = {
+      id: CORSI.length, nome: tipologia, sigla, tipologia, categoria: g(r, 'categoria') || tipologia, prof: g(r, 'prof'),
+      // "Delta anni per libretto": -1 = conta anche l'anno precedente, -2 = due anni prima… ; 0 o vuoto = solo l'anno scelto
+      anniPrima: Math.max(0, -(parseInt(g(r, 'delta'), 10) || 0)),
+      sovra: (() => { const n = parseFloat(g(r, 'sovra').replace(',', '.')); return isNaN(n) ? 999 : n; })(),
+      oreMin: parseOreMin(g(r, 'oreMin')), collPct: parsePct(g(r, 'coll')),
+      soloRegistro: siNo(g(r, 'soloReg')),
+      // la Sigla NON identifica il corso (NBC = NBCR 0…3): si riconosce da Tipologia e da "Corsi (Profilazione)"
+      keys: new Set([normKey(tipologia), normKey(g(r, 'prof'))].filter(k => k.length >= 2)),
+      previste: []
+    };
+    CORSI.push(corso);
+  });
+  // Ordine dei corsi: Categoria (nell'ordine in cui compare in Formazione), poi Livello Sovraordinazione, poi Progressivo
+  const ordCat = new Map();
+  CORSI.forEach(x => { const k = normKey(x.categoria); if (!ordCat.has(k)) ordCat.set(k, ordCat.size); });
+  CORSI.forEach(x => { x.ordine = ordCat.get(normKey(x.categoria)) * 1e6 + Math.min(x.sovra, 999) * 1e3 + x.id; });
+  CATEGORIE = [...new Set(CORSI.map(x => x.categoria))];
+  const perNome = n => CORSI.find(x => normKey(x.tipologia) === normKey(n));
+  EQUIVALENTE = new Map();
+  Object.entries(CORSI_EQUIVALENTI).forEach(([da, a]) => { const c1 = perNome(da), c2 = perNome(a); if (c1 && c2) EQUIVALENTE.set(c1, c2); });
+  DI_TUTTI = CORSI_DI_TUTTI.map(perNome).filter(Boolean);
+  diag.formazione = { intestazioni: hi + 1, corsi: CORSI.length, colonne: c };
+}
+
+function corsiDaSigla(t) {
+  const k = normKey(t);
+  if (!k) return [];
+  const perSigla = [...new Set(CORSI.filter(c => normKey(c.sigla) === k).map(equivalente))];
+  if (perSigla.length) return perSigla;
+  const c = corsoDaChiave(k);
+  return c ? [c] : [];
+}
+function corsoDaChiave(k) {
+  return equivalente(CORSI.find(c => c.keys.has(k))) || null;
+}
+
+function elaboraManovre(rows) {
+  MANOVRE = [];
+  let senzaCorso = 0;
+  rows.forEach(r => {
+    const a = val(r[0]), uid = val(r[1]), cod = val(r[2]), ciclo = val(r[3]), man = val(r[4]), full = val(r[5]);
+    if (!man && !full) return;
+    if (/associazione/i.test(a) || /^manovra$/i.test(man)) return;   // intestazione
+    const testo = full || [ciclo, cod, man].filter(Boolean).join(' ');
+    const m = {
+      corsoTxt: a, uid, codice: cod, ciclo, manovra: man || testo, testo,
+      kFull: normKey(testo), kMan: normKey(man),
+      reUid: uid && uid.length >= 2 ? new RegExp('(^|[^A-Za-z0-9])' + escRe(uid) + '($|[^A-Za-z0-9])', 'i') : null,
+      corsi: corsiDaSigla(a)
+    };
+    if (m.corsi.length) m.corsi.forEach(c => c.previste.push(m)); else senzaCorso++;
+    MANOVRE.push(m);
+  });
+  diag.manovre = { righe: MANOVRE.length, senzaCorso };
+}
+
+// Colore fisso per ogni Categoria (bordi, intestazione e righe tipologia)
+const COLORI_CATEGORIA = [
+  [/^saf/, '#ff9800'], [/^ssa/, '#29b6f6'], [/^usar/, '#8d6e63'], [/^tpss/, '#e53935'],
+  [/^oso/, '#7e57c2'], [/^tas/, '#43a047'], [/^cfbt/, '#c2185b'], [/^nbcr/, '#fdd835'],
+  [/^apr/, '#26a69a'], [/^cinofil|k9/, '#9e9d24'], [/^patentiterrestr/, '#5c6bc0'],
+  [/^macchinemovimento|^mmt/, '#78909c'], [/^patentinautic/, '#00838f'],
+  [/^formazionegenerale/, '#bdbdbd'], [/^varie/, '#9e9e9e']
+];
+function coloreCategoria(nome) {
+  const k = normKey(nome);
+  const c = COLORI_CATEGORIA.find(([re]) => re.test(k));
+  return c ? c[1] : '#9e9e9e';
+}
+
+// Livelli del raggruppamento: Settore (es. SAF) → Categoria → Tipologia
+const categoriaDi = c => c.categoria;
+const settoreDi = categoriaDi;      // i requisiti sono raggruppati per Categoria (colonna C)
+const tipologiaDi = c => c.tipologia;
+// Testo che è una Categoria (es. "SAF (Speleo Alpino Fluviale)") e non una Tipologia
+function trovaCategoria(t) {
+  const k = normKey(t), k2 = senzaParentesi(t);
+  if (!k) return '';
+  return CATEGORIE.find(c => normKey(c) === k) || CATEGORIE.find(c => k2.length >= 2 && senzaParentesi(c) === k2) || '';
+}
+const senzaParentesi = t => normKey((t || '').replace(/\(.*?\)/g, ' '));
+
+// "SAF (Speleo Alpino Fluviale), TAS (Topografia Applicata al Soccorso)" → due categorie
+function splitCategorie(t) {
+  return val(t).split(/\n|;|,(?![^()]*\))/).map(v => v.trim()).filter(Boolean);
+}
+// Categoria di intervento → categoria del libretto e settori dei requisiti
+function infoCategoria(cat) {
+  const label = trovaCategoria(cat) || cat;
+  return { cat, label, settori: new Set([label]) };
+}
+
+// Testo di tipologia → corsi di Formazione
+function trovaCorsi(testo) {
+  const out = new Set();
+  const t = val(testo);
+  if (!t) return out;
+  const tutto = corsoDaChiave(normKey(t));
+  if (tutto) { out.add(tutto); return out; }
+  t.split(/\n|;|,/).map(v => v.trim()).filter(Boolean).forEach(v => {
+    const k = normKey(v);
+    let c = corsoDaChiave(k) || corsoDaChiave(normKey(v.replace(/\(.*?\)/g, ' ')));
+    if (!c) {
+      let best = null, bl = 0;
+      CORSI.forEach(x => x.keys.forEach(kk => { if (kk.length >= 6 && k.includes(kk) && kk.length > bl) { best = x; bl = kk.length; } }));
+      c = equivalente(best);
+    }
+    if (c) out.add(c);
+  });
+  return out;
+}
+
+// Testo delle manovre svolte → manovre previste riconosciute
+function trovaManovre(testo, corsiAtt) {
+  const out = new Set();
+  if (!testo) return out;
+  const nk = normKey(testo);
+  MANOVRE.forEach(m => {
+    if ((m.kFull.length >= 6 && nk.includes(m.kFull)) || (m.reUid && m.reUid.test(testo)) ||
+        (m.corsi.some(c => corsiAtt.has(c)) && m.kMan.length >= 6 && nk.includes(m.kMan))) out.add(m);
+  });
+  return out;
+}
+
+function elaboraElenco(rows) {
+  const head = (rows[0] || []).map(h => (h || '').trim());
+  colElenco = {};
+  Object.entries(COL_ELENCO).forEach(([k, re]) => { colElenco[k] = head.findIndex(h => re.test(h)); });
+  PERSONE = new Map();
+  NOME_A_CF = new Map();
+  if (colElenco.nome < 0) { diag.elenco = { righe: rows.length, persone: 0, errore: 'colonna "Cognome Nome" non trovata' }; return; }
+  const g = (r, k) => colElenco[k] >= 0 ? val(r[colElenco[k]]) : '';
+  let n = 0, corsiNonTrovati = new Set();
+  rows.slice(1).forEach(r => {
+    const { nome, cf } = separaNome(r[colElenco.nome]);
+    if (nome.length < 3 || NOME_NON_REALE.test(nome)) return;
+    const key = cf ? 'cf:' + cf : 'n:' + normKey(nome);
+    const nk = normKey(nome);
+    if (cf) NOME_A_CF.set(nk, NOME_A_CF.has(nk) && NOME_A_CF.get(nk) !== key ? '*' : key);
+    const p = persona(key, nome);
+    p.inElenco = true; n++;
+    if (!p.originaleElenco) p.originaleElenco = val(r[colElenco.nome]).replace(/\s+/g, ' ');
+    const com = nomeComando(g(r, 'comando'));
+    if (com) p.comandi.set(com, (p.comandi.get(com) || 0) + 100);   // l'Elenco vale più delle registrazioni
+    if (g(r, 'qualifica')) p.qualifica = g(r, 'qualifica');
+    g(r, 'corsi').split(/\n|;|,/).map(v => v.trim()).filter(Boolean).forEach(v => {
+      const c = trovaCorsi(v);
+      if (c.size) c.forEach(x => p.corsiPossesso.add(x));
+      else { p.corsiTxt.push(v); corsiNonTrovati.add(v); }
+    });
+  });
+  diag.elenco = { righe: rows.length - 1, persone: n, corsiNonTrovati: [...corsiNonTrovati] };
+}
+
+function elaboraPiano(piano) {
+  const headers = piano.length ? Object.keys(piano[0]) : [];
+  const trova = (regole, esclusi) => { for (const r of regole) { const h = headers.find(h => r.test(h) && !(esclusi && esclusi.test(h))); if (h) return h; } return null; };
+  colPiano = {
+    comando: trova([/organizzat/i, /^comando/i], /funzione|appartenenza/i),
+    squadra: trova([/^squadra$/i, /squadra/i], /sottosquadre/i),
+    tipologia: trova([/^tipologia addestramento/i, /tipologia/i]),
+    inizio: trova([/giorno ed ora inizio/i, /inizio/i]),
+    fine: trova([/giorno ed ora fine/i, /\bfine\b/i]),
+    descr: trova([/descrizione manovre/i, /descrizione/i]),
+    area: trova([/area di addestramento/i]),
+    manovre: headers.filter(h => PIANO_MANOVRE.test(h))
+  };
+  let lista = [];
+  piano.forEach((row, i) => {
+    const d = colPiano.inizio ? parseData(row[colPiano.inizio]) : null;
+    if (!d) return;
+    const com = val(row[colPiano.comando]), tip = val(row[colPiano.tipologia]);
+    if (/\btest\d*\b/i.test(com + ' ' + tip)) return;
+    lista.push({
+      i, data: d, giorno: giornoKey(d), comandoKey: comandoKey(com) || 'nonindicato', comando: nomeComando(com),
+      squadra: val(row[colPiano.squadra]), tipologia: tip,
+      inizio: val(row[colPiano.inizio]), fine: val(row[colPiano.fine]),
+      ore: oreTra(row[colPiano.inizio], row[colPiano.fine]),
+      descr: val(row[colPiano.descr]), area: val(row[colPiano.area]),
+      manovre: colPiano.manovre.map(h => val(row[h])).filter(Boolean).join('\n')
+    });
+  });
+  let duplicati = 0;
+  if (FILTRA_DUPLICATI) {
+    const ultimo = new Map();
+    lista.forEach((a, i) => ultimo.set(`${a.giorno}|${a.comandoKey}|${squadraKey(a.squadra)}|${normKey(a.tipologia)}`, i));
+    const tenere = new Set(ultimo.values());
+    duplicati = lista.length - tenere.size;
+    lista = lista.filter((a, i) => tenere.has(i));
+  }
+  const idx3 = new Map(), idx2 = new Map();
+  lista.forEach(p => {
+    push(idx2, p.giorno + '|' + p.comandoKey, p);
+    if (p.squadra) push(idx3, p.giorno + '|' + p.comandoKey + '|' + squadraKey(p.squadra), p);
+  });
+  PIANI = lista;
+  diag.piano = { righe: piano.length, validi: lista.length, duplicati };
+  return { idx3, idx2 };
+}
+
+function elaboraReg(reg, pianoIdx) {
+  const head = (reg[0] || []).map(h => (h || '').trim());
+  colReg = {};
+  Object.entries(COL_REG).forEach(([k, [lettera, re]]) => {
+    const i = head.findIndex(h => re.test(h));
+    colReg[k] = i >= 0 ? i : letterIdx(lettera);
+  });
+  // "fine" non deve prendere "Giorno ed Ora Inizio"... ma neanche altre colonne con "fine" nel testo
+  const iFine = head.findIndex(h => /giorno ed ora fine/i.test(h));
+  if (iFine >= 0) colReg.fine = iFine;
+  const iIni = head.findIndex(h => /giorno ed ora inizio/i.test(h));
+  if (iIni >= 0) colReg.inizio = iIni;
+  colReg.manovre = head.map((h, i) => REG_MANOVRE.test(h) ? i : -1).filter(i => i >= 0);
+  if (!colReg.manovre.length) colReg.manovre = [letterIdx('N'), letterIdx('O')];
+
+  let righe = 0, scartate = 0, senzaData = 0, collSenzaPiano = 0, nonAttivita = 0;
+  const g = (r, k) => val(r[colReg[k]]);
+  reg.slice(1).forEach(r => {
+    const { nome, cf } = separaNome(g(r, 'nome'));
+    if (!nome && !g(r, 'cronologiche')) return;
+    righe++;
+    if (nome.length < 3 || NOME_NON_REALE.test(nome)) { scartate++; return; }
+
+    // Tipo: si incrociano più colonne.
+    //  D "Che cosa vuoi fare?": "2a - CONFERMA presenza addestramento collettivo odierno",
+    //    "2b - REGISTRAZIONE addestramenti e interventi INDIVIDUALI", "3 - STAMPA/INVIO Registro…" (non è un'attività)
+    //  I "Attività": "Addestramento" / "Intervento" (per le 2b)
+    //  L tipologia individuale, P/R categoria e numero intervento
+    const cosa = g(r, 'cosa'), attiv = g(r, 'attivita');
+    let tipo;
+    if (/collettiv/i.test(cosa)) tipo = 'collettivo';
+    else if (/^intervent/i.test(attiv)) tipo = 'intervento';
+    else if (/^addestr/i.test(attiv) || g(r, 'tipInd')) tipo = 'individuale';
+    else if (g(r, 'numInt') || g(r, 'catInt')) tipo = 'intervento';
+    else if (/stampa|invio|registro individuale/i.test(cosa)) { nonAttivita++; return; }
+    else if (g(r, 'inizio') || g(r, 'descr')) tipo = 'altro';
+    else if (!cosa && g(r, 'organizzatore')) tipo = 'collettivo';
+    else { nonAttivita++; return; }
+
+    // Data: collettivo "odierno" → H se è una data, altrimenti giorno di compilazione (A);
+    // individuali e interventi → Giorno ed Ora Inizio (J), altrimenti A. La colonna V non si usa.
+    const data = tipo === 'collettivo'
+      ? (parseData(g(r, 'dataColl')) || parseData(g(r, 'inizio')) || parseData(g(r, 'cronologiche')))
+      : (parseData(g(r, 'inizio')) || parseData(g(r, 'fine')) || parseData(g(r, 'dataColl')) || parseData(g(r, 'cronologiche')));
+    if (!data) { senzaData++; return; }
+
+    const a = {
+      tipo, data, anno: data.getFullYear(), giorno: giornoKey(data), cosa: attiv || cosa,
+      organizzatore: nomeComando(g(r, 'organizzatore')), organizzatoreRaw: g(r, 'organizzatore'), appartenenzaRaw: g(r, 'appartenenza'),
+      team: g(r, 'team'), ics: g(r, 'ics'),
+      attivita: g(r, 'attivita'), descr: g(r, 'descr'),
+      inizio: g(r, 'inizio'), fine: g(r, 'fine'),
+      ore: oreTra(g(r, 'inizio'), g(r, 'fine')), oreDa: 'registrazione',
+      tipologia: '', manovreTxt: colReg.manovre.map(i => val(r[i])).filter(Boolean).join('\n'),
+      catInt: g(r, 'catInt'), descrInt: g(r, 'descrInt'), numInt: g(r, 'numInt'),
+      piano: null, pianiMultipli: false
+    };
+
+    if (tipo === 'collettivo') {
+      const k2 = a.giorno + '|' + comandoKey(g(r, 'organizzatore'));
+      let cand = (a.team && pianoIdx.idx3.get(k2 + '|' + squadraKey(a.team))) || pianoIdx.idx2.get(k2) || [];
+      if (cand.length > 1 && a.attivita) {
+        const ka = normKey(a.attivita);
+        const f = cand.filter(p => normKey(p.tipologia).includes(ka) || ka.includes(normKey(p.tipologia)));
+        if (f.length) cand = f;
+      }
+      if (cand.length) {
+        const p = cand[cand.length - 1];
+        a.piano = p; a.pianiMultipli = cand.length > 1;
+        a.tipologia = p.tipologia;
+        if (a.ore == null && p.ore != null) { a.ore = p.ore; a.oreDa = 'piano'; a.inizio = p.inizio; a.fine = p.fine; }
+        if (p.manovre) a.manovreTxt = [a.manovreTxt, p.manovre].filter(Boolean).join('\n');
+        if (!a.descr) a.descr = p.descr;
+      } else {
+        collSenzaPiano++;
+        a.tipologia = a.attivita;
+      }
+    } else if (tipo === 'individuale') {
+      a.tipologia = g(r, 'tipInd') || a.attivita;
+    } else if (tipo === 'altro') {
+      a.tipologia = g(r, 'tipInd') || a.attivita;
+    }
+
+    // Corsi di Formazione collegati
+    a.corsi = trovaCorsi(a.tipologia);
+    a.corsiTip = new Set(a.corsi);   // corsi dalla sola tipologia (per il libretto)
+    // Interventi: categorie accorpate ("SAF (...), TAS (...)") divise una per una
+    a.cats = tipo === 'intervento' ? splitCategorie(a.catInt).map(infoCategoria) : [];
+    a.manovre = trovaManovre(a.manovreTxt, a.corsi);
+    // una manovra riconosciuta collega l'attività al suo corso solo se la sigla è di un corso solo
+    if (!a.corsi.size) a.manovre.forEach(m => { if (m.corsi.length === 1 && tipo !== 'intervento') a.corsi.add(m.corsi[0]); });
+    if (!a.corsi.size && tipo !== 'intervento') a.categoria = trovaCategoria(a.tipologia);
+
+    const p = persona(chiavePersona(nome, cf), nome);
+    const orig = g(r, 'nome').replace(/\s+/g, ' ');
+    p.originali.set(orig, (p.originali.get(orig) || 0) + 1);
+    const app = nomeComando(g(r, 'appartenenza'));
+    if (app) p.comandi.set(app, (p.comandi.get(app) || 0) + 1);
+    p.att.push(a);
+  });
+  const piuFrequente = m => [...m.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] || '';
+  PERSONE.forEach(p => { p.nome = piuFrequente(p.grafie); p.comando = piuFrequente(p.comandi); DI_TUTTI.forEach(c => p.corsiPossesso.add(c)); });
+  const perTipo = {};
+  PERSONE.forEach(p => p.att.forEach(a => { perTipo[a.tipo] = (perTipo[a.tipo] || 0) + 1; }));
+  diag.reg = { righe, scartate, senzaData, collSenzaPiano, nonAttivita, perTipo, persone: PERSONE.size };
+}
+
+/* =====================================================================
+   CALCOLI (come nel Report individuale)
+   ===================================================================== */
+const nonIntervento = a => a.tipo !== 'intervento';
+function somma(lista) {
+  const giorni = new Set(lista.map(a => a.giorno));
+  return {
+    n: lista.length, giorni: giorni.size,
+    ore: lista.reduce((s, a) => s + (a.ore || 0), 0),
+    senzaOre: lista.filter(a => a.ore == null).length
+  };
+}
+
+function riepilogoAnno(att, y) {
+  const lista = att.filter(a => a.anno === y);
+  const add = lista.filter(nonIntervento);
+  return {
+    tot: somma(add),
+    coll: somma(add.filter(a => a.tipo === 'collettivo')),
+    ind: somma(add.filter(a => a.tipo === 'individuale')),
+    altro: somma(add.filter(a => a.tipo === 'altro')),
+    int: somma(lista.filter(a => a.tipo === 'intervento')),
+    mesi: Array.from({ length: 12 }, (_, m) => add.filter(a => a.data.getMonth() === m).reduce((s, a) => s + (a.ore || 0), 0))
+  };
+}
+
+function riepilogoCorsi(p, y) {
+  const att = p.att;
+  const coinvolti = new Set(p.corsiPossesso);
+  const inFinestra = (a, c) => a.anno <= y && a.anno >= y - c.anniPrima;
+  att.forEach(a => a.corsi.forEach(c => { if (inFinestra(a, c)) coinvolti.add(c); }));
+  return [...coinvolti].map(c => {
+    const nel = att.filter(a => a.corsi.has(c) && inFinestra(a, c));
+    const add = nel.filter(nonIntervento);
+    const coll = add.filter(a => a.tipo === 'collettivo');
+    const ore = add.reduce((s, a) => s + (a.ore || 0), 0);
+    const oreColl = coll.reduce((s, a) => s + (a.ore || 0), 0);
+    const oreAnno = add.filter(a => a.anno === y).reduce((s, a) => s + (a.ore || 0), 0);
+    const fatte = new Map();
+    nel.forEach(a => a.manovre.forEach(m => {
+      if (!m.corsi.includes(c)) return;
+      const f = fatte.get(m) || { n: 0, ultima: null };
+      f.n++; if (!f.ultima || a.data > f.ultima) f.ultima = a.data;
+      fatte.set(m, f);
+    }));
+    const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
+    let stato = 'nd';
+    if (c.oreMin != null) stato = ore >= c.oreMin - 1e-6 && (collMin == null || oreColl >= collMin - 1e-6) ? 'ok' : 'ko';
+    return {
+      c, ore, oreColl, oreAnno, collMin, stato,
+      giorni: new Set(add.map(a => a.giorno)).size,
+      nAtt: add.length, nInt: nel.length - add.length, fatte,
+      dal: y - c.anniPrima, possesso: p.corsiPossesso.has(c)
+    };
+  }).sort((a, b) => a.c.ordine - b.c.ordine);
+}
+
+// Settori: corsi + ore di addestramento e interventi dell'anno
+// Requisiti per Categoria (es. SAF):
+//   ore svolte   = addestramenti della categoria + interventi della categoria (come "Totale Categoria" del libretto)
+//   ore richieste = somma delle "Ore Minime" dei corsi in possesso della categoria
+//   collettive   = somma delle quote collettive richieste dai corsi in possesso
+//   periodo      = il più lungo tra i "Delta anni" dei corsi in possesso (es. AVANZATO -1 → anche l'anno prima)
+function riepilogoSettori(att, corsi, y) {
+  const ordine = new Map();
+  [...CORSI].sort((a, b) => a.ordine - b.ordine).forEach(c => { const s = settoreDi(c); if (!ordine.has(s)) ordine.set(s, c.ordine); });
+  const settori = new Map();
+  const get = s => { if (!settori.has(s)) settori.set(s, { nome: s, ordine: ordine.has(s) ? ordine.get(s) : 9e9, righe: [] }); return settori.get(s); };
+  corsi.forEach(r => get(settoreDi(r.c)).righe.push(r));
+  // categorie con soli interventi o attività senza corso
+  att.forEach(a => {
+    if (a.anno > y) return;
+    if (a.tipo === 'intervento') a.cats.forEach(i => { if (a.anno === y) get(i.label); });
+    else if (!a.corsi.size && a.categoria && a.anno === y) get(a.categoria);
+  });
+  const ore = l => l.reduce((t, a) => t + (a.ore || 0), 0);
+  return [...settori.values()].map(st => {
+    const req = st.righe.filter(r => r.possesso && r.c.oreMin);
+    // ogni attività conta nel periodo della sua tipologia (Delta anni), come nel libretto; interventi: solo l'anno scelto
+    const anniPrima = Math.max(0, ...st.righe.map(r => r.c.anniPrima));
+    const dal = y - anniPrima;
+    const base = a => [...(a.corsiTip.size ? a.corsiTip : a.corsi)].filter(c => settoreDi(c) === st.nome);
+    const add = att.filter(a => {
+      if (a.tipo === 'intervento' || a.anno > y) return false;
+      const cc = base(a);
+      if (cc.length) return cc.some(c => a.anno >= y - c.anniPrima);
+      return !a.corsi.size && a.categoria === st.nome && a.anno === y;
+    });
+    const int = att.filter(a => a.tipo === 'intervento' && a.anno === y && a.cats.some(i => i.label === st.nome));
+    const oreAdd = ore(add), oreInt = ore(int), oreColl = ore(add.filter(a => a.tipo === 'collettivo'));
+    const tot = oreAdd + oreInt;
+    const minTot = req.reduce((t, r) => t + r.c.oreMin, 0);
+    const collMinTot = req.reduce((t, r) => t + (r.c.collPct ? r.c.oreMin * r.c.collPct : 0), 0);
+    let stato = 'nd';
+    if (minTot > 0) stato = tot >= minTot - 1e-6 && oreColl >= collMinTot - 1e-6 ? 'ok' : 'ko';
+    const manca = Math.max(0, minTot - tot, collMinTot - oreColl);
+    const anno = l => ore(l.filter(a => a.anno === y));
+    const senzaTip = add.filter(a => !a.corsi.size);
+    return { ...st, req, anniPrima, dal, add, int, senzaTip, oreSenzaTip: ore(senzaTip), oreAdd, oreInt, oreColl, tot, minTot, collMinTot, stato, manca,
+      totAnno: anno(add) + anno(int) };
+  }).sort((a, b) => a.ordine - b.ordine || a.nome.localeCompare(b.nome, 'it'));
+}
+
+/* PDF: librerie e utilità (come nel Report individuale) */
+function caricaScript(src) {
+  return new Promise((ok, ko) => {
+    const sc = document.createElement('script');
+    sc.src = src;
+    sc.onload = ok;
+    sc.onerror = () => ko(new Error('libreria per il PDF non caricata'));
+    document.head.appendChild(sc);
+  });
+}
+async function caricaJsPdf() {
+  if (!(window.jspdf && window.jspdf.jsPDF)) await caricaScript(JSPDF_URL);
+  if (!window.jspdf.jsPDF.API.autoTable) await caricaScript(AUTOTABLE_URL);
+}
+// tinta chiara del colore di categoria
+function schiarisci(hex, quota) {
+  const m = String(hex).trim().match(/^#?([0-9a-f]{6})$/i);
+  if (!m) return '#ffffff';
+  const n = parseInt(m[1], 16), c = [n >> 16, (n >> 8) & 255, n & 255];
+  return '#' + c.map(v => Math.round(v * quota + 255 * (1 - quota)).toString(16).padStart(2, '0')).join('');
+}
+const rgbDi = hex => { const n = parseInt(String(hex).replace('#', ''), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+// i caratteri standard del PDF conoscono solo l'alfabeto latino: tolgo emoji e simboli
+const testoPdf = t => String(t == null ? '' : t).replace(/[^\u0000-\u00ff\u2013\u2014\u2018\u2019\u201c\u201d\u20ac]/g, '').replace(/^\s+/, '');
+function immagineDataUrl(url) {
+  return fetch(url).then(r => { if (!r.ok) throw new Error('immagine'); return r.blob(); })
+    .then(b => new Promise((ok, ko) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = ko; fr.readAsDataURL(b); }));
+}
+function svgPng(svg, px = 96) {
+  return new Promise((ok, ko) => {
+    const img = new Image();
+    img.onload = () => {
+      const cv = document.createElement('canvas'); cv.width = cv.height = px;
+      cv.getContext('2d').drawImage(img, 0, 0, px, px);
+      ok(cv.toDataURL('image/png'));
+    };
+    img.onerror = ko;
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  });
+}
+
+
+/* =====================================================================
+   REPORT COLLETTIVO: Comandi e Direzioni
+   ===================================================================== */
+// Responsabili di settore (ROP, ROR, Funzionario, Staff): tabella in RESPONSABILI_COMANDO (letta per nome del foglio)
+const RESP_FOGLIO = 'RESPONSABILI_COMANDO';
+const RESP_RANGE  = 'A30:DW88';
+const gvizUrl = (foglio, range) => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=0&sheet=${encodeURIComponent(foglio)}&range=${range}`;
+// Categorie di Formazione che non sono settori
+const NON_SETTORI = /^(varie|pianodisicurezzamancante)/;
+const SETTORE_PREDEFINITO = 'SAF (Speleo Alpino Fluviale)';
+// Soglia "quasi": ore svolte almeno al 75% delle richieste
+const SOGLIA_QUASI = 0.75;
+
+// Direzione di ogni Comando (dalla riga 30 di Responsabili; se il foglio si legge, si aggiorna da lì)
+const ORGANIGRAMMA = {
+  "Direzione Abruzzo": ["Chieti", "L'Aquila", "Pescara", "Teramo"],
+  "Direzione Basilicata": ["Matera", "Potenza"],
+  "Direzione Calabria": ["Catanzaro", "Cosenza", "Crotone", "Reggio Calabria", "Vibo Valentia"],
+  "Direzione Campania": ["Avellino", "Benevento", "Caserta", "Napoli", "Salerno"],
+  "Direzione Emilia-Romagna": ["Bologna", "Ferrara", "Forlì-Cesena", "Modena", "Parma", "Piacenza", "Ravenna", "Reggio Emilia", "Rimini"],
+  "Direzione Friuli Venezia Giulia": ["Gorizia", "Pordenone", "Trieste", "Udine"],
+  "Direzione Lazio": ["Frosinone", "Latina", "Rieti", "Roma", "Viterbo"],
+  "Direzione Liguria": ["Genova", "Imperia", "La Spezia", "Savona"],
+  "Direzione Lombardia": ["Bergamo", "Brescia", "Como", "Cremona", "Lecco", "Lodi", "Mantova", "Milano", "Monza e della Brianza", "Pavia", "Sondrio", "Varese"],
+  "Direzione Marche": ["Ancona", "Ascoli Piceno", "Fermo", "Macerata", "Pesaro e Urbino"],
+  "Direzione Molise": ["Campobasso", "Isernia"],
+  "Direzione Piemonte": ["Alessandria", "Asti", "Biella", "Cuneo", "Novara", "Torino", "Verbano-Cusio-Ossola", "Vercelli"],
+  "Direzione Puglia": ["Bari", "Barletta-Andria-Trani", "Brindisi", "Foggia", "Lecce", "Taranto"],
+  "Direzione Sardegna": ["Cagliari", "Nuoro", "Oristano", "Sassari"],
+  "Direzione Sicilia": ["Agrigento", "Caltanissetta", "Catania", "Enna", "Messina", "Palermo", "Ragusa", "Siracusa", "Trapani"],
+  "Direzione Toscana": ["Arezzo", "Firenze", "Grosseto", "Livorno", "Lucca", "Massa-Carrara", "Pisa", "Pistoia", "Prato", "Siena"],
+  "Direzione Umbria": ["Perugia", "Terni"],
+  "Direzione Valle d'Aosta": ["Aosta"],
+  "Direzione Veneto e TAA": ["Belluno", "Bolzano", "Padova", "Rovigo", "Trento", "Treviso", "Venezia", "Verona", "Vicenza"]
+};
+const DIREZIONE_DI = new Map();   // chiave Comando → nome Direzione
+const NOME_ENTE = new Map();      // chiave → nome scritto per intero ("Comando Forlì-Cesena")
+Object.entries(ORGANIGRAMMA).forEach(([dir, comandi]) => {
+  NOME_ENTE.set(comandoKey(dir), dir);
+  comandi.forEach(c => { const n = 'Comando ' + c, k = comandoKey(n); DIREZIONE_DI.set(k, dir); NOME_ENTE.set(k, n); });
+});
+const direzioneDi = k => DIREZIONE_DI.get(k) || (k.startsWith('direzione') ? NOME_ENTE.get(k) || '' : '');
+const comandiDi = dir => [...DIREZIONE_DI.entries()].filter(([, d]) => comandoKey(d) === comandoKey(dir)).map(([k]) => k);
+
+// Stati del personale abilitato
+const STATI = {
+  ok:    { t: 'Idoneo',                 c: '#66bb6a', o: 1 },
+  man:   { t: 'Verificare manovre',     c: '#fdd835', o: 2 },
+  quasi: { t: 'Almeno 75% delle ore',   c: '#ffa726', o: 3 },
+  ko:    { t: 'Non idoneo',             c: '#ef5350', o: 4 },
+  nd:    { t: 'Nessun minimo',          c: '#9e9e9e', o: 5 },
+  na:    { t: 'Non abilitato',          c: '#616161', o: 6 }
+};
+const ORDINE_STATI = ['ok', 'man', 'quasi', 'ko', 'nd'];
+
+let RESP = new Map();    // "rop|settore|ente" → [nominativi]
+let PIANI = [];          // Piani di Sicurezza validi (addestramenti collettivi)
+let PER_ENTE = new Map(); // chiave ente → [persone]
+
+function elaboraResponsabili(rows) {
+  RESP = new Map();
+  if (!rows || rows.length < 4) { diag.resp = { righe: rows ? rows.length : 0, errore: 'tabella non letta' }; return; }
+  const iHead = rows.findIndex(r => /^ruolo$/i.test(val(r[0])));
+  if (iHead < 0) { diag.resp = { righe: rows.length, errore: 'riga "Ruolo / Settore" non trovata' }; return; }
+  const enti = rows[iHead].map(v => val(v));
+  const dirRow = iHead >= 2 ? rows[iHead - 2] : [];
+  enti.forEach((e, j) => {
+    if (j < 2 || !e) return;
+    const k = comandoKey(e), d = val(dirRow[j]);
+    if (!NOME_ENTE.has(k)) NOME_ENTE.set(k, e);
+    if (d && /^direzione/i.test(d) && !k.startsWith('direzione')) DIREZIONE_DI.set(k, d);
+  });
+  let n = 0;
+  rows.slice(iHead + 1).forEach(r => {
+    const ruolo = val(r[0]), settore = val(r[1]);
+    const rk = /provinciale/i.test(ruolo) ? 'rop' : /regionale/i.test(ruolo) ? 'ror' : /funzionario/i.test(ruolo) ? 'fds' : /staff/i.test(ruolo) ? 'staff' : '';
+    if (!rk || !settore) return;
+    enti.forEach((e, j) => {
+      if (j < 2 || !e) return;
+      const nomi = val(r[j]).split(/\n|;/).map(t => t.trim()).filter(Boolean);
+      if (nomi.length) { RESP.set(`${rk}|${normKey(settore)}|${comandoKey(e)}`, nomi); n++; }
+    });
+  });
+  diag.resp = { righe: rows.length, celle: n };
+}
+const senzaCf = t => separaNome(t).nome || t;
+const unici = l => [...new Set(l)];
+function resp(ruolo, settore, k) { return RESP.get(`${ruolo}|${normKey(settore)}|${k}`) || []; }
+// ROP e ROR di un Comando (ROR: del Comando, altrimenti della sua Direzione) o di una Direzione
+function responsabiliDi(tipo, k, settore) {
+  if (tipo === 'comando') {
+    const dir = direzioneDi(k);
+    const ror = resp('ror', settore, k);
+    return { rop: resp('rop', settore, k), ror: ror.length ? ror : (dir ? resp('ror', settore, comandoKey(dir)) : []), fds: resp('fds', settore, k) };
+  }
+  const com = comandiDi(NOME_ENTE.get(k) || k);
+  let ror = resp('ror', settore, k);
+  if (!ror.length) ror = unici(com.flatMap(c => resp('ror', settore, c)));
+  return { ror, rop: unici([k, ...com].flatMap(c => resp('rop', settore, c))), fds: resp('fds', settore, k) };
+}
+const elencoNomi = l => l.length ? l.map(senzaCf).map(esc).join(', ') : '<span class="manca">non indicato</span>';
+
+/* ---------------- calcolo per persona ---------------- */
+const SIGLA_BREVE = c => {
+  let t = c.tipologia;
+  if (normKey(t).startsWith(normKey(c.categoria)) && normKey(t) !== normKey(c.categoria)) t = t.slice(c.categoria.length);
+  t = t.replace(/\(.*?\)/g, ' ').replace(/\s+/g, ' ').trim();
+  return t || c.sigla || c.tipologia;
+};
+function schedaPersona(p, settore, y) {
+  const corsi = riepilogoCorsi(p, y);
+  const st = riepilogoSettori(p.att, corsi, y).find(x => x.nome === settore);
+  const vuota = { p, st: null, abil: [], poss: [], abilitato: false, attivo: false, stato: 'na', coll: 0, ind: 0, int: 0, nInt: 0, tot: 0, minTot: 0, oreColl: 0, collMin: 0, fatte: 0, prev: 0, pct: 0, dal: y };
+  if (!st) return vuota;
+  const abil = st.righe.filter(r => r.possesso && (!DI_TUTTI.includes(r.c) || r.c.oreMin > 0));
+  const conManovre = st.req.length ? st.req : abil;
+  const prev = conManovre.reduce((t, r) => t + r.c.previste.length, 0);
+  const fatte = conManovre.reduce((t, r) => t + r.fatte.size, 0);
+  const s = {
+    p, st, abil, poss: st.righe.filter(r => r.possesso), abilitato: abil.length > 0, attivo: st.add.length + st.int.length > 0,
+    coll: st.oreColl, ind: st.oreAdd - st.oreColl, int: st.oreInt, nInt: st.int.length, nAdd: st.add.length,
+    tot: st.tot, minTot: st.minTot, oreColl: st.oreColl, collMin: st.collMinTot, fatte, prev, dal: st.dal,
+    pct: st.minTot ? st.tot / st.minTot : 0
+  };
+  if (!s.abilitato) s.stato = 'na';
+  else if (!st.minTot) s.stato = 'nd';
+  else if (st.stato === 'ok') s.stato = prev && fatte < prev ? 'man' : 'ok';
+  else s.stato = st.tot >= st.minTot * SOGLIA_QUASI - 1e-6 ? 'quasi' : 'ko';
+  return s;
+}
+
+// Personale di un Comando (o della Direzione come ente), diviso in gruppi
+function personaleEnte(k, settore, y, tutti) {
+  const schede = (PER_ENTE.get(k) || []).map(p => schedaPersona(p, settore, y));
+  const ord = (a, b) => a.p.nome.localeCompare(b.p.nome, 'it');
+  const abil = schede.filter(s => s.abilitato).sort(ord);
+  const non = schede.filter(s => !s.abilitato && s.attivo).sort(ord);
+  const altri = tutti ? schede.filter(s => !s.abilitato && !s.attivo).sort(ord) : [];
+  const conta = Object.fromEntries(Object.keys(STATI).map(x => [x, abil.filter(s => s.stato === x).length]));
+  const somma = l => ({ coll: l.reduce((t, s) => t + s.coll, 0), ind: l.reduce((t, s) => t + s.ind, 0), int: l.reduce((t, s) => t + s.int, 0), tot: l.reduce((t, s) => t + s.tot, 0) });
+  return { k, nome: NOME_ENTE.get(k) || k, abil, non, altri, conta, totale: schede.length, ore: somma([...abil, ...non]), collettivi: collettiviOrganizzati(k, settore, y), collPrec: collettiviOrganizzati(k, settore, y - 1) };
+}
+// Addestramenti collettivi del settore organizzati dall'ente (Piani di Sicurezza)
+function collettiviOrganizzati(k, settore, y) {
+  const l = PIANI.filter(p => p.data.getFullYear() === y && p.comandoKey === k && settorePiano(p) === settore);
+  return { n: l.length, ore: l.reduce((t, p) => t + (p.ore || 0), 0) };
+}
+function settorePiano(p) {
+  if (p.settore === undefined) {
+    const c = [...trovaCorsi(p.tipologia)][0];
+    p.settore = c ? c.categoria : (trovaCategoria(p.tipologia) || '');
+  }
+  return p.settore;
+}
+
+/* =====================================================================
+   CARICAMENTO
+   ===================================================================== */
+const refreshBtn = document.getElementById('refresh-btn');
+const enteSelect = document.getElementById('ente-select');
+const settoreSelect = document.getElementById('settore-select');
+const annoSelect = document.getElementById('anno-select');
+const tuttiChk = document.getElementById('tutti-chk');
+const printBtn = document.getElementById('print-btn');
+const pdfBtn = document.getElementById('pdf-btn');
+const mailBtn = document.getElementById('mail-btn');
+const report = document.getElementById('report');
+let loading = false, caricato = false;
+const state = {
+  tipo: URLP.get('tipo') === 'direzione' ? 'direzione' : 'comando',
+  ente: URLP.get('ente') ? comandoKey(URLP.get('ente')) : '',
+  settore: URLP.get('settore') || '',
+  anno: parseInt(URLP.get('anno'), 10) || ANNO_OGGI,
+  tutti: URLP.has('tutti')
+};
+tuttiChk.checked = state.tutti;
+let ULTIMO = null;   // ultimo report disegnato (per PDF e invio)
+
+function scaricaGviz(foglio, range) {
+  return new Promise(resolve => {
+    Papa.parse(gvizUrl(foglio, range) + '&_=' + Date.now(), {
+      download: true, header: false, skipEmptyLines: false,
+      complete: r => resolve(r.data), error: err => { console.warn('Responsabili non letti:', err); resolve(null); }
+    });
+  });
+}
+
+async function caricaDati() {
+  if (loading) return;
+  loading = true;
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = '⟳ Caricamento…';
+  if (!caricato) report.innerHTML = '<div class="msg">Caricamento dati…</div>';
+  try {
+    const [reg, piano, manovre, formazione, elenco, respRows] = await Promise.all([
+      scaricaCsv(GID_REG, false), scaricaCsv(GID_PIANO, true), scaricaCsv(GID_MANOVRE, false),
+      scaricaCsv(GID_FORMAZIONE, false), scaricaCsv(GID_ELENCO, false), scaricaGviz(RESP_FOGLIO, RESP_RANGE), loghiPronti
+    ]);
+    diag = {};
+    elaboraFormazione(formazione);
+    elaboraManovre(manovre);
+    elaboraElenco(elenco);
+    elaboraReg(reg, elaboraPiano(piano));
+    elaboraResponsabili(respRows);
+    PER_ENTE = new Map();
+    PERSONE.forEach(p => { const k = comandoKey(p.comando); if (k) push(PER_ENTE, k, p); });
+    PER_ENTE.forEach((l, k) => { if (!NOME_ENTE.has(k)) NOME_ENTE.set(k, l[0].comando); });
+    caricato = true;
+    document.getElementById('last-update').textContent = new Date().toLocaleString('it-IT');
+    preparaFiltri();
+    disegna();
+  } catch (err) {
+    console.error(err);
+    report.innerHTML = `<div class="msg">Errore nel caricamento dei dati. Riprova più tardi.
+      <small>Controlla che il file sia condiviso come "Chiunque abbia il link: Visualizzatore" e che i GID ${GID_REG}, ${GID_PIANO}, ${GID_MANOVRE}, ${GID_FORMAZIONE} e ${GID_ELENCO} siano giusti.</small></div>`;
+  } finally {
+    loading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = '⟳ Aggiorna';
+  }
+}
+
+function preparaFiltri() {
+  // Settori = Categorie di Formazione
+  const settori = CATEGORIE.filter(c => !NON_SETTORI.test(normKey(c)));
+  if (!settori.includes(state.settore)) {
+    state.settore = settori.find(s => normKey(s) === normKey(state.settore)) || (state.settore && settori.find(s => normKey(s).startsWith(normKey(state.settore)))) || settori.find(s => s === SETTORE_PREDEFINITO) || settori[0] || '';
+  }
+  settoreSelect.innerHTML = settori.map(s => `<option value="${esc(s)}"${s === state.settore ? ' selected' : ''}>${esc(s)}</option>`).join('');
+  settoreSelect.disabled = false;
+  preparaEnti();
+  preparaAnni();
+}
+
+function preparaEnti() {
+  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.tipo === state.tipo));
+  const nPers = k => (PER_ENTE.get(k) || []).length;
+  let html = '';
+  if (state.tipo === 'direzione') {
+    const dirs = [...new Set([...Object.keys(ORGANIGRAMMA), ...[...DIREZIONE_DI.values()]])].sort((a, b) => a.localeCompare(b, 'it'));
+    if (state.ente && !state.ente.startsWith('direzione')) state.ente = comandoKey(direzioneDi(state.ente) || '');
+    html = dirs.map(d => {
+      const k = comandoKey(d), n = nPers(k) + comandiDi(d).reduce((t, c) => t + nPers(c), 0);
+      return `<option value="${k}"${k === state.ente ? ' selected' : ''}${n ? '' : ' class="vuota"'}>${esc(d)} (${n})</option>`;
+    }).join('');
+  } else {
+    // Comandi raggruppati per Direzione; anche la Direzione come ente (il suo personale)
+    const gruppi = new Map();
+    const enti = new Set([...DIREZIONE_DI.keys(), ...PER_ENTE.keys()]);
+    Object.keys(ORGANIGRAMMA).forEach(d => enti.add(comandoKey(d)));
+    enti.forEach(k => push(gruppi, direzioneDi(k) || 'Altri enti', k));
+    if (state.ente && !enti.has(state.ente)) state.ente = '';
+    html = `<option value="">— scegli il Comando —</option>` + [...gruppi.entries()].sort((a, b) => a[0].localeCompare(b[0], 'it')).map(([dir, ks]) =>
+      `<optgroup label="${esc(dir)}">` + ks.sort((a, b) => (a.startsWith('direzione') ? -1 : 0) - (b.startsWith('direzione') ? -1 : 0) || (NOME_ENTE.get(a) || a).localeCompare(NOME_ENTE.get(b) || b, 'it')).map(k =>
+        `<option value="${k}"${k === state.ente ? ' selected' : ''}>${esc(NOME_ENTE.get(k) || k)} (${nPers(k)})</option>`).join('') + '</optgroup>').join('');
+  }
+  if (state.tipo === 'direzione' && !state.ente) html = `<option value="">— scegli la Direzione —</option>` + html;
+  enteSelect.innerHTML = html;
+  enteSelect.value = state.ente;
+  enteSelect.disabled = false;
+}
+
+function preparaAnni() {
+  const anni = new Set([ANNO_OGGI]);
+  PERSONE.forEach(p => p.att.forEach(a => { if (a.anno >= 2020 && a.anno <= ANNO_OGGI + 1) anni.add(a.anno); }));
+  const lista = [...anni].sort((a, b) => b - a);
+  if (!lista.includes(state.anno)) state.anno = ANNO_OGGI;
+  annoSelect.innerHTML = lista.map(y => `<option value="${y}"${y === state.anno ? ' selected' : ''}>${y}</option>`).join('');
+}
+
+function aggiornaUrl() {
+  const q = new URLSearchParams();
+  if (state.tipo === 'direzione') q.set('tipo', 'direzione');
+  if (state.ente) q.set('ente', NOME_ENTE.get(state.ente) || state.ente);
+  if (state.settore) q.set('settore', state.settore);
+  if (state.anno !== ANNO_OGGI) q.set('anno', state.anno);
+  if (state.tutti) q.set('tutti', '1');
+  if (DEBUG) q.set('debug', '1');
+  history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : ''));
+}
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  if (state.tipo === b.dataset.tipo) return;
+  state.tipo = b.dataset.tipo;
+  if (state.tipo === 'comando' && state.ente.startsWith('direzione')) state.ente = '';
+  if (caricato) { preparaEnti(); disegna(); }
+}));
+enteSelect.addEventListener('change', () => { state.ente = enteSelect.value; disegna(); document.getElementById('content').scrollTop = 0; });
+settoreSelect.addEventListener('change', () => { state.settore = settoreSelect.value; disegna(); });
+annoSelect.addEventListener('change', () => { state.anno = +annoSelect.value; disegna(); });
+tuttiChk.addEventListener('change', () => { state.tutti = tuttiChk.checked; disegna(); });
+refreshBtn.addEventListener('click', caricaDati);
+printBtn.addEventListener('click', () => window.print());
+
+/* =====================================================================
+   DISEGNO
+   ===================================================================== */
+const pallino = st => `<span class="pallino" style="--sc:${STATI[st].c}"></span>`;
+function statoHtml(s) {
+  const x = STATI[s.stato];
+  return `<span class="stato" style="--sc:${x.c}">${pallino(s.stato)}${x.t}</span>`;
+}
+const fmtOre = h => h ? fmtHM(h) : '—';
+const linkIndividuale = (p, y) => `reportindividuale.html?nome=${encodeURIComponent(p.etichetta || p.nome)}&anno=${y}`;
+
+function rigaPersona(s, i, y) {
+  const p = s.p, col = STATI[s.stato].c;
+  const corsi = s.poss.map(r => s.abil.includes(r) ? esc(SIGLA_BREVE(r.c)) : `<span class="sub-n" style="display:inline">${esc(SIGLA_BREVE(r.c))}</span>`).join(', ');
+  const periodo = s.st && s.st.anniPrima ? `<span class="sub-n">${s.dal}–${y}</span>` : '';
+  const pct = s.minTot ? Math.min(100, s.pct * 100) : 0;
+  return `<tr class="persona" style="--sc:${col}">
+    <td class="c">${i}</td>
+    <td class="nome"><a href="${linkIndividuale(p, y)}" target="_blank" rel="noopener" title="Apri il report individuale">${esc(p.nome)}</a>${p.key.startsWith('cf:') ? `<span class="cf">${esc(p.key.slice(3))}</span>` : ''}</td>
+    <td class="c">${esc(p.qualifica || '')}</td>
+    <td>${corsi || '<span class="sub-n">—</span>'}</td>
+    <td class="n">${fmtOre(s.coll)}</td>
+    <td class="n">${fmtOre(s.ind)}</td>
+    <td class="n">${fmtOre(s.int)}${s.nInt ? `<span class="sub-n">${s.nInt} interv.</span>` : ''}</td>
+    <td class="n"><b>${fmtOre(s.tot)}</b>${s.minTot ? ` / ${fmtHM(s.minTot)}<div class="bar"><i style="width:${pct}%"></i></div>` : ''}${periodo}</td>
+    <td class="n">${s.collMin ? `${fmtOre(s.oreColl)} / ${fmtHM(s.collMin)}` : '—'}</td>
+    <td class="c">${s.prev ? `<b class="${s.fatte >= s.prev ? 'ok-t' : ''}">${s.fatte}</b> / ${s.prev}` : '—'}</td>
+    <td>${statoHtml(s)}</td>
+  </tr>`;
+}
+const TESTA_TABELLA = `<thead><tr><th>#</th><th>Nominativo</th><th>Qualifica</th><th>Corsi del settore</th><th>Collettivi</th><th>Individuali</th><th>Interventi</th><th>Ore svolte / richieste</th><th>di cui collettive</th><th>Manovre</th><th>Stato</th></tr></thead>`;
+const GRUPPI = [
+  ['abil', 'Personale abilitato', 'con almeno un corso del settore in possesso'],
+  ['non', 'Personale non abilitato con attività nel settore', 'nessun corso del settore in Elenco_Filtrato, oltre a quelli che hanno tutti'],
+  ['altri', 'Altro personale', 'nessun corso e nessuna attività nel settore']
+];
+function tabellaPersonale(E, y, settore) {
+  const cc = coloreCategoria(settore);
+  let h = `<div class="table-scroll"><table class="pers">${TESTA_TABELLA}<tbody>`, i = 0;
+  GRUPPI.forEach(([k, titolo, nota]) => {
+    const l = E[k];
+    if (!l.length) return;
+    h += `<tr class="grp" style="--cc:${cc}"><td colspan="11">${titolo} · ${l.length} <span>· ${nota}</span></td></tr>`;
+    l.forEach(s => { h += rigaPersona(s, ++i, y); });
+  });
+  if (!i) h += `<tr><td colspan="11" class="vuoto">Nessun nominativo con corsi o attività nel settore.${E.totale ? ` ${E.totale} persone del ${esc(E.nome)} in PUMA: spunta «Tutto il personale» per vederle.` : ''}</td></tr>`;
+  else {
+    const o = E.ore;
+    h += `<tr class="tot"><td colspan="4" style="text-align:right">Totale ore nel settore (abilitati e non)</td><td class="n">${fmtHM(o.coll)}</td><td class="n">${fmtHM(o.ind)}</td><td class="n">${fmtHM(o.int)}</td><td class="n">${fmtHM(o.tot)}</td><td colspan="3"></td></tr>`;
+  }
+  return h + '</tbody></table></div>';
+}
+function legendaHtml() {
+  return `<div class="legenda">${ORDINE_STATI.map(k => `<span>${pallino(k)}${STATI[k].t}</span>`).join('')}</div>`;
+}
+function tessere(conta, nAbil, coll, collPrec, y, extra) {
+  const pc = n => nAbil ? ` <small>· ${Math.round(n / nAbil * 100)}%</small>` : '';
+  return `<div class="tiles">
+    <div class="tile" style="--tc:#ef6c00"><div class="k">Personale abilitato</div><div class="v">${nAbil}</div><div class="p">${extra || ''}</div></div>
+    ${ORDINE_STATI.slice(0, 4).map(k => `<div class="tile" style="--tc:${STATI[k].c}"><div class="k">${pallino(k)}${STATI[k].t}</div><div class="v">${conta[k]}${pc(conta[k])}</div></div>`).join('')}
+    <div class="tile" style="--tc:#4fc3f7"><div class="k">Collettivi organizzati nel settore</div><div class="v">${coll.n} <small>· ${fmtH(coll.ore)}</small></div><div class="p">${y - 1}: ${collPrec.n} · ${fmtH(collPrec.ore)}</div></div>
+  </div>`;
+}
+function testaStampa(titoloEnte, settore, y, firme) {
+  const ora = new Date(), due = n => String(n).padStart(2, '0');
+  const luogo = titoloEnte.replace(/^(comando|direzione)\s+(regionale\s+)?/i, '');
+  return `<div class="print-only p-testa">
+    <img src="${EMBLEMA_URL}" alt="">
+    <div class="e">VIGILI DEL FUOCO<br>${esc(titoloEnte.toUpperCase())}<br>REPORT COLLETTIVO DI SETTORE<br>${esc(settore)}</div>
+    <table><tr><td class="k">Anno</td><td><b>${y}</b></td>${firme[0] ? `<td class="k">${esc(firme[0][0])}</td><td class="firma">${esc(firme[0][1])}</td>` : '<td></td><td></td>'}</tr>
+      <tr><td class="k">Luogo e Data</td><td>${esc(luogo)}, ${due(ora.getDate())}/${due(ora.getMonth() + 1)}/${ora.getFullYear()} ${due(ora.getHours())}.${due(ora.getMinutes())}</td>${firme[1] ? `<td class="k">${esc(firme[1][0])}</td><td class="firma">${esc(firme[1][1])}</td>` : '<td></td><td></td>'}</tr></table>
+  </div>`;
+}
+function noteHtml(settore, y) {
+  const corsi = CORSI.filter(c => c.categoria === settore && c.oreMin);
+  return `<div class="note-box solo-schermo"><b>Come si calcola</b><ul>
+    <li>Ore svolte = addestramenti collettivi + individuali + interventi del settore, come nel Libretto individuale; ogni corso conta nel suo periodo (Delta anni).</li>
+    <li>Ore richieste = somma delle Ore Minime dei corsi del settore in possesso${corsi.length ? ': ' + corsi.map(c => `${esc(SIGLA_BREVE(c))} ${fmtHM(c.oreMin)}${c.collPct ? ` (${Math.round(c.collPct * 100)}% collettive)` : ''}${c.anniPrima ? ` in ${c.anniPrima + 1} anni` : ''}`).join(' · ') : ''}.</li>
+    <li><b style="color:${STATI.ok.c}">Idoneo</b>: ore e quota collettive raggiunte e tutte le manovre previste svolte · <b style="color:${STATI.man.c}">Verificare manovre</b>: ore raggiunte ma mancano manovre previste · <b style="color:${STATI.quasi.c}">Almeno 75%</b>: ore svolte tra il 75% e il 100% del richiesto (o manca la quota collettive) · <b style="color:${STATI.ko.c}">Non idoneo</b>: meno del 75%.</li>
+    <li>Il Comando di ognuno è quello di appartenenza in Elenco_Filtrato. Clic su un nominativo per il suo report individuale.</li>
+  </ul></div>`;
+}
+
+function disegna() {
+  if (!caricato) return;
+  aggiornaUrl();
+  const y = state.anno, settore = state.settore, k = state.ente;
+  const nomeEnte = NOME_ENTE.get(k) || '';
+  document.getElementById('periodo-label').textContent = k ? `${nomeEnte} · ${settore} · ${y}` : `${settore} · ${y}`;
+  document.title = k ? `P.U.M.A. - Report collettivo ${nomeEnte} ${y}` : 'P.U.M.A. - Report collettivo';
+  ULTIMO = null;
+  [printBtn, pdfBtn, mailBtn].forEach(b => { b.disabled = !k; });
+  let html = DEBUG ? diagnostica() : '';
+  if (!k) {
+    report.innerHTML = html + `<div class="msg">Scegli ${state.tipo === 'direzione' ? 'la Direzione' : 'il Comando'}, il settore e l'anno
+      <small>${PERSONE.size.toLocaleString('it-IT')} persone in PUMA · ${state.tipo === 'direzione' ? 'il report della Direzione raggruppa tutto il personale dei suoi Comandi, Comando per Comando' : 'il report del Comando elenca il suo personale con le ore e lo stato dei requisiti del settore'}</small></div>`;
+    return;
+  }
+  if (state.tipo === 'comando') html += disegnaComando(k, settore, y);
+  else html += disegnaDirezione(k, settore, y);
+  report.innerHTML = html;
+  report.querySelectorAll('table.riep tr[data-k]').forEach(tr => tr.addEventListener('click', () => {
+    const el = document.getElementById('sez-' + tr.dataset.k);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+}
+
+function disegnaComando(k, settore, y) {
+  const E = personaleEnte(k, settore, y, state.tutti);
+  const R = responsabiliDi('comando', k, settore);
+  const dir = direzioneDi(k);
+  ULTIMO = { tipo: 'comando', k, nome: E.nome, settore, y, enti: [E], R, dir };
+  const firme = [['Visto del ROP', R.rop.map(senzaCf).join(', ')], ['Visto del ROR', R.ror.map(senzaCf).join(', ')]];
+  let h = testaStampa(E.nome, settore, y, firme);
+  h += `<div class="ente-head"><div>
+      <h3>${esc(E.nome)} <span>· ${esc(settore)}</span></h3>
+      <div class="sub">${dir && !k.startsWith('direzione') ? esc(dir) + ' · ' : ''}${E.totale} persone in PUMA<br>
+        ROP: <b>${elencoNomi(R.rop)}</b> · ROR: <b>${elencoNomi(R.ror)}</b> · Funzionario di settore: <b>${elencoNomi(R.fds)}</b></div>
+    </div><div class="anno-big">Anno di riferimento<b>${y}</b></div></div>`;
+  h += `<div class="solo-schermo">${tessere(E.conta, E.abil.length, E.collettivi, E.collPrec, y, E.non.length ? `+ ${E.non.length} non abilitati con attività` : '')}</div>`;
+  h += `<h4 class="sec">Personale ${y} <span>· clic su un nominativo per il report individuale</span></h4>`;
+  h += legendaHtml() + tabellaPersonale(E, y, settore);
+  return h + noteHtml(settore, y);
+}
+
+function disegnaDirezione(k, settore, y) {
+  const nomeDir = NOME_ENTE.get(k) || k;
+  const keys = [k, ...comandiDi(nomeDir).sort((a, b) => (NOME_ENTE.get(a) || a).localeCompare(NOME_ENTE.get(b) || b, 'it'))];
+  const enti = keys.map(c => personaleEnte(c, settore, y, state.tutti));
+  const R = responsabiliDi('direzione', k, settore);
+  ULTIMO = { tipo: 'direzione', k, nome: nomeDir, settore, y, enti, R };
+  const tot = { abil: 0, non: 0, totale: 0, conta: Object.fromEntries(Object.keys(STATI).map(x => [x, 0])), coll: { n: 0, ore: 0 }, collPrec: { n: 0, ore: 0 }, ore: 0 };
+  enti.forEach(E => {
+    tot.abil += E.abil.length; tot.non += E.non.length; tot.totale += E.totale; tot.ore += E.ore.tot;
+    Object.keys(STATI).forEach(x => { tot.conta[x] += E.conta[x]; });
+    tot.coll.n += E.collettivi.n; tot.coll.ore += E.collettivi.ore; tot.collPrec.n += E.collPrec.n; tot.collPrec.ore += E.collPrec.ore;
+  });
+  const firme = [['Visto del ROR', R.ror.map(senzaCf).join(', ')], R.fds.length ? ['Visto del Funzionario di settore', R.fds.map(senzaCf).join(', ')] : null].filter(Boolean);
+  let h = testaStampa(nomeDir, settore, y, firme);
+  h += `<div class="ente-head"><div>
+      <h3>${esc(nomeDir)} <span>· ${esc(settore)}</span></h3>
+      <div class="sub">${keys.length - 1} Comandi · ${tot.totale} persone in PUMA<br>
+        ROR: <b>${elencoNomi(R.ror)}</b>${R.fds.length ? ` · Funzionario di settore: <b>${elencoNomi(R.fds)}</b>` : ''}</div>
+    </div><div class="anno-big">Anno di riferimento<b>${y}</b></div></div>`;
+  h += `<div class="solo-schermo">${tessere(tot.conta, tot.abil, tot.coll, tot.collPrec, y, tot.non ? `+ ${tot.non} non abilitati con attività` : '')}</div>`;
+
+  // Riepilogo Comando per Comando
+  h += `<h4 class="sec">Riepilogo per Comando ${y} <span>· clic su una riga per andare al Comando</span></h4>${legendaHtml()}
+    <div class="table-scroll"><table class="riep"><thead><tr><th>Comando</th><th>ROP</th><th>Personale in PUMA</th><th>Abilitati</th>
+    ${ORDINE_STATI.slice(0, 4).map(x => `<th>${pallino(x)}${STATI[x].t}</th>`).join('')}<th>Idonei</th><th>Ore nel settore</th><th>Collettivi organizzati</th></tr></thead><tbody>`;
+  enti.forEach(E => {
+    const rop = resp('rop', settore, E.k);
+    const n = E.abil.length;
+    const barre = n ? ORDINE_STATI.map(x => E.conta[x] ? `<i style="width:${E.conta[x] / n * 100}%;background:${STATI[x].c}" title="${STATI[x].t}: ${E.conta[x]}"></i>` : '').join('') : '';
+    h += `<tr data-k="${E.k}"><td><b>${esc(E.nome)}</b></td><td>${rop.length ? esc(rop.map(senzaCf).join(', ')) : '<span class="sub-n">—</span>'}</td>
+      <td class="n">${E.totale}</td><td class="n"><b>${n}</b>${E.non.length ? `<span class="sub-n">+ ${E.non.length} non abil.</span>` : ''}</td>
+      ${ORDINE_STATI.slice(0, 4).map(x => `<td class="n">${E.conta[x] || ''}</td>`).join('')}
+      <td>${n ? `<div class="mini">${barre}</div><span class="sub-n">${Math.round(E.conta.ok / n * 100)}% idonei</span>` : '<span class="sub-n">—</span>'}</td>
+      <td class="n">${E.ore.tot ? fmtHM(E.ore.tot) : '—'}</td><td class="n">${E.collettivi.n || '—'}${E.collettivi.n ? `<span class="sub-n">${fmtHM(E.collettivi.ore)}</span>` : ''}</td></tr>`;
+  });
+  h += `<tr class="tot"><td>Totale ${esc(nomeDir)}</td><td></td><td class="n">${tot.totale}</td><td class="n">${tot.abil}</td>
+    ${ORDINE_STATI.slice(0, 4).map(x => `<td class="n">${tot.conta[x]}</td>`).join('')}<td>${tot.abil ? Math.round(tot.conta.ok / tot.abil * 100) + '% idonei' : ''}</td>
+    <td class="n">${fmtHM(tot.ore)}</td><td class="n">${tot.coll.n}</td></tr></tbody></table></div>`;
+
+  // Comando per Comando
+  const senza = [];
+  enti.forEach(E => {
+    if (!E.abil.length && !E.non.length && !E.altri.length) { senza.push(E.nome); return; }
+    const rop = resp('rop', settore, E.k);
+    h += `<div class="com-sez" id="sez-${E.k}"><h4 class="sec">${esc(E.nome)} <small>ROP: ${rop.length ? esc(rop.map(senzaCf).join(', ')) : 'non indicato'} · ${E.abil.length} abilitati · ${E.conta.ok} idonei</small></h4>
+      ${tabellaPersonale(E, y, settore)}</div>`;
+  });
+  if (senza.length) h += `<div class="note-box"><b>Senza personale nel settore</b> (nessun corso né attività${state.tutti ? ' e nessuna persona in PUMA' : ''}): ${senza.map(esc).join(' · ')}</div>`;
+  return h + noteHtml(settore, y);
+}
+
+/* =====================================================================
+   PDF (jsPDF): A4 orizzontale, uguale per Comando e Direzione
+   ===================================================================== */
+const SIGLA_ENTE = n => n.replace(/^comando\s+/i, '').replace(/^direzione\s+/i, 'DIR_').replace(/[^A-Za-z0-9_]+/g, '');
+function nomeFilePdf(R) {
+  const s = (CORSI.find(c => c.categoria === R.settore) || {}).sigla;
+  const set = normKey(R.settore.replace(/\(.*?\)/g, ' ')).toUpperCase() || s || 'SETTORE';
+  return `Report_Collettivo_${set}_${SIGLA_ENTE(R.nome)}_${R.y}.pdf`;
+}
+async function creaPdf() {
+  await caricaJsPdf();
+  const R = ULTIMO;
+  if (!R) throw new Error('nessun report da esportare');
+  const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+  const W = 297, H = 210, M = 6;
+  let yy = 5;
+  try { doc.addImage(await immagineDataUrl(EMBLEMA_URL), 'PNG', (W - 11.4) / 2, yy, 11.4, 13, 'emblema', 'FAST'); } catch (e) { /* senza emblema */ }
+  yy += 17;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
+  ['VIGILI DEL FUOCO', R.nome.toUpperCase()].forEach(t => { doc.text(testoPdf(t), W / 2, yy, { align: 'center' }); yy += 4.4; });
+  doc.setFontSize(9.5);
+  doc.text(testoPdf('REPORT COLLETTIVO DI SETTORE - ' + R.settore), W / 2, yy, { align: 'center' }); yy += 6.5;
+
+  const ora = new Date(), due = n => String(n).padStart(2, '0');
+  const luogo = R.nome.replace(/^(comando|direzione)\s+(regionale\s+)?/i, '');
+  const firme = R.tipo === 'comando'
+    ? [['Visto del ROP', R.R.rop], ['Visto del ROR', R.R.ror]]
+    : [['Visto del ROR', R.R.ror], ...(R.R.fds.length ? [['Visto del Funzionario di settore', R.R.fds]] : [])];
+  const voce = (k, v, x, yv) => { doc.setFont('helvetica', 'normal'); doc.text(k, x, yv, { align: 'right' }); if (v) { doc.setFont('helvetica', 'bold'); doc.text(testoPdf(v), x + 2.5, yv); } };
+  doc.setFontSize(8);
+  voce('Anno', String(R.y), 30, yy);
+  if (firme[0]) { voce(firme[0][0], firme[0][1].map(senzaCf).join(', '), 175, yy); doc.setLineWidth(0.2); doc.line(177.5, yy + 1, W - M, yy + 1); }
+  yy += 5.5;
+  voce('Luogo e Data', `${luogo}, ${due(ora.getDate())}/${due(ora.getMonth() + 1)}/${ora.getFullYear()} ${due(ora.getHours())}.${due(ora.getMinutes())}`, 30, yy);
+  if (firme[1]) { voce(firme[1][0], firme[1][1].map(senzaCf).join(', '), 175, yy); doc.line(177.5, yy + 1, W - M, yy + 1); }
+  yy += 5;
+
+  // legenda
+  doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+  let lx = M;
+  ORDINE_STATI.forEach(k => {
+    doc.setFillColor(...rgbDi(STATI[k].c)); doc.circle(lx + 1.3, yy - 1, 1.3, 'F');
+    doc.text(testoPdf(STATI[k].t), lx + 3.6, yy); lx += doc.getTextWidth(STATI[k].t) + 10;
+  });
+  doc.setTextColor(110); doc.text('Generato da P.U.M.A.', W - M, yy, { align: 'right' }); doc.setTextColor(0);
+  yy += 3;
+
+  const col = rgbDi(coloreCategoria(R.settore)), chiaro = rgbDi(schiarisci(coloreCategoria(R.settore), 0.3));
+  const testa = [['#', 'Nominativo', 'Qualifica', 'Corsi del settore', 'Collettivi', 'Individuali', 'Interventi', 'Ore svolte / richieste', 'di cui collettive', 'Manovre', 'Stato']];
+  const stili = { font: 'helvetica', fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.15, textColor: [0, 0, 0], valign: 'middle', overflow: 'linebreak' };
+  const colonne = { 0: { cellWidth: 7, halign: 'center' }, 1: { cellWidth: 52 }, 2: { cellWidth: 15, halign: 'center' }, 3: { cellWidth: 'auto' },
+    4: { cellWidth: 17, halign: 'right' }, 5: { cellWidth: 17, halign: 'right' }, 6: { cellWidth: 17, halign: 'right' }, 7: { cellWidth: 27, halign: 'right' },
+    8: { cellWidth: 22, halign: 'right' }, 9: { cellWidth: 15, halign: 'center' }, 10: { cellWidth: 33 } };
+  const corpo = E => {
+    const b = []; let i = 0;
+    GRUPPI.forEach(([k, titolo]) => {
+      if (!E[k].length) return;
+      b.push([{ content: testoPdf(`${titolo} (${E[k].length})`), colSpan: 11, styles: { fillColor: chiaro, fontStyle: 'bold' } }]);
+      E[k].forEach(s => {
+        const p = s.p, cf = p.key.startsWith('cf:') ? p.key.slice(3) : '';
+        b.push([String(++i), testoPdf(p.nome + (cf ? '\n' + cf : '')), testoPdf(p.qualifica || ''), testoPdf(s.poss.map(r => SIGLA_BREVE(r.c)).join(', ') || '-'),
+          fmtOre(s.coll).replace('—', '-'), fmtOre(s.ind).replace('—', '-'), fmtOre(s.int).replace('—', '-') + (s.nInt ? ` (${s.nInt})` : ''),
+          (fmtOre(s.tot).replace('—', '-') + (s.minTot ? ' / ' + fmtHM(s.minTot) : '')) + (s.st && s.st.anniPrima ? `\n${s.dal}-${R.y}` : ''),
+          s.collMin ? `${fmtOre(s.oreColl).replace('—', '-')} / ${fmtHM(s.collMin)}` : '-',
+          s.prev ? `${s.fatte} / ${s.prev}` : '-',
+          { content: testoPdf(STATI[s.stato].t), stato: s.stato, styles: { cellPadding: { top: 1, bottom: 1, right: 1, left: 4.5 } } }]);
+      });
+    });
+    if (i) b.push([{ content: 'Totale ore nel settore', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
+      ...[E.ore.coll, E.ore.ind, E.ore.int, E.ore.tot].map(v => ({ content: fmtHM(v), styles: { halign: 'right', fontStyle: 'bold' } })),
+      { content: '', colSpan: 3 }]);
+    else b.push([{ content: 'Nessun nominativo con corsi o attività nel settore.', colSpan: 11, styles: { textColor: [100, 100, 100] } }]);
+    return b;
+  };
+  const tabella = (body, startY) => doc.autoTable({
+    startY, margin: { left: M, right: M, top: M, bottom: 8 }, head: testa, body, theme: 'grid',
+    styles: stili, headStyles: { fillColor: [235, 235, 235], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', lineWidth: 0.2 },
+    columnStyles: colonne, rowPageBreak: 'avoid', showHead: 'everyPage',
+    didDrawCell: d => {
+      if (d.section === 'body' && d.cell.raw && d.cell.raw.stato) {
+        doc.setFillColor(...rgbDi(STATI[d.cell.raw.stato].c));
+        doc.circle(d.cell.x + 2.3, d.cell.y + d.cell.height / 2, 1.2, 'F');
+      }
+      if (d.section === 'body' && d.column.index === 0 && d.cell.raw && d.row.raw && d.row.raw[10] && d.row.raw[10].stato) {
+        doc.setFillColor(...rgbDi(STATI[d.row.raw[10].stato].c));
+        doc.rect(d.cell.x, d.cell.y, 1, d.cell.height, 'F');
+      }
+    }
+  });
+
+  if (R.tipo === 'comando') {
+    const E = R.enti[0], n = E.abil.length;
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+    doc.text(testoPdf(`Personale abilitato ${n}: ` + ORDINE_STATI.slice(0, 4).map(k => `${STATI[k].t} ${E.conta[k]}`).join(' - ') +
+      ` · Collettivi del settore organizzati: ${E.collettivi.n} (${fmtHM(E.collettivi.ore)})`).replace('·', '-'), M, yy + 3);
+    tabella(corpo(E), yy + 5);
+  } else {
+    // riepilogo per Comando
+    const body = R.enti.map(E => {
+      const n = E.abil.length, rop = resp('rop', R.settore, E.k).map(senzaCf).join(', ');
+      return [testoPdf(E.nome), testoPdf(rop || '-'), String(E.totale), String(n) + (E.non.length ? ` (+${E.non.length})` : ''),
+        ...ORDINE_STATI.slice(0, 4).map(k => String(E.conta[k] || '')), n ? Math.round(E.conta.ok / n * 100) + '%' : '-',
+        E.ore.tot ? fmtHM(E.ore.tot) : '-', String(E.collettivi.n || '-')];
+    });
+    const T = R.enti.reduce((t, E) => { t.tot += E.totale; t.n += E.abil.length; ORDINE_STATI.forEach(k => { t[k] = (t[k] || 0) + E.conta[k]; }); t.ore += E.ore.tot; t.coll += E.collettivi.n; return t; }, { tot: 0, n: 0, ore: 0, coll: 0 });
+    body.push([{ content: testoPdf('Totale ' + R.nome), colSpan: 2, styles: { fontStyle: 'bold' } }, String(T.tot), String(T.n), ...ORDINE_STATI.slice(0, 4).map(k => String(T[k])),
+      T.n ? Math.round(T.ok / T.n * 100) + '%' : '-', fmtHM(T.ore), String(T.coll)].map(v => typeof v === 'string' ? { content: v, styles: { fontStyle: 'bold' } } : v));
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text('Riepilogo per Comando', M, yy + 3.5);
+    doc.autoTable({
+      startY: yy + 5, margin: { left: M, right: M, top: M, bottom: 8 }, theme: 'grid',
+      head: [['Comando', 'ROP', 'Personale in PUMA', 'Abilitati', ...ORDINE_STATI.slice(0, 4).map(k => STATI[k].t), 'Idonei', 'Ore nel settore', 'Collettivi organizzati']],
+      body, styles: stili, headStyles: { fillColor: [235, 235, 235], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', lineWidth: 0.2 },
+      columnStyles: { 0: { cellWidth: 45 }, 1: { cellWidth: 'auto' }, 2: { halign: 'right', cellWidth: 20 }, 3: { halign: 'right', cellWidth: 18 }, 4: { halign: 'right', cellWidth: 18 },
+        5: { halign: 'right', cellWidth: 22 }, 6: { halign: 'right', cellWidth: 22 }, 7: { halign: 'right', cellWidth: 18 }, 8: { halign: 'right', cellWidth: 15 }, 9: { halign: 'right', cellWidth: 20 }, 10: { halign: 'right', cellWidth: 20 } },
+      didParseCell: d => { if (d.section === 'head' && d.column.index >= 4 && d.column.index <= 7) d.cell.styles.textColor = [0, 0, 0]; },
+      didDrawCell: d => {
+        if (d.section === 'head' && d.column.index >= 4 && d.column.index <= 7) {
+          doc.setFillColor(...rgbDi(STATI[ORDINE_STATI[d.column.index - 4]].c)); doc.rect(d.cell.x, d.cell.y + d.cell.height - 1, d.cell.width, 1, 'F');
+        }
+      }
+    });
+    // Comando per Comando
+    R.enti.forEach(E => {
+      if (!E.abil.length && !E.non.length && !E.altri.length) return;
+      let y0 = doc.lastAutoTable.finalY + 7;
+      if (y0 > H - 35) { doc.addPage(); y0 = M + 5; }
+      const rop = resp('rop', R.settore, E.k).map(senzaCf).join(', ');
+      doc.setFontSize(9.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...col.map(v => Math.round(v * 0.6)));
+      doc.text(testoPdf(E.nome), M, y0);
+      const wNome = doc.getTextWidth(testoPdf(E.nome));
+      doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
+      doc.text(testoPdf(`ROP: ${rop || 'non indicato'} - abilitati ${E.abil.length} - ` + ORDINE_STATI.slice(0, 4).map(k => `${STATI[k].t} ${E.conta[k]}`).join(' - ')), M + wNome + 4, y0);
+      doc.setTextColor(0);
+      tabella(corpo(E), y0 + 2);
+    });
+  }
+  const pagine = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pagine; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(110);
+    doc.text(testoPdf(`${R.nome} - ${R.settore} - Report collettivo ${R.y} - pag. ${i}/${pagine}`), W - M, H - 3, { align: 'right' });
+    doc.setTextColor(0);
+  }
+  return doc;
+}
+pdfBtn.addEventListener('click', async () => {
+  pdfBtn.disabled = true; const t = pdfBtn.textContent; pdfBtn.textContent = '⏳ PDF…';
+  try { (await creaPdf()).save(nomeFilePdf(ULTIMO)); }
+  catch (err) { console.error(err); alert('PDF non creato: ' + (err && err.message ? err.message : err)); }
+  finally { pdfBtn.textContent = t; pdfBtn.disabled = !ULTIMO; }
+});
+
+/* =====================================================================
+   INVIO VIA GMAIL → app web Apps Script "InvioReportCollettivo.gs"
+   (gli indirizzi di ROP e ROR li trova lo script: la pagina non li vede)
+   ===================================================================== */
+const dlg = document.getElementById('invio-dlg');
+const invStato = document.getElementById('inv-stato');
+const invInvia = document.getElementById('inv-invia');
+const invAltro = document.getElementById('inv-altro');
+const statoInv = (txt, cls) => { invStato.textContent = txt; invStato.className = 'inv-stato' + (cls ? ' ' + cls : ''); };
+
+function apriInvio() {
+  const R = ULTIMO;
+  if (!R) return;
+  document.getElementById('inv-sotto').textContent = `Report collettivo ${R.y} · ${R.settore} · ${R.nome}, in PDF.`;
+  const voce = (id, testo, nomi, sempre) => {
+    const ok = nomi.length > 0 || sempre;
+    return `<label class="chk${ok ? '' : ' off'}"><input type="checkbox" id="${id}" ${ok ? 'checked' : 'disabled'}> <span>${testo}<small>${nomi.length ? nomi.map(senzaCf).map(esc).join(', ') : 'non indicato in Responsabili per questo settore'}</small></span></label>`;
+  };
+  let h = '';
+  if (R.tipo === 'comando') {
+    h += voce('inv-rop', 'Responsabile Operativo Provinciale (ROP)', R.R.rop);
+    h += voce('inv-ror', 'Responsabile Operativo Regionale (ROR)', R.R.ror);
+  } else {
+    h += voce('inv-ror', 'Responsabile Operativo Regionale (ROR)', R.R.ror);
+    const ropC = R.R.rop;
+    h += `<label class="chk${ropC.length ? '' : ' off'}"><input type="checkbox" id="inv-rop" ${ropC.length ? '' : 'disabled'}> <span>Anche ai ROP dei Comandi della Direzione<small>${ropC.length ? ropC.map(senzaCf).map(esc).join(', ') : 'nessun ROP indicato'}</small></span></label>`;
+  }
+  document.getElementById('inv-dest').innerHTML = h;
+  invAltro.value = '';
+  invInvia.disabled = !URL_INVIO_COLLETTIVO;
+  if (!URL_INVIO_COLLETTIVO) statoInv("Invio non ancora attivo: manca l'indirizzo dello script di invio (URL_INVIO_COLLETTIVO).", 'ko');
+  else if (!R.R.rop.length && !R.R.ror.length) statoInv('ROP e ROR non indicati: puoi inviarlo solo a un altro destinatario.', 'wip');
+  else statoInv('');
+  dlg.hidden = false;
+}
+function chiudiInvio() { if (!invInvia.dataset.busy) dlg.hidden = true; }
+
+async function inviaReport() {
+  const R = ULTIMO;
+  const spunta = id => { const e = document.getElementById(id); return !!(e && e.checked && !e.disabled); };
+  const rop = spunta('inv-rop'), ror = spunta('inv-ror');
+  const altro = invAltro.value.trim().toLowerCase();
+  if (!rop && !ror && !altro) return statoInv('Scegli almeno un destinatario.', 'ko');
+  if (altro && !(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(altro) && DOMINI_INVIO.some(d => altro.endsWith('@' + d)))) {
+    return statoInv('Indirizzo non ammesso: solo ' + DOMINI_INVIO.map(d => '@' + d).join(', ') + '.', 'ko');
+  }
+  invInvia.disabled = true; invInvia.dataset.busy = '1';
+  try {
+    statoInv('Preparo il PDF…', 'wip');
+    const doc = await creaPdf();
+    const pdf = doc.output('datauristring').split(',')[1];
+    statoInv('Invio in corso…', 'wip');
+    const r = await fetch(URL_INVIO_COLLETTIVO, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // richiesta semplice: niente preflight CORS
+      body: JSON.stringify({ tipo: R.tipo, ente: R.nome, settore: R.settore, anno: R.y, rop, ror, altro, nomeFile: nomeFilePdf(R), pdf })
+    });
+    const j = await r.json();
+    if (j.ok) statoInv('Inviato a: ' + (j.destinatari || []).join(', '), 'ok');
+    else statoInv(j.errore || 'Invio non riuscito.', 'ko');
+  } catch (err) {
+    console.error(err);
+    statoInv('Invio non riuscito: ' + (err && err.message ? err.message : err), 'ko');
+  } finally {
+    delete invInvia.dataset.busy;
+    invInvia.disabled = !URL_INVIO_COLLETTIVO;
+  }
+}
+mailBtn.addEventListener('click', apriInvio);
+invInvia.addEventListener('click', inviaReport);
+document.getElementById('inv-annulla').addEventListener('click', chiudiInvio);
+dlg.addEventListener('mousedown', e => { if (e.target === dlg) chiudiInvio(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !dlg.hidden) chiudiInvio(); });
+
+function diagnostica() {
+  return `<div class="note-box" style="border-color:#a33;margin:0 0 12px"><b>Diagnostica</b><br>
+    Registrazioni: ${diag.reg?.righe} righe · ${diag.reg?.persone} persone · Piano: ${diag.piano?.validi} validi · Elenco_Filtrato: ${diag.elenco?.persone} persone ·
+    Formazione: ${diag.formazione?.corsi} corsi · Manovre: ${diag.manovre?.righe} · Responsabili: ${esc(JSON.stringify(diag.resp || {}))}<br>
+    Enti con personale: ${PER_ENTE.size} · senza Direzione: ${esc([...PER_ENTE.keys()].filter(k => !direzioneDi(k)).join(', ') || '—')}
+  </div>`;
+}
+
+caricaDati();
+</script>
+</body>
+</html>
