@@ -743,24 +743,32 @@ function corsoDaChiave(k) {
   return equivalente(CORSI.find(c => c.keys.has(k))) || null;
 }
 
+// Testo di manovra confrontabile: senza la lettera finale "(A)/(B)/(C)/(N)" e senza zeri iniziali (02 = 2)
+const RE_LETTERA_MANOVRA = /\s*\(([A-Za-z])\)\s*$/;
+const chiaveManovra = t => normKey(String(t || '').replace(RE_LETTERA_MANOVRA, '').replace(/\b0+(\d)/g, '$1'));
+const chiaveTesto = t => normKey(String(t || '').replace(/\b0+(\d)/g, '$1'));
+
 function elaboraManovre(rows) {
   MANOVRE = [];
-  let senzaCorso = 0;
+  let senzaCorso = 0, escluse = 0;
   rows.forEach(r => {
     const a = val(r[0]), uid = val(r[1]), cod = val(r[2]), ciclo = val(r[3]), man = val(r[4]), full = val(r[5]);
     if (!man && !full) return;
     if (/associazione/i.test(a) || /^manovra$/i.test(man)) return;   // intestazione
     const testo = full || [ciclo, cod, man].filter(Boolean).join(' ');
+    // Lettera finale: (N) = non si considera; (C) = si cerca anche nei collettivi e nelle descrizioni
+    const lettera = ((testo.match(RE_LETTERA_MANOVRA) || man.match(RE_LETTERA_MANOVRA) || [])[1] || '').toUpperCase();
+    if (lettera === 'N') { escluse++; return; }
     const m = {
-      corsoTxt: a, uid, codice: cod, ciclo, manovra: man || testo, testo,
-      kFull: normKey(testo), kMan: normKey(man),
+      corsoTxt: a, uid, codice: cod, ciclo, manovra: man || testo, testo, lettera,
+      kFull: chiaveTesto(testo), kBase: chiaveManovra(testo), kMan: chiaveManovra(man),
       reUid: uid && uid.length >= 2 ? new RegExp('(^|[^A-Za-z0-9])' + escRe(uid) + '($|[^A-Za-z0-9])', 'i') : null,
       corsi: corsiDaSigla(a)
     };
     if (m.corsi.length) m.corsi.forEach(c => c.previste.push(m)); else senzaCorso++;
     MANOVRE.push(m);
   });
-  diag.manovre = { righe: MANOVRE.length, senzaCorso };
+  diag.manovre = { righe: MANOVRE.length, senzaCorso, escluse };
 }
 
 // Colore fisso per ogni Categoria (bordi, intestazione e righe tipologia)
@@ -820,13 +828,17 @@ function trovaCorsi(testo) {
 }
 
 // Testo delle manovre svolte → manovre previste riconosciute
-function trovaManovre(testo, corsiAtt) {
+// testo = colonne delle manovre svolte; descrizioni = descrizione della registrazione e del Piano di Sicurezza
+function trovaManovre(testo, corsiAtt, descrizioni) {
   const out = new Set();
-  if (!testo) return out;
-  const nk = normKey(testo);
+  if (!testo && !descrizioni) return out;
+  const nk = chiaveTesto(testo), nd = chiaveTesto(descrizioni);
   MANOVRE.forEach(m => {
-    if ((m.kFull.length >= 6 && nk.includes(m.kFull)) || (m.reUid && m.reUid.test(testo)) ||
-        (m.corsi.some(c => corsiAtt.has(c)) && m.kMan.length >= 6 && nk.includes(m.kMan))) out.add(m);
+    const nelleManovre = !!testo && ((m.kFull.length >= 6 && nk.includes(m.kFull)) || (m.kBase.length >= 10 && nk.includes(m.kBase)) ||
+      (m.reUid && m.reUid.test(testo)) || (m.corsi.some(c => corsiAtt.has(c)) && m.kMan.length >= 6 && nk.includes(m.kMan)));
+    // (C): vale anche se è scritta nella descrizione di un collettivo o di un individuale
+    const nelleDescrizioni = m.lettera === 'C' && !!descrizioni && m.kBase.length >= 10 && nd.includes(m.kBase);
+    if (nelleManovre || nelleDescrizioni) out.add(m);
   });
   return out;
 }
@@ -994,7 +1006,7 @@ function elaboraReg(reg, pianoIdx) {
     a.corsiTip = new Set(a.corsi);   // corsi dalla sola tipologia (per il libretto)
     // Interventi: categorie accorpate ("SAF (...), TAS (...)") divise una per una
     a.cats = tipo === 'intervento' ? splitCategorie(a.catInt).map(infoCategoria) : [];
-    a.manovre = trovaManovre(a.manovreTxt, a.corsi);
+    a.manovre = trovaManovre(a.manovreTxt, a.corsi, [a.descr, a.piano && a.piano.descr].filter(Boolean).join('\n'));
     // una manovra riconosciuta collega l'attività al suo corso solo se la sigla è di un corso solo
     if (!a.corsi.size) a.manovre.forEach(m => { if (m.corsi.length === 1 && tipo !== 'intervento') a.corsi.add(m.corsi[0]); });
     if (!a.corsi.size && tipo !== 'intervento') a.categoria = trovaCategoria(a.tipologia);
@@ -1878,7 +1890,7 @@ function diagnostica() {
     Piano: ${diag.piano?.righe} righe · ${diag.piano?.validi} validi · ${diag.piano?.duplicati} duplicati · colonne: ${Object.entries(colPiano).map(([k, v]) => `${k}=<code>${esc(Array.isArray(v) ? v.join(' + ') : v)}</code>`).join(' ')}<br>
     Elenco_Filtrato: ${diag.elenco?.righe} righe · ${diag.elenco?.persone} persone${diag.elenco?.errore ? ' · <b>' + esc(diag.elenco.errore) + '</b>' : ''} · colonne: ${Object.entries(colElenco).map(([k, v]) => `${k}=<code>${v >= 0 ? lettera(v) : '—'}</code>`).join(' ')}${diag.elenco?.corsiNonTrovati?.length ? '<br>Corsi in possesso non trovati in Formazione: <code>' + esc(diag.elenco.corsiNonTrovati.join(' · ')) + '</code>' : ''}<br>
     Formazione: intestazioni in riga ${diag.formazione?.intestazioni} · ${diag.formazione?.corsi} corsi<br>
-    Manovre_PREVISTE: ${diag.manovre?.righe} manovre · ${diag.manovre?.senzaCorso} con "Associazione Corso" non trovata in Formazione
+    Manovre_PREVISTE: ${diag.manovre?.righe} manovre considerate · ${diag.manovre?.escluse} escluse (N) · ${diag.manovre?.senzaCorso} con "Associazione Corso" non trovata in Formazione
   </div>`;
 }
 
