@@ -68,7 +68,7 @@
     }
     #filters select:focus { outline: none; border-color: var(--arancio); }
     #ente-select { min-width: 230px; }
-    #settore-select { min-width: 250px; }
+    #tip-select { min-width: 300px; }
     #anno-select { font-weight: bold; }
     .seg { display: inline-flex; border: 1px solid var(--arancio); border-radius: 4px; overflow: hidden; }
     .seg button {
@@ -194,6 +194,8 @@
     .dlg-btn button.primario { background: var(--arancio); color: #fff; }
     .dlg-btn button:disabled { opacity: .45; cursor: default; }
 
+    .logo { display: inline-block; width: 20px; height: 20px; vertical-align: middle; margin: -3px 6px -2px 0; }
+    .logo svg { width: 100%; height: 100%; display: block; }
     .print-only { display: none; }
 
     /* ---------- STAMPA ---------- */
@@ -237,7 +239,7 @@
 <header id="page-header">
   <div>
     <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
-    <h2>Report collettivo di settore: <b id="periodo-label">—</b></h2>
+    <h2>Report collettivo per tipologia: <b id="periodo-label">—</b></h2>
     <div id="meta-info">Dati caricati: <span id="last-update">—</span></div>
   </div>
   <div id="nav-buttons">
@@ -255,11 +257,11 @@
     <button type="button" data-tipo="comando" class="on">Comando</button><button type="button" data-tipo="direzione">Direzione</button>
   </span>
   <select id="ente-select" aria-label="Comando o Direzione" disabled><option>Caricamento…</option></select>
-  <label class="lbl" for="settore-select">Settore</label>
-  <select id="settore-select" aria-label="Settore" disabled></select>
+  <label class="lbl" for="tip-select">Tipologia</label>
+  <select id="tip-select" aria-label="Tipologia (corso)" disabled></select>
   <label class="lbl" for="anno-select">Anno</label>
   <select id="anno-select" aria-label="Anno di riferimento"></select>
-  <label class="chk-f" title="Mostra anche chi non ha corsi né attività nel settore"><input type="checkbox" id="tutti-chk"> Tutto il personale</label>
+  <label class="chk-f" title="Mostra anche chi non ha il corso né attività di questa tipologia"><input type="checkbox" id="tutti-chk"> Tutto il personale</label>
   <span class="azioni">
     <button id="print-btn" type="button" disabled>🖨 Stampa</button>
     <button id="pdf-btn" type="button" disabled>⬇ PDF</button>
@@ -971,9 +973,11 @@ function svgPng(svg, px = 96) {
 const RESP_FOGLIO = 'RESPONSABILI_COMANDO';
 const RESP_RANGE  = 'A30:DW88';
 const gvizUrl = (foglio, range) => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=0&sheet=${encodeURIComponent(foglio)}&range=${range}`;
-// Categorie di Formazione che non sono settori
+// Categorie di Formazione che non sono settori (le loro tipologie non hanno report)
 const NON_SETTORI = /^(varie|pianodisicurezzamancante)/;
-const SETTORE_PREDEFINITO = 'SAF (Speleo Alpino Fluviale)';
+const TIPOLOGIA_PREDEFINITA = 'SAF (Speleo Alpino Fluviale) BASICO';
+// Interventi del settore contati nelle ore svolte (come nel Totale Categoria del libretto)
+const INTERVENTI_NEL_TOTALE = true;
 // Soglia "quasi": ore svolte almeno al 75% delle richieste
 const SOGLIA_QUASI = 0.75;
 
@@ -1008,14 +1012,14 @@ Object.entries(ORGANIGRAMMA).forEach(([dir, comandi]) => {
 const direzioneDi = k => DIREZIONE_DI.get(k) || (k.startsWith('direzione') ? NOME_ENTE.get(k) || '' : '');
 const comandiDi = dir => [...DIREZIONE_DI.entries()].filter(([, d]) => comandoKey(d) === comandoKey(dir)).map(([k]) => k);
 
-// Stati del personale abilitato
+// Stati del personale con il corso
 const STATI = {
   ok:    { t: 'Idoneo',                 c: '#66bb6a', o: 1 },
   man:   { t: 'Verificare manovre',     c: '#fdd835', o: 2 },
   quasi: { t: 'Almeno 75% delle ore',   c: '#ffa726', o: 3 },
   ko:    { t: 'Non idoneo',             c: '#ef5350', o: 4 },
   nd:    { t: 'Nessun minimo',          c: '#9e9e9e', o: 5 },
-  na:    { t: 'Non abilitato',          c: '#616161', o: 6 }
+  na:    { t: 'Senza corso',            c: '#616161', o: 6 }
 };
 const ORDINE_STATI = ['ok', 'man', 'quasi', 'ko', 'nd'];
 
@@ -1066,57 +1070,64 @@ function responsabiliDi(tipo, k, settore) {
 }
 const elencoNomi = l => l.length ? l.map(senzaCf).map(esc).join(', ') : '<span class="manca">non indicato</span>';
 
-/* ---------------- calcolo per persona ---------------- */
+
+/* ---------------- calcolo per persona, per Tipologia (corso) ---------------- */
+// "SAF (Speleo Alpino Fluviale) BASICO" → "BASICO"; "SFA (Soccorritore …)" → "SFA"
 const SIGLA_BREVE = c => {
   let t = c.tipologia;
   if (normKey(t).startsWith(normKey(c.categoria)) && normKey(t) !== normKey(c.categoria)) t = t.slice(c.categoria.length);
   t = t.replace(/\(.*?\)/g, ' ').replace(/\s+/g, ' ').trim();
   return t || c.sigla || c.tipologia;
 };
-function schedaPersona(p, settore, y) {
-  const corsi = riepilogoCorsi(p, y);
-  const st = riepilogoSettori(p.att, corsi, y).find(x => x.nome === settore);
-  const vuota = { p, st: null, abil: [], poss: [], abilitato: false, attivo: false, stato: 'na', coll: 0, ind: 0, int: 0, nInt: 0, tot: 0, minTot: 0, oreColl: 0, collMin: 0, fatte: 0, prev: 0, pct: 0, dal: y };
-  if (!st) return vuota;
-  const abil = st.righe.filter(r => r.possesso && (!DI_TUTTI.includes(r.c) || r.c.oreMin > 0));
-  const conManovre = st.req.length ? st.req : abil;
-  const prev = conManovre.reduce((t, r) => t + r.c.previste.length, 0);
-  const fatte = conManovre.reduce((t, r) => t + r.fatte.size, 0);
+// Tipologie con report: corsi di Formazione dei settori, senza quelli contati come un altro (SAF1A)
+const tipologieReport = () => CORSI.filter(c => !NON_SETTORI.test(normKey(c.categoria)) && !EQUIVALENTE.has(c)).sort((a, b) => a.ordine - b.ordine);
+const corsoScelto = () => CORSI.find(c => c.id === state.corso) || null;
+
+function schedaPersona(p, c, y) {
+  const r = riepilogoCorsi(p, y).find(x => x.c === c);
+  const cat = c.categoria;
+  // interventi del settore nell'anno (gli interventi non hanno tipologia)
+  const intv = p.att.filter(a => a.tipo === 'intervento' && a.anno === y && a.cats.some(i => i.label === cat));
+  const oreInt = intv.reduce((t, a) => t + (a.ore || 0), 0);
+  const con = p.corsiPossesso.has(c);
+  const altri = [...p.corsiPossesso].filter(x => x !== c && x.categoria === cat && !(DI_TUTTI.includes(x) && !x.oreMin)).sort((a, b) => a.ordine - b.ordine);
+  const ore = r ? r.ore : 0, oreColl = r ? r.oreColl : 0;
+  const tot = ore + (INTERVENTI_NEL_TOTALE ? oreInt : 0);
   const s = {
-    p, st, abil, poss: st.righe.filter(r => r.possesso), abilitato: abil.length > 0, attivo: st.add.length + st.int.length > 0,
-    coll: st.oreColl, ind: st.oreAdd - st.oreColl, int: st.oreInt, nInt: st.int.length, nAdd: st.add.length,
-    tot: st.tot, minTot: st.minTot, oreColl: st.oreColl, collMin: st.collMinTot, fatte, prev, dal: st.dal,
-    pct: st.minTot ? st.tot / st.minTot : 0
+    p, c, r, con, altri, attivo: !!(r && r.nAtt > 0),
+    coll: oreColl, ind: ore - oreColl, int: oreInt, nInt: intv.length, nAtt: r ? r.nAtt : 0,
+    tot, minTot: con && c.oreMin ? c.oreMin : 0, oreColl, collMin: con && c.oreMin && c.collPct ? c.oreMin * c.collPct : 0,
+    fatte: r ? r.fatte.size : 0, prev: c.previste.length, dal: y - c.anniPrima
   };
-  if (!s.abilitato) s.stato = 'na';
-  else if (!st.minTot) s.stato = 'nd';
-  else if (st.stato === 'ok') s.stato = prev && fatte < prev ? 'man' : 'ok';
-  else s.stato = st.tot >= st.minTot * SOGLIA_QUASI - 1e-6 ? 'quasi' : 'ko';
+  s.pct = s.minTot ? s.tot / s.minTot : 0;
+  if (!con) s.stato = 'na';
+  else if (!s.minTot) s.stato = 'nd';
+  else if (s.tot >= s.minTot - 1e-6 && oreColl >= s.collMin - 1e-6) s.stato = s.prev && s.fatte < s.prev ? 'man' : 'ok';
+  else s.stato = s.tot >= s.minTot * SOGLIA_QUASI - 1e-6 ? 'quasi' : 'ko';
   return s;
 }
 
-// Personale di un Comando (o della Direzione come ente), diviso in gruppi
-function personaleEnte(k, settore, y, tutti) {
-  const schede = (PER_ENTE.get(k) || []).map(p => schedaPersona(p, settore, y));
+// Personale di un Comando (o della Direzione come ente): con il corso / senza corso
+function personaleEnte(k, c, y, tutti) {
+  const schede = (PER_ENTE.get(k) || []).map(p => schedaPersona(p, c, y));
   const ord = (a, b) => a.p.nome.localeCompare(b.p.nome, 'it');
-  const abil = schede.filter(s => s.abilitato).sort(ord);
-  const non = schede.filter(s => !s.abilitato && s.attivo).sort(ord);
-  const altri = tutti ? schede.filter(s => !s.abilitato && !s.attivo).sort(ord) : [];
-  const conta = Object.fromEntries(Object.keys(STATI).map(x => [x, abil.filter(s => s.stato === x).length]));
-  const somma = l => ({ coll: l.reduce((t, s) => t + s.coll, 0), ind: l.reduce((t, s) => t + s.ind, 0), int: l.reduce((t, s) => t + s.int, 0), tot: l.reduce((t, s) => t + s.tot, 0) });
-  return { k, nome: NOME_ENTE.get(k) || k, abil, non, altri, conta, totale: schede.length, ore: somma([...abil, ...non]), collettivi: collettiviOrganizzati(k, settore, y), collPrec: collettiviOrganizzati(k, settore, y - 1) };
+  const con = schede.filter(s => s.con).sort(ord);
+  const senza = schede.filter(s => !s.con && s.attivo).sort(ord);
+  const altri = tutti ? schede.filter(s => !s.con && !s.attivo).sort(ord) : [];
+  const conta = Object.fromEntries(Object.keys(STATI).map(x => [x, con.filter(s => s.stato === x).length]));
+  const l = [...con, ...senza];
+  const ore = { coll: l.reduce((t, s) => t + s.coll, 0), ind: l.reduce((t, s) => t + s.ind, 0), int: l.reduce((t, s) => t + s.int, 0), tot: l.reduce((t, s) => t + s.tot, 0) };
+  return { k, nome: NOME_ENTE.get(k) || k, con, senza, altri, conta, totale: schede.length, ore,
+    collettivi: collettiviOrganizzati(k, c, y), collPrec: collettiviOrganizzati(k, c, y - 1) };
 }
-// Addestramenti collettivi del settore organizzati dall'ente (Piani di Sicurezza)
-function collettiviOrganizzati(k, settore, y) {
-  const l = PIANI.filter(p => p.data.getFullYear() === y && p.comandoKey === k && settorePiano(p) === settore);
+// Addestramenti collettivi della tipologia organizzati dall'ente (Piani di Sicurezza)
+function collettiviOrganizzati(k, c, y) {
+  const l = PIANI.filter(p => p.data.getFullYear() === y && p.comandoKey === k && corsiPiano(p).has(c));
   return { n: l.length, ore: l.reduce((t, p) => t + (p.ore || 0), 0) };
 }
-function settorePiano(p) {
-  if (p.settore === undefined) {
-    const c = [...trovaCorsi(p.tipologia)][0];
-    p.settore = c ? c.categoria : (trovaCategoria(p.tipologia) || '');
-  }
-  return p.settore;
+function corsiPiano(p) {
+  if (!p.corsi) p.corsi = trovaCorsi(p.tipologia);
+  return p.corsi;
 }
 
 /* =====================================================================
@@ -1124,7 +1135,7 @@ function settorePiano(p) {
    ===================================================================== */
 const refreshBtn = document.getElementById('refresh-btn');
 const enteSelect = document.getElementById('ente-select');
-const settoreSelect = document.getElementById('settore-select');
+const tipSelect = document.getElementById('tip-select');
 const annoSelect = document.getElementById('anno-select');
 const tuttiChk = document.getElementById('tutti-chk');
 const printBtn = document.getElementById('print-btn');
@@ -1135,7 +1146,8 @@ let loading = false, caricato = false;
 const state = {
   tipo: URLP.get('tipo') === 'direzione' ? 'direzione' : 'comando',
   ente: URLP.get('ente') ? comandoKey(URLP.get('ente')) : '',
-  settore: URLP.get('settore') || '',
+  tipologiaUrl: URLP.get('tipologia') || '',
+  corso: null,
   anno: parseInt(URLP.get('anno'), 10) || ANNO_OGGI,
   tutti: URLP.has('tutti')
 };
@@ -1156,6 +1168,7 @@ async function caricaDati() {
   loading = true;
   refreshBtn.disabled = true;
   refreshBtn.textContent = '⟳ Caricamento…';
+  const nomeCorso = corsoScelto() ? corsoScelto().tipologia : state.tipologiaUrl;
   if (!caricato) report.innerHTML = '<div class="msg">Caricamento dati…</div>';
   try {
     const [reg, piano, manovre, formazione, elenco, respRows] = await Promise.all([
@@ -1172,6 +1185,7 @@ async function caricaDati() {
     PERSONE.forEach(p => { const k = comandoKey(p.comando); if (k) push(PER_ENTE, k, p); });
     PER_ENTE.forEach((l, k) => { if (!NOME_ENTE.has(k)) NOME_ENTE.set(k, l[0].comando); });
     caricato = true;
+    state.tipologiaUrl = nomeCorso;
     document.getElementById('last-update').textContent = new Date().toLocaleString('it-IT');
     preparaFiltri();
     disegna();
@@ -1187,13 +1201,20 @@ async function caricaDati() {
 }
 
 function preparaFiltri() {
-  // Settori = Categorie di Formazione
-  const settori = CATEGORIE.filter(c => !NON_SETTORI.test(normKey(c)));
-  if (!settori.includes(state.settore)) {
-    state.settore = settori.find(s => normKey(s) === normKey(state.settore)) || (state.settore && settori.find(s => normKey(s).startsWith(normKey(state.settore)))) || settori.find(s => s === SETTORE_PREDEFINITO) || settori[0] || '';
-  }
-  settoreSelect.innerHTML = settori.map(s => `<option value="${esc(s)}"${s === state.settore ? ' selected' : ''}>${esc(s)}</option>`).join('');
-  settoreSelect.disabled = false;
+  // Tipologie (corsi di Formazione), raggruppate per Settore
+  const tip = tipologieReport();
+  const cerca = t => {
+    const k = normKey(t);
+    if (!k) return null;
+    return tip.find(c => normKey(c.tipologia) === k) || tip.find(c => normKey(c.sigla) === k) || tip.find(c => normKey(c.tipologia).includes(k)) || null;
+  };
+  const scelto = cerca(state.tipologiaUrl) || cerca(TIPOLOGIA_PREDEFINITA) || tip[0];
+  state.corso = scelto ? scelto.id : null;
+  const gruppi = new Map();
+  tip.forEach(c => push(gruppi, c.categoria, c));
+  tipSelect.innerHTML = [...gruppi.entries()].map(([cat, l]) => `<optgroup label="${esc(cat)}">` +
+    l.map(c => `<option value="${c.id}"${c.id === state.corso ? ' selected' : ''}>${esc(c.tipologia)}${c.oreMin ? ` · ${fmtHM(c.oreMin)} h` : ''}</option>`).join('') + '</optgroup>').join('');
+  tipSelect.disabled = false;
   preparaEnti();
   preparaAnni();
 }
@@ -1205,9 +1226,9 @@ function preparaEnti() {
   if (state.tipo === 'direzione') {
     const dirs = [...new Set([...Object.keys(ORGANIGRAMMA), ...[...DIREZIONE_DI.values()]])].sort((a, b) => a.localeCompare(b, 'it'));
     if (state.ente && !state.ente.startsWith('direzione')) state.ente = comandoKey(direzioneDi(state.ente) || '');
-    html = dirs.map(d => {
+    html = `<option value="">— scegli la Direzione —</option>` + dirs.map(d => {
       const k = comandoKey(d), n = nPers(k) + comandiDi(d).reduce((t, c) => t + nPers(c), 0);
-      return `<option value="${k}"${k === state.ente ? ' selected' : ''}${n ? '' : ' class="vuota"'}>${esc(d)} (${n})</option>`;
+      return `<option value="${k}"${k === state.ente ? ' selected' : ''}>${esc(d)} (${n})</option>`;
     }).join('');
   } else {
     // Comandi raggruppati per Direzione; anche la Direzione come ente (il suo personale)
@@ -1220,7 +1241,6 @@ function preparaEnti() {
       `<optgroup label="${esc(dir)}">` + ks.sort((a, b) => (a.startsWith('direzione') ? -1 : 0) - (b.startsWith('direzione') ? -1 : 0) || (NOME_ENTE.get(a) || a).localeCompare(NOME_ENTE.get(b) || b, 'it')).map(k =>
         `<option value="${k}"${k === state.ente ? ' selected' : ''}>${esc(NOME_ENTE.get(k) || k)} (${nPers(k)})</option>`).join('') + '</optgroup>').join('');
   }
-  if (state.tipo === 'direzione' && !state.ente) html = `<option value="">— scegli la Direzione —</option>` + html;
   enteSelect.innerHTML = html;
   enteSelect.value = state.ente;
   enteSelect.disabled = false;
@@ -1235,10 +1255,10 @@ function preparaAnni() {
 }
 
 function aggiornaUrl() {
-  const q = new URLSearchParams();
+  const q = new URLSearchParams(), c = corsoScelto();
   if (state.tipo === 'direzione') q.set('tipo', 'direzione');
   if (state.ente) q.set('ente', NOME_ENTE.get(state.ente) || state.ente);
-  if (state.settore) q.set('settore', state.settore);
+  if (c) q.set('tipologia', c.tipologia);
   if (state.anno !== ANNO_OGGI) q.set('anno', state.anno);
   if (state.tutti) q.set('tutti', '1');
   if (DEBUG) q.set('debug', '1');
@@ -1252,7 +1272,7 @@ document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click'
   if (caricato) { preparaEnti(); disegna(); }
 }));
 enteSelect.addEventListener('change', () => { state.ente = enteSelect.value; disegna(); document.getElementById('content').scrollTop = 0; });
-settoreSelect.addEventListener('change', () => { state.settore = settoreSelect.value; disegna(); });
+tipSelect.addEventListener('change', () => { state.corso = +tipSelect.value; disegna(); });
 annoSelect.addEventListener('change', () => { state.anno = +annoSelect.value; disegna(); });
 tuttiChk.addEventListener('change', () => { state.tutti = tuttiChk.checked; disegna(); });
 refreshBtn.addEventListener('click', caricaDati);
@@ -1268,34 +1288,33 @@ function statoHtml(s) {
 }
 const fmtOre = h => h ? fmtHM(h) : '—';
 const linkIndividuale = (p, y) => `reportindividuale.html?nome=${encodeURIComponent(p.etichetta || p.nome)}&anno=${y}`;
+const periodoDi = (c, y) => c.anniPrima ? `${y - c.anniPrima}–${y}` : String(y);
 
 function rigaPersona(s, i, y) {
   const p = s.p, col = STATI[s.stato].c;
-  const corsi = s.poss.map(r => s.abil.includes(r) ? esc(SIGLA_BREVE(r.c)) : `<span class="sub-n" style="display:inline">${esc(SIGLA_BREVE(r.c))}</span>`).join(', ');
-  const periodo = s.st && s.st.anniPrima ? `<span class="sub-n">${s.dal}–${y}</span>` : '';
   const pct = s.minTot ? Math.min(100, s.pct * 100) : 0;
   return `<tr class="persona" style="--sc:${col}">
     <td class="c">${i}</td>
     <td class="nome"><a href="${linkIndividuale(p, y)}" target="_blank" rel="noopener" title="Apri il report individuale">${esc(p.nome)}</a>${p.key.startsWith('cf:') ? `<span class="cf">${esc(p.key.slice(3))}</span>` : ''}</td>
     <td class="c">${esc(p.qualifica || '')}</td>
-    <td>${corsi || '<span class="sub-n">—</span>'}</td>
+    <td>${s.altri.length ? esc(s.altri.map(SIGLA_BREVE).join(', ')) : '<span class="sub-n">—</span>'}</td>
     <td class="n">${fmtOre(s.coll)}</td>
     <td class="n">${fmtOre(s.ind)}</td>
     <td class="n">${fmtOre(s.int)}${s.nInt ? `<span class="sub-n">${s.nInt} interv.</span>` : ''}</td>
-    <td class="n"><b>${fmtOre(s.tot)}</b>${s.minTot ? ` / ${fmtHM(s.minTot)}<div class="bar"><i style="width:${pct}%"></i></div>` : ''}${periodo}</td>
+    <td class="n"><b>${fmtOre(s.tot)}</b>${s.minTot ? ` / ${fmtHM(s.minTot)}<div class="bar"><i style="width:${pct}%"></i></div>` : ''}</td>
     <td class="n">${s.collMin ? `${fmtOre(s.oreColl)} / ${fmtHM(s.collMin)}` : '—'}</td>
     <td class="c">${s.prev ? `<b class="${s.fatte >= s.prev ? 'ok-t' : ''}">${s.fatte}</b> / ${s.prev}` : '—'}</td>
     <td>${statoHtml(s)}</td>
   </tr>`;
 }
-const TESTA_TABELLA = `<thead><tr><th>#</th><th>Nominativo</th><th>Qualifica</th><th>Corsi del settore</th><th>Collettivi</th><th>Individuali</th><th>Interventi</th><th>Ore svolte / richieste</th><th>di cui collettive</th><th>Manovre</th><th>Stato</th></tr></thead>`;
+const TESTA_TABELLA = `<thead><tr><th>#</th><th>Nominativo</th><th>Qualifica</th><th>Altri corsi del settore</th><th>Collettivi</th><th>Individuali</th><th>Interventi del settore</th><th>Ore svolte / richieste</th><th>di cui collettive</th><th>Manovre previste</th><th>Stato</th></tr></thead>`;
 const GRUPPI = [
-  ['abil', 'Personale abilitato', 'con almeno un corso del settore in possesso'],
-  ['non', 'Personale non abilitato con attività nel settore', 'nessun corso del settore in Elenco_Filtrato, oltre a quelli che hanno tutti'],
-  ['altri', 'Altro personale', 'nessun corso e nessuna attività nel settore']
+  ['con', 'Personale con corso', 'il corso è tra quelli in possesso in Elenco_Filtrato'],
+  ['senza', 'Personale senza corso', 'con attività di questa tipologia nel periodo'],
+  ['altri', 'Altro personale senza corso', 'nessuna attività di questa tipologia']
 ];
-function tabellaPersonale(E, y, settore) {
-  const cc = coloreCategoria(settore);
+function tabellaPersonale(E, y, c) {
+  const cc = coloreCategoria(c.categoria);
   let h = `<div class="table-scroll"><table class="pers">${TESTA_TABELLA}<tbody>`, i = 0;
   GRUPPI.forEach(([k, titolo, nota]) => {
     const l = E[k];
@@ -1303,61 +1322,64 @@ function tabellaPersonale(E, y, settore) {
     h += `<tr class="grp" style="--cc:${cc}"><td colspan="11">${titolo} · ${l.length} <span>· ${nota}</span></td></tr>`;
     l.forEach(s => { h += rigaPersona(s, ++i, y); });
   });
-  if (!i) h += `<tr><td colspan="11" class="vuoto">Nessun nominativo con corsi o attività nel settore.${E.totale ? ` ${E.totale} persone del ${esc(E.nome)} in PUMA: spunta «Tutto il personale» per vederle.` : ''}</td></tr>`;
+  if (!i) h += `<tr><td colspan="11" class="vuoto">Nessuno con il corso o con attività di questa tipologia.${E.totale ? ` ${E.totale} persone del ${esc(E.nome)} in PUMA: spunta «Tutto il personale» per vederle.` : ''}</td></tr>`;
   else {
     const o = E.ore;
-    h += `<tr class="tot"><td colspan="4" style="text-align:right">Totale ore nel settore (abilitati e non)</td><td class="n">${fmtHM(o.coll)}</td><td class="n">${fmtHM(o.ind)}</td><td class="n">${fmtHM(o.int)}</td><td class="n">${fmtHM(o.tot)}</td><td colspan="3"></td></tr>`;
+    h += `<tr class="tot"><td colspan="4" style="text-align:right">Totale ore (con e senza corso)</td><td class="n">${fmtHM(o.coll)}</td><td class="n">${fmtHM(o.ind)}</td><td class="n">${fmtHM(o.int)}</td><td class="n">${fmtHM(o.tot)}</td><td colspan="3"></td></tr>`;
   }
   return h + '</tbody></table></div>';
 }
 function legendaHtml() {
-  return `<div class="legenda">${ORDINE_STATI.map(k => `<span>${pallino(k)}${STATI[k].t}</span>`).join('')}</div>`;
+  return `<div class="legenda">${[...ORDINE_STATI, 'na'].map(k => `<span>${pallino(k)}${STATI[k].t}</span>`).join('')}</div>`;
 }
-function tessere(conta, nAbil, coll, collPrec, y, extra) {
-  const pc = n => nAbil ? ` <small>· ${Math.round(n / nAbil * 100)}%</small>` : '';
+function tessere(conta, nCon, nSenza, coll, collPrec, y) {
+  const pc = n => nCon ? ` <small>· ${Math.round(n / nCon * 100)}%</small>` : '';
   return `<div class="tiles">
-    <div class="tile" style="--tc:#ef6c00"><div class="k">Personale abilitato</div><div class="v">${nAbil}</div><div class="p">${extra || ''}</div></div>
+    <div class="tile" style="--tc:#ef6c00"><div class="k">Personale con corso</div><div class="v">${nCon}</div><div class="p">${nSenza ? `+ ${nSenza} senza corso con attività` : 'nessuno senza corso con attività'}</div></div>
     ${ORDINE_STATI.slice(0, 4).map(k => `<div class="tile" style="--tc:${STATI[k].c}"><div class="k">${pallino(k)}${STATI[k].t}</div><div class="v">${conta[k]}${pc(conta[k])}</div></div>`).join('')}
-    <div class="tile" style="--tc:#4fc3f7"><div class="k">Collettivi organizzati nel settore</div><div class="v">${coll.n} <small>· ${fmtH(coll.ore)}</small></div><div class="p">${y - 1}: ${collPrec.n} · ${fmtH(collPrec.ore)}</div></div>
+    <div class="tile" style="--tc:#4fc3f7"><div class="k">Collettivi organizzati</div><div class="v">${coll.n} <small>· ${fmtH(coll.ore)}</small></div><div class="p">${y - 1}: ${collPrec.n} · ${fmtH(collPrec.ore)}</div></div>
   </div>`;
 }
-function testaStampa(titoloEnte, settore, y, firme) {
+function testaStampa(titoloEnte, c, y, firme) {
   const ora = new Date(), due = n => String(n).padStart(2, '0');
   const luogo = titoloEnte.replace(/^(comando|direzione)\s+(regionale\s+)?/i, '');
   return `<div class="print-only p-testa">
     <img src="${EMBLEMA_URL}" alt="">
-    <div class="e">VIGILI DEL FUOCO<br>${esc(titoloEnte.toUpperCase())}<br>REPORT COLLETTIVO DI SETTORE<br>${esc(settore)}</div>
-    <table><tr><td class="k">Anno</td><td><b>${y}</b></td>${firme[0] ? `<td class="k">${esc(firme[0][0])}</td><td class="firma">${esc(firme[0][1])}</td>` : '<td></td><td></td>'}</tr>
+    <div class="e">VIGILI DEL FUOCO<br>${esc(titoloEnte.toUpperCase())}<br>REPORT COLLETTIVO<br>${esc(c.tipologia)}</div>
+    <table><tr><td class="k">Anno</td><td><b>${y}</b>${c.anniPrima ? ` (ore ${periodoDi(c, y)})` : ''}</td>${firme[0] ? `<td class="k">${esc(firme[0][0])}</td><td class="firma">${esc(firme[0][1])}</td>` : '<td></td><td></td>'}</tr>
       <tr><td class="k">Luogo e Data</td><td>${esc(luogo)}, ${due(ora.getDate())}/${due(ora.getMonth() + 1)}/${ora.getFullYear()} ${due(ora.getHours())}.${due(ora.getMinutes())}</td>${firme[1] ? `<td class="k">${esc(firme[1][0])}</td><td class="firma">${esc(firme[1][1])}</td>` : '<td></td><td></td>'}</tr></table>
   </div>`;
 }
-function noteHtml(settore, y) {
-  const corsi = CORSI.filter(c => c.categoria === settore && c.oreMin);
+function requisitoTxt(c, y) {
+  if (!c.oreMin) return 'nessun minimo di ore';
+  return `${fmtHM(c.oreMin)} h${c.anniPrima ? ` in ${c.anniPrima + 1} anni (${periodoDi(c, y)})` : ` nel ${y}`}${c.collPct ? `, di cui ${Math.round(c.collPct * 100)}% collettive` : ''}${c.previste.length ? ` · ${c.previste.length} manovre previste` : ''}`;
+}
+function noteHtml(c, y) {
   return `<div class="note-box solo-schermo"><b>Come si calcola</b><ul>
-    <li>Ore svolte = addestramenti collettivi + individuali + interventi del settore, come nel Libretto individuale; ogni corso conta nel suo periodo (Delta anni).</li>
-    <li>Ore richieste = somma delle Ore Minime dei corsi del settore in possesso${corsi.length ? ': ' + corsi.map(c => `${esc(SIGLA_BREVE(c))} ${fmtHM(c.oreMin)}${c.collPct ? ` (${Math.round(c.collPct * 100)}% collettive)` : ''}${c.anniPrima ? ` in ${c.anniPrima + 1} anni` : ''}`).join(' · ') : ''}.</li>
+    <li>Requisito di ${esc(c.tipologia)}: ${requisitoTxt(c, y)}.</li>
+    <li>Ore svolte = addestramenti collettivi e individuali di questa tipologia nel periodo${INTERVENTI_NEL_TOTALE ? ` + interventi del settore ${esc(c.categoria)} nell'anno` : ''}. Gli interventi non hanno una tipologia: si contano per settore, come nel Libretto.</li>
     <li><b style="color:${STATI.ok.c}">Idoneo</b>: ore e quota collettive raggiunte e tutte le manovre previste svolte · <b style="color:${STATI.man.c}">Verificare manovre</b>: ore raggiunte ma mancano manovre previste · <b style="color:${STATI.quasi.c}">Almeno 75%</b>: ore svolte tra il 75% e il 100% del richiesto (o manca la quota collettive) · <b style="color:${STATI.ko.c}">Non idoneo</b>: meno del 75%.</li>
-    <li>Il Comando di ognuno è quello di appartenenza in Elenco_Filtrato. Clic su un nominativo per il suo report individuale.</li>
+    <li>Con corso = il corso è tra quelli in possesso in Elenco_Filtrato${DI_TUTTI.includes(c) ? ' (questa tipologia la hanno tutti)' : ''}. Il Comando di ognuno è quello di appartenenza. Clic su un nominativo per il suo report individuale.</li>
   </ul></div>`;
 }
 
 function disegna() {
   if (!caricato) return;
   aggiornaUrl();
-  const y = state.anno, settore = state.settore, k = state.ente;
+  const y = state.anno, c = corsoScelto(), k = state.ente;
   const nomeEnte = NOME_ENTE.get(k) || '';
-  document.getElementById('periodo-label').textContent = k ? `${nomeEnte} · ${settore} · ${y}` : `${settore} · ${y}`;
-  document.title = k ? `P.U.M.A. - Report collettivo ${nomeEnte} ${y}` : 'P.U.M.A. - Report collettivo';
+  document.getElementById('periodo-label').textContent = [k ? nomeEnte : '', c ? c.tipologia : '', y].filter(Boolean).join(' · ');
+  document.title = k ? `P.U.M.A. - Report collettivo ${nomeEnte} ${c ? SIGLA_BREVE(c) : ''} ${y}` : 'P.U.M.A. - Report collettivo';
   ULTIMO = null;
-  [printBtn, pdfBtn, mailBtn].forEach(b => { b.disabled = !k; });
+  [printBtn, pdfBtn, mailBtn].forEach(b => { b.disabled = !k || !c; });
   let html = DEBUG ? diagnostica() : '';
-  if (!k) {
-    report.innerHTML = html + `<div class="msg">Scegli ${state.tipo === 'direzione' ? 'la Direzione' : 'il Comando'}, il settore e l'anno
-      <small>${PERSONE.size.toLocaleString('it-IT')} persone in PUMA · ${state.tipo === 'direzione' ? 'il report della Direzione raggruppa tutto il personale dei suoi Comandi, Comando per Comando' : 'il report del Comando elenca il suo personale con le ore e lo stato dei requisiti del settore'}</small></div>`;
+  if (!k || !c) {
+    report.innerHTML = html + `<div class="msg">Scegli ${state.tipo === 'direzione' ? 'la Direzione' : 'il Comando'}, la tipologia e l'anno
+      <small>${PERSONE.size.toLocaleString('it-IT')} persone in PUMA · ${state.tipo === 'direzione' ? 'il report della Direzione raggruppa tutto il personale dei suoi Comandi, Comando per Comando' : 'il report del Comando elenca il suo personale con e senza il corso, con le ore e lo stato del requisito'}</small></div>`;
     return;
   }
-  if (state.tipo === 'comando') html += disegnaComando(k, settore, y);
-  else html += disegnaDirezione(k, settore, y);
+  if (state.tipo === 'comando') html += disegnaComando(k, c, y);
+  else html += disegnaDirezione(k, c, y);
   report.innerHTML = html;
   report.querySelectorAll('table.riep tr[data-k]').forEach(tr => tr.addEventListener('click', () => {
     const el = document.getElementById('sez-' + tr.dataset.k);
@@ -1365,73 +1387,76 @@ function disegna() {
   }));
 }
 
-function disegnaComando(k, settore, y) {
-  const E = personaleEnte(k, settore, y, state.tutti);
-  const R = responsabiliDi('comando', k, settore);
-  const dir = direzioneDi(k);
-  ULTIMO = { tipo: 'comando', k, nome: E.nome, settore, y, enti: [E], R, dir };
-  const firme = [['Visto del ROP', R.rop.map(senzaCf).join(', ')], ['Visto del ROR', R.ror.map(senzaCf).join(', ')]];
-  let h = testaStampa(E.nome, settore, y, firme);
-  h += `<div class="ente-head"><div>
-      <h3>${esc(E.nome)} <span>· ${esc(settore)}</span></h3>
-      <div class="sub">${dir && !k.startsWith('direzione') ? esc(dir) + ' · ' : ''}${E.totale} persone in PUMA<br>
-        ROP: <b>${elencoNomi(R.rop)}</b> · ROR: <b>${elencoNomi(R.ror)}</b> · Funzionario di settore: <b>${elencoNomi(R.fds)}</b></div>
+function testaEnte(titolo, c, y, righe) {
+  return `<div class="ente-head"><div>
+      <h3>${esc(titolo)} <span>· ${logoHtml(c.tipologia)}${esc(c.tipologia)}</span></h3>
+      <div class="sub">${righe}<br>Requisito: <b>${requisitoTxt(c, y)}</b></div>
     </div><div class="anno-big">Anno di riferimento<b>${y}</b></div></div>`;
-  h += `<div class="solo-schermo">${tessere(E.conta, E.abil.length, E.collettivi, E.collPrec, y, E.non.length ? `+ ${E.non.length} non abilitati con attività` : '')}</div>`;
-  h += `<h4 class="sec">Personale ${y} <span>· clic su un nominativo per il report individuale</span></h4>`;
-  h += legendaHtml() + tabellaPersonale(E, y, settore);
-  return h + noteHtml(settore, y);
 }
 
-function disegnaDirezione(k, settore, y) {
+function disegnaComando(k, c, y) {
+  const E = personaleEnte(k, c, y, state.tutti);
+  const R = responsabiliDi('comando', k, c.categoria);
+  const dir = direzioneDi(k);
+  ULTIMO = { tipo: 'comando', k, nome: E.nome, c, y, enti: [E], R, dir };
+  const firme = [['Visto del ROP', R.rop.map(senzaCf).join(', ')], ['Visto del ROR', R.ror.map(senzaCf).join(', ')]];
+  let h = testaStampa(E.nome, c, y, firme);
+  h += testaEnte(E.nome, c, y, `${dir && !k.startsWith('direzione') ? esc(dir) + ' · ' : ''}Settore ${esc(c.categoria)} · ${E.totale} persone in PUMA<br>
+        ROP: <b>${elencoNomi(R.rop)}</b> · ROR: <b>${elencoNomi(R.ror)}</b> · Funzionario di settore: <b>${elencoNomi(R.fds)}</b>`);
+  h += `<div class="solo-schermo">${tessere(E.conta, E.con.length, E.senza.length, E.collettivi, E.collPrec, y)}</div>`;
+  h += `<h4 class="sec">Personale ${y} <span>· clic su un nominativo per il report individuale</span></h4>`;
+  h += legendaHtml() + tabellaPersonale(E, y, c);
+  return h + noteHtml(c, y);
+}
+
+function disegnaDirezione(k, c, y) {
   const nomeDir = NOME_ENTE.get(k) || k;
   const keys = [k, ...comandiDi(nomeDir).sort((a, b) => (NOME_ENTE.get(a) || a).localeCompare(NOME_ENTE.get(b) || b, 'it'))];
-  const enti = keys.map(c => personaleEnte(c, settore, y, state.tutti));
-  const R = responsabiliDi('direzione', k, settore);
-  ULTIMO = { tipo: 'direzione', k, nome: nomeDir, settore, y, enti, R };
-  const tot = { abil: 0, non: 0, totale: 0, conta: Object.fromEntries(Object.keys(STATI).map(x => [x, 0])), coll: { n: 0, ore: 0 }, collPrec: { n: 0, ore: 0 }, ore: 0 };
+  const enti = keys.map(x => personaleEnte(x, c, y, state.tutti));
+  const R = responsabiliDi('direzione', k, c.categoria);
+  ULTIMO = { tipo: 'direzione', k, nome: nomeDir, c, y, enti, R };
+  const tot = { con: 0, senza: 0, totale: 0, conta: Object.fromEntries(Object.keys(STATI).map(x => [x, 0])), coll: { n: 0, ore: 0 }, collPrec: { n: 0, ore: 0 }, ore: 0 };
   enti.forEach(E => {
-    tot.abil += E.abil.length; tot.non += E.non.length; tot.totale += E.totale; tot.ore += E.ore.tot;
+    tot.con += E.con.length; tot.senza += E.senza.length; tot.totale += E.totale; tot.ore += E.ore.tot;
     Object.keys(STATI).forEach(x => { tot.conta[x] += E.conta[x]; });
     tot.coll.n += E.collettivi.n; tot.coll.ore += E.collettivi.ore; tot.collPrec.n += E.collPrec.n; tot.collPrec.ore += E.collPrec.ore;
   });
+  ULTIMO.tot = tot;
   const firme = [['Visto del ROR', R.ror.map(senzaCf).join(', ')], R.fds.length ? ['Visto del Funzionario di settore', R.fds.map(senzaCf).join(', ')] : null].filter(Boolean);
-  let h = testaStampa(nomeDir, settore, y, firme);
-  h += `<div class="ente-head"><div>
-      <h3>${esc(nomeDir)} <span>· ${esc(settore)}</span></h3>
-      <div class="sub">${keys.length - 1} Comandi · ${tot.totale} persone in PUMA<br>
-        ROR: <b>${elencoNomi(R.ror)}</b>${R.fds.length ? ` · Funzionario di settore: <b>${elencoNomi(R.fds)}</b>` : ''}</div>
-    </div><div class="anno-big">Anno di riferimento<b>${y}</b></div></div>`;
-  h += `<div class="solo-schermo">${tessere(tot.conta, tot.abil, tot.coll, tot.collPrec, y, tot.non ? `+ ${tot.non} non abilitati con attività` : '')}</div>`;
+  let h = testaStampa(nomeDir, c, y, firme);
+  h += testaEnte(nomeDir, c, y, `Settore ${esc(c.categoria)} · ${keys.length - 1} Comandi · ${tot.totale} persone in PUMA<br>
+        ROR: <b>${elencoNomi(R.ror)}</b>${R.fds.length ? ` · Funzionario di settore: <b>${elencoNomi(R.fds)}</b>` : ''}`);
+  h += `<div class="solo-schermo">${tessere(tot.conta, tot.con, tot.senza, tot.coll, tot.collPrec, y)}</div>`;
 
   // Riepilogo Comando per Comando
   h += `<h4 class="sec">Riepilogo per Comando ${y} <span>· clic su una riga per andare al Comando</span></h4>${legendaHtml()}
-    <div class="table-scroll"><table class="riep"><thead><tr><th>Comando</th><th>ROP</th><th>Personale in PUMA</th><th>Abilitati</th>
-    ${ORDINE_STATI.slice(0, 4).map(x => `<th>${pallino(x)}${STATI[x].t}</th>`).join('')}<th>Idonei</th><th>Ore nel settore</th><th>Collettivi organizzati</th></tr></thead><tbody>`;
+    <div class="table-scroll"><table class="riep"><thead><tr><th>Comando</th><th>ROP</th><th>Personale in PUMA</th><th>Con corso</th>
+    ${ORDINE_STATI.slice(0, 4).map(x => `<th>${pallino(x)}${STATI[x].t}</th>`).join('')}<th>Idonei</th><th>Senza corso con attività</th><th>Ore svolte</th><th>Collettivi organizzati</th></tr></thead><tbody>`;
   enti.forEach(E => {
-    const rop = resp('rop', settore, E.k);
-    const n = E.abil.length;
+    const rop = resp('rop', c.categoria, E.k);
+    const n = E.con.length;
     const barre = n ? ORDINE_STATI.map(x => E.conta[x] ? `<i style="width:${E.conta[x] / n * 100}%;background:${STATI[x].c}" title="${STATI[x].t}: ${E.conta[x]}"></i>` : '').join('') : '';
     h += `<tr data-k="${E.k}"><td><b>${esc(E.nome)}</b></td><td>${rop.length ? esc(rop.map(senzaCf).join(', ')) : '<span class="sub-n">—</span>'}</td>
-      <td class="n">${E.totale}</td><td class="n"><b>${n}</b>${E.non.length ? `<span class="sub-n">+ ${E.non.length} non abil.</span>` : ''}</td>
+      <td class="n">${E.totale}</td><td class="n"><b>${n}</b></td>
       ${ORDINE_STATI.slice(0, 4).map(x => `<td class="n">${E.conta[x] || ''}</td>`).join('')}
       <td>${n ? `<div class="mini">${barre}</div><span class="sub-n">${Math.round(E.conta.ok / n * 100)}% idonei</span>` : '<span class="sub-n">—</span>'}</td>
+      <td class="n">${E.senza.length || ''}</td>
       <td class="n">${E.ore.tot ? fmtHM(E.ore.tot) : '—'}</td><td class="n">${E.collettivi.n || '—'}${E.collettivi.n ? `<span class="sub-n">${fmtHM(E.collettivi.ore)}</span>` : ''}</td></tr>`;
   });
-  h += `<tr class="tot"><td>Totale ${esc(nomeDir)}</td><td></td><td class="n">${tot.totale}</td><td class="n">${tot.abil}</td>
-    ${ORDINE_STATI.slice(0, 4).map(x => `<td class="n">${tot.conta[x]}</td>`).join('')}<td>${tot.abil ? Math.round(tot.conta.ok / tot.abil * 100) + '% idonei' : ''}</td>
-    <td class="n">${fmtHM(tot.ore)}</td><td class="n">${tot.coll.n}</td></tr></tbody></table></div>`;
+  h += `<tr class="tot"><td>Totale ${esc(nomeDir)}</td><td></td><td class="n">${tot.totale}</td><td class="n">${tot.con}</td>
+    ${ORDINE_STATI.slice(0, 4).map(x => `<td class="n">${tot.conta[x]}</td>`).join('')}<td>${tot.con ? Math.round(tot.conta.ok / tot.con * 100) + '% idonei' : ''}</td>
+    <td class="n">${tot.senza}</td><td class="n">${fmtHM(tot.ore)}</td><td class="n">${tot.coll.n}</td></tr></tbody></table></div>`;
 
   // Comando per Comando
-  const senza = [];
+  const vuoti = [];
   enti.forEach(E => {
-    if (!E.abil.length && !E.non.length && !E.altri.length) { senza.push(E.nome); return; }
-    const rop = resp('rop', settore, E.k);
-    h += `<div class="com-sez" id="sez-${E.k}"><h4 class="sec">${esc(E.nome)} <small>ROP: ${rop.length ? esc(rop.map(senzaCf).join(', ')) : 'non indicato'} · ${E.abil.length} abilitati · ${E.conta.ok} idonei</small></h4>
-      ${tabellaPersonale(E, y, settore)}</div>`;
+    if (!E.con.length && !E.senza.length && !E.altri.length) { vuoti.push(E.nome); return; }
+    const rop = resp('rop', c.categoria, E.k);
+    h += `<div class="com-sez" id="sez-${E.k}"><h4 class="sec">${esc(E.nome)} <small>ROP: ${rop.length ? esc(rop.map(senzaCf).join(', ')) : 'non indicato'} · ${E.con.length} con corso · ${E.conta.ok} idonei · ${E.senza.length} senza corso</small></h4>
+      ${tabellaPersonale(E, y, c)}</div>`;
   });
-  if (senza.length) h += `<div class="note-box"><b>Senza personale nel settore</b> (nessun corso né attività${state.tutti ? ' e nessuna persona in PUMA' : ''}): ${senza.map(esc).join(' · ')}</div>`;
-  return h + noteHtml(settore, y);
+  if (vuoti.length) h += `<div class="note-box"><b>Nessuno con il corso o con attività di questa tipologia</b>: ${vuoti.map(esc).join(' · ')}</div>`;
+  return h + noteHtml(c, y);
 }
 
 /* =====================================================================
@@ -1439,13 +1464,12 @@ function disegnaDirezione(k, settore, y) {
    ===================================================================== */
 const SIGLA_ENTE = n => n.replace(/^comando\s+/i, '').replace(/^direzione\s+/i, 'DIR_').replace(/[^A-Za-z0-9_]+/g, '');
 function nomeFilePdf(R) {
-  const s = (CORSI.find(c => c.categoria === R.settore) || {}).sigla;
-  const set = normKey(R.settore.replace(/\(.*?\)/g, ' ')).toUpperCase() || s || 'SETTORE';
-  return `Report_Collettivo_${set}_${SIGLA_ENTE(R.nome)}_${R.y}.pdf`;
+  const t = (R.c.sigla || normKey(SIGLA_BREVE(R.c))).replace(/[^A-Za-z0-9]+/g, '') || 'TIP';
+  return `Report_Collettivo_${t}_${SIGLA_ENTE(R.nome)}_${R.y}.pdf`;
 }
 async function creaPdf() {
   await caricaJsPdf();
-  const R = ULTIMO;
+  const R = ULTIMO, c = R && R.c;
   if (!R) throw new Error('nessun report da esportare');
   const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
   const W = 297, H = 210, M = 6;
@@ -1455,7 +1479,7 @@ async function creaPdf() {
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
   ['VIGILI DEL FUOCO', R.nome.toUpperCase()].forEach(t => { doc.text(testoPdf(t), W / 2, yy, { align: 'center' }); yy += 4.4; });
   doc.setFontSize(9.5);
-  doc.text(testoPdf('REPORT COLLETTIVO DI SETTORE - ' + R.settore), W / 2, yy, { align: 'center' }); yy += 6.5;
+  doc.text(testoPdf('REPORT COLLETTIVO - ' + c.tipologia), W / 2, yy, { align: 'center' }); yy += 6.5;
 
   const ora = new Date(), due = n => String(n).padStart(2, '0');
   const luogo = R.nome.replace(/^(comando|direzione)\s+(regionale\s+)?/i, '');
@@ -1464,29 +1488,32 @@ async function creaPdf() {
     : [['Visto del ROR', R.R.ror], ...(R.R.fds.length ? [['Visto del Funzionario di settore', R.R.fds]] : [])];
   const voce = (k, v, x, yv) => { doc.setFont('helvetica', 'normal'); doc.text(k, x, yv, { align: 'right' }); if (v) { doc.setFont('helvetica', 'bold'); doc.text(testoPdf(v), x + 2.5, yv); } };
   doc.setFontSize(8);
-  voce('Anno', String(R.y), 30, yy);
+  voce('Anno', String(R.y) + (c.anniPrima ? ` (ore ${periodoDi(c, R.y).replace('–', '-')})` : ''), 30, yy);
   if (firme[0]) { voce(firme[0][0], firme[0][1].map(senzaCf).join(', '), 175, yy); doc.setLineWidth(0.2); doc.line(177.5, yy + 1, W - M, yy + 1); }
   yy += 5.5;
   voce('Luogo e Data', `${luogo}, ${due(ora.getDate())}/${due(ora.getMonth() + 1)}/${ora.getFullYear()} ${due(ora.getHours())}.${due(ora.getMinutes())}`, 30, yy);
   if (firme[1]) { voce(firme[1][0], firme[1][1].map(senzaCf).join(', '), 175, yy); doc.line(177.5, yy + 1, W - M, yy + 1); }
   yy += 5;
+  voce('Requisito', requisitoTxt(c, R.y).replace(/–/g, '-'), 30, yy);
+  yy += 5;
 
   // legenda
   doc.setFontSize(7); doc.setFont('helvetica', 'normal');
   let lx = M;
-  ORDINE_STATI.forEach(k => {
+  [...ORDINE_STATI, 'na'].forEach(k => {
     doc.setFillColor(...rgbDi(STATI[k].c)); doc.circle(lx + 1.3, yy - 1, 1.3, 'F');
     doc.text(testoPdf(STATI[k].t), lx + 3.6, yy); lx += doc.getTextWidth(STATI[k].t) + 10;
   });
   doc.setTextColor(110); doc.text('Generato da P.U.M.A.', W - M, yy, { align: 'right' }); doc.setTextColor(0);
   yy += 3;
 
-  const col = rgbDi(coloreCategoria(R.settore)), chiaro = rgbDi(schiarisci(coloreCategoria(R.settore), 0.3));
-  const testa = [['#', 'Nominativo', 'Qualifica', 'Corsi del settore', 'Collettivi', 'Individuali', 'Interventi', 'Ore svolte / richieste', 'di cui collettive', 'Manovre', 'Stato']];
+  const col = rgbDi(coloreCategoria(c.categoria)), chiaro = rgbDi(schiarisci(coloreCategoria(c.categoria), 0.3));
+  const testa = [['#', 'Nominativo', 'Qualifica', 'Altri corsi del settore', 'Collettivi', 'Individuali', 'Interventi del settore', 'Ore svolte / richieste', 'di cui collettive', 'Manovre previste', 'Stato']];
   const stili = { font: 'helvetica', fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.15, textColor: [0, 0, 0], valign: 'middle', overflow: 'linebreak' };
   const colonne = { 0: { cellWidth: 7, halign: 'center' }, 1: { cellWidth: 52 }, 2: { cellWidth: 15, halign: 'center' }, 3: { cellWidth: 'auto' },
-    4: { cellWidth: 17, halign: 'right' }, 5: { cellWidth: 17, halign: 'right' }, 6: { cellWidth: 17, halign: 'right' }, 7: { cellWidth: 27, halign: 'right' },
-    8: { cellWidth: 22, halign: 'right' }, 9: { cellWidth: 15, halign: 'center' }, 10: { cellWidth: 33 } };
+    4: { cellWidth: 17, halign: 'right' }, 5: { cellWidth: 17, halign: 'right' }, 6: { cellWidth: 19, halign: 'right' }, 7: { cellWidth: 25, halign: 'right' },
+    8: { cellWidth: 22, halign: 'right' }, 9: { cellWidth: 16, halign: 'center' }, 10: { cellWidth: 33 } };
+  const o = v => fmtOre(v).replace('—', '-');
   const corpo = E => {
     const b = []; let i = 0;
     GRUPPI.forEach(([k, titolo]) => {
@@ -1494,18 +1521,18 @@ async function creaPdf() {
       b.push([{ content: testoPdf(`${titolo} (${E[k].length})`), colSpan: 11, styles: { fillColor: chiaro, fontStyle: 'bold' } }]);
       E[k].forEach(s => {
         const p = s.p, cf = p.key.startsWith('cf:') ? p.key.slice(3) : '';
-        b.push([String(++i), testoPdf(p.nome + (cf ? '\n' + cf : '')), testoPdf(p.qualifica || ''), testoPdf(s.poss.map(r => SIGLA_BREVE(r.c)).join(', ') || '-'),
-          fmtOre(s.coll).replace('—', '-'), fmtOre(s.ind).replace('—', '-'), fmtOre(s.int).replace('—', '-') + (s.nInt ? ` (${s.nInt})` : ''),
-          (fmtOre(s.tot).replace('—', '-') + (s.minTot ? ' / ' + fmtHM(s.minTot) : '')) + (s.st && s.st.anniPrima ? `\n${s.dal}-${R.y}` : ''),
-          s.collMin ? `${fmtOre(s.oreColl).replace('—', '-')} / ${fmtHM(s.collMin)}` : '-',
+        b.push([String(++i), testoPdf(p.nome + (cf ? '\n' + cf : '')), testoPdf(p.qualifica || ''), testoPdf(s.altri.map(SIGLA_BREVE).join(', ') || '-'),
+          o(s.coll), o(s.ind), o(s.int) + (s.nInt ? ` (${s.nInt})` : ''),
+          o(s.tot) + (s.minTot ? ' / ' + fmtHM(s.minTot) : ''),
+          s.collMin ? `${o(s.oreColl)} / ${fmtHM(s.collMin)}` : '-',
           s.prev ? `${s.fatte} / ${s.prev}` : '-',
           { content: testoPdf(STATI[s.stato].t), stato: s.stato, styles: { cellPadding: { top: 1, bottom: 1, right: 1, left: 4.5 } } }]);
       });
     });
-    if (i) b.push([{ content: 'Totale ore nel settore', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
+    if (i) b.push([{ content: 'Totale ore (con e senza corso)', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
       ...[E.ore.coll, E.ore.ind, E.ore.int, E.ore.tot].map(v => ({ content: fmtHM(v), styles: { halign: 'right', fontStyle: 'bold' } })),
       { content: '', colSpan: 3 }]);
-    else b.push([{ content: 'Nessun nominativo con corsi o attività nel settore.', colSpan: 11, styles: { textColor: [100, 100, 100] } }]);
+    else b.push([{ content: 'Nessuno con il corso o con attività di questa tipologia.', colSpan: 11, styles: { textColor: [100, 100, 100] } }]);
     return b;
   };
   const tabella = (body, startY) => doc.autoTable({
@@ -1517,55 +1544,54 @@ async function creaPdf() {
         doc.setFillColor(...rgbDi(STATI[d.cell.raw.stato].c));
         doc.circle(d.cell.x + 2.3, d.cell.y + d.cell.height / 2, 1.2, 'F');
       }
-      if (d.section === 'body' && d.column.index === 0 && d.cell.raw && d.row.raw && d.row.raw[10] && d.row.raw[10].stato) {
+      if (d.section === 'body' && d.column.index === 0 && d.row.raw && d.row.raw[10] && d.row.raw[10].stato) {
         doc.setFillColor(...rgbDi(STATI[d.row.raw[10].stato].c));
         doc.rect(d.cell.x, d.cell.y, 1, d.cell.height, 'F');
       }
     }
   });
+  const conteggi = E => ORDINE_STATI.slice(0, 4).map(k => `${STATI[k].t} ${E.conta[k]}`).join(' - ');
 
   if (R.tipo === 'comando') {
-    const E = R.enti[0], n = E.abil.length;
+    const E = R.enti[0];
     doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-    doc.text(testoPdf(`Personale abilitato ${n}: ` + ORDINE_STATI.slice(0, 4).map(k => `${STATI[k].t} ${E.conta[k]}`).join(' - ') +
-      ` · Collettivi del settore organizzati: ${E.collettivi.n} (${fmtHM(E.collettivi.ore)})`).replace('·', '-'), M, yy + 3);
+    doc.text(testoPdf(`Con corso ${E.con.length}: ${conteggi(E)} - Senza corso con attività ${E.senza.length} - Collettivi organizzati ${E.collettivi.n} (${fmtHM(E.collettivi.ore)})`), M, yy + 3);
     tabella(corpo(E), yy + 5);
   } else {
-    // riepilogo per Comando
     const body = R.enti.map(E => {
-      const n = E.abil.length, rop = resp('rop', R.settore, E.k).map(senzaCf).join(', ');
-      return [testoPdf(E.nome), testoPdf(rop || '-'), String(E.totale), String(n) + (E.non.length ? ` (+${E.non.length})` : ''),
+      const n = E.con.length, rop = resp('rop', c.categoria, E.k).map(senzaCf).join(', ');
+      return [testoPdf(E.nome), testoPdf(rop || '-'), String(E.totale), String(n),
         ...ORDINE_STATI.slice(0, 4).map(k => String(E.conta[k] || '')), n ? Math.round(E.conta.ok / n * 100) + '%' : '-',
-        E.ore.tot ? fmtHM(E.ore.tot) : '-', String(E.collettivi.n || '-')];
+        String(E.senza.length || ''), E.ore.tot ? fmtHM(E.ore.tot) : '-', String(E.collettivi.n || '-')];
     });
-    const T = R.enti.reduce((t, E) => { t.tot += E.totale; t.n += E.abil.length; ORDINE_STATI.forEach(k => { t[k] = (t[k] || 0) + E.conta[k]; }); t.ore += E.ore.tot; t.coll += E.collettivi.n; return t; }, { tot: 0, n: 0, ore: 0, coll: 0 });
-    body.push([{ content: testoPdf('Totale ' + R.nome), colSpan: 2, styles: { fontStyle: 'bold' } }, String(T.tot), String(T.n), ...ORDINE_STATI.slice(0, 4).map(k => String(T[k])),
-      T.n ? Math.round(T.ok / T.n * 100) + '%' : '-', fmtHM(T.ore), String(T.coll)].map(v => typeof v === 'string' ? { content: v, styles: { fontStyle: 'bold' } } : v));
+    const T = R.tot;
+    body.push([{ content: testoPdf('Totale ' + R.nome), colSpan: 2, styles: { fontStyle: 'bold' } },
+      ...[String(T.totale), String(T.con), ...ORDINE_STATI.slice(0, 4).map(k => String(T.conta[k])), T.con ? Math.round(T.conta.ok / T.con * 100) + '%' : '-',
+        String(T.senza), fmtHM(T.ore), String(T.coll.n)].map(v => ({ content: v, styles: { fontStyle: 'bold' } }))]);
     doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text('Riepilogo per Comando', M, yy + 3.5);
     doc.autoTable({
       startY: yy + 5, margin: { left: M, right: M, top: M, bottom: 8 }, theme: 'grid',
-      head: [['Comando', 'ROP', 'Personale in PUMA', 'Abilitati', ...ORDINE_STATI.slice(0, 4).map(k => STATI[k].t), 'Idonei', 'Ore nel settore', 'Collettivi organizzati']],
+      head: [['Comando', 'ROP', 'Personale in PUMA', 'Con corso', ...ORDINE_STATI.slice(0, 4).map(k => STATI[k].t), 'Idonei', 'Senza corso con attività', 'Ore svolte', 'Collettivi organizzati']],
       body, styles: stili, headStyles: { fillColor: [235, 235, 235], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', lineWidth: 0.2 },
-      columnStyles: { 0: { cellWidth: 45 }, 1: { cellWidth: 'auto' }, 2: { halign: 'right', cellWidth: 20 }, 3: { halign: 'right', cellWidth: 18 }, 4: { halign: 'right', cellWidth: 18 },
-        5: { halign: 'right', cellWidth: 22 }, 6: { halign: 'right', cellWidth: 22 }, 7: { halign: 'right', cellWidth: 18 }, 8: { halign: 'right', cellWidth: 15 }, 9: { halign: 'right', cellWidth: 20 }, 10: { halign: 'right', cellWidth: 20 } },
-      didParseCell: d => { if (d.section === 'head' && d.column.index >= 4 && d.column.index <= 7) d.cell.styles.textColor = [0, 0, 0]; },
+      columnStyles: { 0: { cellWidth: 42 }, 1: { cellWidth: 'auto' }, 2: { halign: 'right', cellWidth: 18 }, 3: { halign: 'right', cellWidth: 16 }, 4: { halign: 'right', cellWidth: 17 },
+        5: { halign: 'right', cellWidth: 20 }, 6: { halign: 'right', cellWidth: 20 }, 7: { halign: 'right', cellWidth: 17 }, 8: { halign: 'right', cellWidth: 14 }, 9: { halign: 'right', cellWidth: 20 },
+        10: { halign: 'right', cellWidth: 18 }, 11: { halign: 'right', cellWidth: 18 } },
       didDrawCell: d => {
         if (d.section === 'head' && d.column.index >= 4 && d.column.index <= 7) {
           doc.setFillColor(...rgbDi(STATI[ORDINE_STATI[d.column.index - 4]].c)); doc.rect(d.cell.x, d.cell.y + d.cell.height - 1, d.cell.width, 1, 'F');
         }
       }
     });
-    // Comando per Comando
     R.enti.forEach(E => {
-      if (!E.abil.length && !E.non.length && !E.altri.length) return;
+      if (!E.con.length && !E.senza.length && !E.altri.length) return;
       let y0 = doc.lastAutoTable.finalY + 7;
       if (y0 > H - 35) { doc.addPage(); y0 = M + 5; }
-      const rop = resp('rop', R.settore, E.k).map(senzaCf).join(', ');
+      const rop = resp('rop', c.categoria, E.k).map(senzaCf).join(', ');
       doc.setFontSize(9.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...col.map(v => Math.round(v * 0.6)));
       doc.text(testoPdf(E.nome), M, y0);
       const wNome = doc.getTextWidth(testoPdf(E.nome));
       doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
-      doc.text(testoPdf(`ROP: ${rop || 'non indicato'} - abilitati ${E.abil.length} - ` + ORDINE_STATI.slice(0, 4).map(k => `${STATI[k].t} ${E.conta[k]}`).join(' - ')), M + wNome + 4, y0);
+      doc.text(testoPdf(`ROP: ${rop || 'non indicato'} - con corso ${E.con.length}: ${conteggi(E)} - senza corso ${E.senza.length}`), M + wNome + 4, y0);
       doc.setTextColor(0);
       tabella(corpo(E), y0 + 2);
     });
@@ -1574,7 +1600,7 @@ async function creaPdf() {
   for (let i = 1; i <= pagine; i++) {
     doc.setPage(i);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(110);
-    doc.text(testoPdf(`${R.nome} - ${R.settore} - Report collettivo ${R.y} - pag. ${i}/${pagine}`), W - M, H - 3, { align: 'right' });
+    doc.text(testoPdf(`${R.nome} - ${c.tipologia} - Report collettivo ${R.y} - pag. ${i}/${pagine}`), W - M, H - 3, { align: 'right' });
     doc.setTextColor(0);
   }
   return doc;
@@ -1599,10 +1625,10 @@ const statoInv = (txt, cls) => { invStato.textContent = txt; invStato.className 
 function apriInvio() {
   const R = ULTIMO;
   if (!R) return;
-  document.getElementById('inv-sotto').textContent = `Report collettivo ${R.y} · ${R.settore} · ${R.nome}, in PDF.`;
-  const voce = (id, testo, nomi, sempre) => {
-    const ok = nomi.length > 0 || sempre;
-    return `<label class="chk${ok ? '' : ' off'}"><input type="checkbox" id="${id}" ${ok ? 'checked' : 'disabled'}> <span>${testo}<small>${nomi.length ? nomi.map(senzaCf).map(esc).join(', ') : 'non indicato in Responsabili per questo settore'}</small></span></label>`;
+  document.getElementById('inv-sotto').textContent = `Report collettivo ${R.y} · ${R.c.tipologia} · ${R.nome}, in PDF.`;
+  const voce = (id, testo, nomi) => {
+    const ok = nomi.length > 0;
+    return `<label class="chk${ok ? '' : ' off'}"><input type="checkbox" id="${id}" ${ok ? 'checked' : 'disabled'}> <span>${testo}<small>${ok ? nomi.map(senzaCf).map(esc).join(', ') : 'non indicato in Responsabili per il settore ' + esc(R.c.categoria)}</small></span></label>`;
   };
   let h = '';
   if (R.tipo === 'comando') {
@@ -1641,7 +1667,7 @@ async function inviaReport() {
     const r = await fetch(URL_INVIO_COLLETTIVO, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // richiesta semplice: niente preflight CORS
-      body: JSON.stringify({ tipo: R.tipo, ente: R.nome, settore: R.settore, anno: R.y, rop, ror, altro, nomeFile: nomeFilePdf(R), pdf })
+      body: JSON.stringify({ tipo: R.tipo, ente: R.nome, settore: R.c.categoria, tipologia: R.c.tipologia, anno: R.y, rop, ror, altro, nomeFile: nomeFilePdf(R), pdf })
     });
     const j = await r.json();
     if (j.ok) statoInv('Inviato a: ' + (j.destinatari || []).join(', '), 'ok');
