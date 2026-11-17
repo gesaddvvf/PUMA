@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P.U.M.A. - Direzione Regionale Emilia-Romagna - Libretti SAF</title>
+  <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: dark; --gold: #ffd700; --ok: #66bb6a; --ko: #ef5350; --warn: #ffb74d; --rosso: #c62828; }
+    * { scrollbar-width: thin; scrollbar-color: #555 #1e1e1e; }
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body { font-family: 'Comfortaa', cursive; background-color: #1e1e1e; color: #f0f0f0; display: flex; flex-direction: column; }
+
+    /* ---------- HEADER (come le altre pagine PUMA) ---------- */
+    #page-header {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+      background-color: #1e1e1e; border-bottom: 1px solid #444; padding: 10px 16px; box-sizing: border-box; flex-shrink: 0;
+    }
+    #page-header h1 { font-size: 16px; color: var(--gold); margin: 0 0 2px 0; font-weight: bold; display: flex; align-items: center; gap: 6px; }
+    #page-header .puma-icon { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+    #page-header .subtitle-divider { color: #666; }
+    #page-header h2 { font-size: 13px; color: #ccc; font-weight: normal; margin: 0; }
+    #page-header h2 b { color: var(--gold); }
+    #meta-info { font-size: 11.5px; color: #999; margin-top: 4px; }
+    #nav-buttons { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .nav-btn {
+      display: inline-block; background-color: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px; padding: 8px 14px;
+      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 13px; text-decoration: none; transition: background-color 0.15s, color 0.15s;
+    }
+    .nav-btn:hover { background-color: var(--gold); color: #1e1e1e; }
+    button.nav-btn { cursor: pointer; }
+    button.nav-btn:disabled { opacity: 0.6; cursor: wait; }
+    #refresh-btn.nav-btn { background-color: #c62828; color: #fff; border-color: #c62828; }
+    #refresh-btn.nav-btn:hover { background-color: #e53935; border-color: #e53935; color: #fff; }
+    #refresh-btn.nav-btn:disabled { background-color: #7f1d1d; border-color: #7f1d1d; }
+    .badge-er { display: inline-block; background: var(--rosso); color: #fff; border-radius: 3px; padding: 1px 7px; font-size: 11px; margin-left: 4px; letter-spacing: .03em; }
+
+    /* ---------- FILTRI ---------- */
+    .filters {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 8px 16px; border-bottom: 1px solid #444; background-color: #232323; font-size: 12.5px; flex-shrink: 0;
+    }
+    .filters label.lbl { color: #aaa; }
+    .filters input, .filters select {
+      background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px; padding: 6px 8px; font-family: 'Comfortaa', cursive; font-size: 12.5px;
+    }
+    .filters input:focus, .filters select:focus { outline: none; border-color: var(--gold); }
+    .filters select { font-weight: bold; }
+    #sel-op { min-width: 300px; max-width: 100%; }
+    #cerca { width: 150px; }
+    .filters label.chk { display: inline-flex; gap: 6px; align-items: center; color: #ccc; cursor: pointer; }
+    .filters label.chk input { accent-color: var(--gold); }
+    .azioni { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px;
+      padding: 6px 12px; font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+    }
+    .btn:hover { background: var(--gold); color: #1e1e1e; }
+    .btn:disabled { opacity: .4; cursor: default; background: #2a2a2a; color: var(--gold); }
+    .btn.primario { background: var(--gold); color: #1e1e1e; }
+    .btn.primario:disabled { background: #2a2a2a; color: var(--gold); }
+    @media (max-width: 700px) {
+      #page-header { flex-direction: column; }
+      #nav-buttons { width: 100%; }
+      .nav-btn { flex: 1 1 40%; text-align: center; }
+      .filters label.lbl, #meta-info { display: none; }
+      .filters select, .filters input:not([type=checkbox]), #sel-op, #cerca { flex: 1 1 100%; min-width: 0; box-sizing: border-box; }
+      .azioni { margin-left: 0; width: 100%; }
+      .azioni .btn { flex: 1 1 45%; }
+      .filters { padding: 6px 10px; gap: 6px; }
+    }
+
+    /* ---------- CONTENUTO ---------- */
+    #content { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; box-sizing: border-box; }
+    .wrap { max-width: 1180px; margin: 0 auto; }
+    .msg {
+      margin: 40px auto; max-width: 600px; text-align: center; color: var(--gold); border: 1px solid var(--gold);
+      border-radius: 6px; padding: 16px 20px; font-weight: bold; line-height: 1.6; background: #232323;
+    }
+    .msg small { display: block; color: #aaa; font-weight: normal; margin-top: 6px; }
+    .stato-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 14px; }
+    .st { background: #262626; border: 1px solid #3a3a3a; border-radius: 6px; padding: 8px 11px; }
+    .st .k { color: #aaa; font-size: 11px; }
+    .st .v { font-size: 20px; font-weight: bold; margin-top: 3px; }
+    .st .v small { font-size: 12px; color: #aaa; font-weight: normal; }
+    .st.ok { border-color: #2e5e30; } .st.ok .v { color: var(--ok); }
+    .st.ko { border-color: #6b2b2b; } .st.ko .v { color: var(--ko); }
+    .note-box { background: #2a2620; border: 1px solid #5a4a20; border-radius: 4px; padding: 10px 12px; font-size: 12px; line-height: 1.6; color: #ddd; margin: 0 0 14px; }
+    .note-box b { color: var(--warn); }
+    .note-box ul { margin: 4px 0 0; padding-left: 18px; }
+    .debug-box { background: #2a2020; border: 1px solid #a33; border-radius: 4px; padding: 10px; font-size: 12px; margin-bottom: 12px; line-height: 1.5; white-space: pre-wrap; }
+
+    /* ---------- ANTEPRIMA DEL LIBRETTO (foglio bianco, come il modulo) ---------- */
+    .foglio {
+      background: #fff; color: #000; border-radius: 3px; box-shadow: 0 4px 18px rgba(0,0,0,.5);
+      padding: 18px 22px 22px; margin-bottom: 18px; font-family: 'Times New Roman', Times, serif; font-size: 12.5px; line-height: 1.35;
+      overflow-x: auto;
+    }
+    .foglio.basico { font-family: Arial, Helvetica, sans-serif; font-size: 11.5px; }
+    .foglio .dir { text-align: center; color: #e00000; font-weight: bold; font-size: 15px; margin-bottom: 10px; }
+    .foglio .tit { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-weight: bold; font-size: 13px; margin-bottom: 6px; }
+    .foglio .campo { border-bottom: 1px solid #000; padding: 0 6px; font-weight: bold; }
+    .foglio .riga-op { margin-bottom: 8px; }
+    .foglio .ciclo { font-weight: bold; margin: 12px 0 2px; }
+    .foglio .mn { margin-bottom: 4px; }
+    .foglio table { border-collapse: collapse; width: 100%; min-width: 760px; font-family: inherit; font-size: 11.5px; margin-bottom: 4px; }
+    .foglio th, .foglio td { border: 1px solid #000; padding: 3px 5px; color: #000; background: #fff; vertical-align: middle; }
+    .foglio th { font-weight: bold; text-align: center; }
+    .foglio td.c { text-align: center; }
+    .foglio td.n { text-align: right; white-space: nowrap; }
+    .foglio td.tot { text-align: right; font-weight: bold; }
+    .foglio td.vuota { color: #999; }
+    .foglio tr.sotto td.tot { color: #c00; }
+    .foglio .box { display: inline-block; width: 11px; height: 11px; border: 1px solid #000; line-height: 10px; text-align: center; font-size: 10px; font-weight: bold; font-family: Arial, sans-serif; }
+    .foglio .gen { color: #666; font-size: 10.5px; margin-top: 8px; }
+    .foglio .gen-titolo { color: #444; font-size: 11px; font-style: italic; margin: 10px 0 0; }
+    .op-titolo { color: var(--gold); font-size: 15px; margin: 4px 0 10px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+    .op-titolo small { color: #aaa; font-size: 12px; font-weight: normal; }
+  </style>
+</head>
+<body>
+<header id="page-header">
+  <div>
+    <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Direzione Regionale Emilia-Romagna <span class="badge-er">VV.F. E-R</span></h1>
+    <h2>Export dei <b>libretti individuali dei mantenimenti SAF</b> (modelli della Direzione Regionale)</h2>
+    <div id="meta-info">Dati caricati: <span id="last-update">—</span></div>
+  </div>
+  <div id="nav-buttons">
+    <button class="nav-btn" id="refresh-btn" type="button">⟳ Aggiorna</button>
+    <a class="nav-btn" href="https://sites.google.com/view/pumavvf/home-page">Homepage P.U.M.A.</a>
+    <a class="nav-btn" href="https://gesaddvvf.github.io/PUMA/reportindividuale.html">Report Individuale</a>
+  </div>
+</header>
+
+<div class="filters">
+  <label class="lbl" for="sel-comando">Comando</label>
+  <select id="sel-comando" aria-label="Comando"></select>
+  <label class="lbl" for="sel-tipo">Libretto</label>
+  <select id="sel-tipo" aria-label="Libretto">
+    <option value="AVA">SAF Avanzato (biennio)</option>
+    <option value="BAS">SAF Basico (anno solare)</option>
+  </select>
+  <label class="lbl" for="sel-periodo" id="lbl-periodo">Biennio</label>
+  <select id="sel-periodo" aria-label="Periodo"></select>
+  <label class="chk" id="allega-wrap" title="Il libretto SAF Avanzato è corredato dai libretti SAF Basico degli anni del biennio"><input type="checkbox" id="chk-allega" checked> con i libretti SAF Basico</label>
+</div>
+<div class="filters">
+  <label class="lbl" for="sel-op">Operatore</label>
+  <input id="cerca" placeholder="Filtra per nome…" autocomplete="off" aria-label="Filtra operatori">
+  <select id="sel-op" aria-label="Operatore" disabled></select>
+  <div class="azioni">
+    <button class="btn primario" id="pdf-btn" type="button" disabled>⬇ PDF operatore</button>
+    <button class="btn" id="pdf-tutti-btn" type="button" disabled>⬇ PDF di tutti</button>
+  </div>
+</div>
+
+<div id="content"><div class="wrap" id="report"><div class="msg">Caricamento dati…</div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+/* =====================================================================
+   LETTURA DEI DATI PUMA
+   Stessa configurazione e stesse regole del Report Individuale
+   (reportindividuale.html): se lì cambia qualcosa, va cambiato anche qui.
+   ===================================================================== */
+/* =====================================================================
+   CONFIGURAZIONE
+   ===================================================================== */
+const SHEET_ID      = "1WHGKaawomU_jMuO6FnwzYidou-fmpc0ndeE0aiEMYP4"; // PUMA VVF Database Personale
+const GID_REG       = "2031805821";   // Registrazione_Attivita_Semplificata: una persona per riga
+const GID_PIANO     = "1495276384";   // Piano_Di_Sicurezza: un addestramento collettivo per riga
+const GID_MANOVRE   = "605866354";    // Manovre_PREVISTE: A2:F
+const GID_FORMAZIONE = "1631986002";  // Formazione: requisiti per corso
+const GID_ELENCO    = "84413100";     // Elenco_Filtrato: corsi in possesso di ogni persona
+
+// Elenco_Filtrato: si leggono SOLO queste colonne (e-mail e cellulare non vengono letti)
+const COL_ELENCO = {
+  nome:      /cognome nome/i,
+  comando:   /appartenenza/i,
+  qualifica: /^qualifica$/i,
+  corsi:     /corsi in possesso/i
+};
+// Codice fiscale dentro "Cognome Nome - Codice Fiscale": identifica la persona (anche tra omonimi)
+const RE_CF = /\b[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]\b/i;
+
+// Registrazione_Attivita_Semplificata: colonna trovata dall'intestazione; se manca, si usa la lettera.
+const COL_REG = {
+  cronologiche:  ['A', /informazioni cronologiche|timestamp/i],
+  appartenenza:  ['B', /appartenenza/i],
+  nome:          ['C', /personale partecipante|nominativo/i],
+  cosa:          ['D', /che cosa vuoi fare/i],
+  organizzatore: ['E', /organizzatore/i],
+  team:          ['F', /^team$|^squadra$/i],
+  ics:           ['G', /incident command/i],
+  dataColl:      ['H', /data addestramento collettivo/i],
+  attivita:      ['I', /^attivit[àa]$/i],
+  inizio:        ['J', /inizio/i],
+  fine:          ['K', /fine/i],
+  tipInd:        ['L', /tipologia addestramento individuale/i],
+  descr:         ['M', /^descrizione attivit/i],
+  catInt:        ['P', /categoria.*intervento/i],
+  descrInt:      ['Q', /breve descrizione/i],
+  numInt:        ['R', /numero intervento/i],
+  data:          ['V', /^data$/i]
+};
+// Colonne con le manovre svolte: tutte quelle "Attività addestrativa svolta (…)"
+const REG_MANOVRE = /attivit[àa] addestrativa svolta\s*\(/i;
+// Piano_Di_Sicurezza: colonne con le manovre previste
+const PIANO_MANOVRE = /^manovre\b.*previste/i;
+
+// Corsi che hanno TUTTI (in possesso anche se non scritti in Elenco_Filtrato)
+const CORSI_DI_TUTTI = ['SAF (Speleo Alpino Fluviale) Competenze primarie', 'TPSS (Tecniche di Primo Soccorso Sanitario)'];
+// Corsi da contare come un altro: tipologia registrata → tipologia del libretto
+const CORSI_EQUIVALENTI = { 'SAF (Speleo Alpino Fluviale) SAF1A': 'SAF (Speleo Alpino Fluviale) Competenze primarie' };
+
+// Registrazioni da scartare (prove)
+const NOME_NON_REALE = /\b(test\d*|prova\d*|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;   // anche TEST1, TEST2, TEST3…
+// Durata massima credibile di un'attività (ore): oltre, l'orario è considerato sbagliato
+const ORE_MAX = 168;
+// Duplicati in Piano_Di_Sicurezza: stesso giorno + Comando + squadra + tipologia → resta l'ultimo inserito
+const FILTRA_DUPLICATI = true;
+
+/* ===================================================================== */
+const URLP = new URLSearchParams(location.search);
+const DEBUG = URLP.has('debug');
+const ANNO_OGGI = new Date().getFullYear();
+const MESI_BREVI = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+const csvUrl = gid => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const isNA = v => /^#?N\/[AD]$|^#(REF|VALUE|ERROR|NAME)!?/i.test((v || '').trim());
+const val = v => { const t = String(v == null ? '' : v).trim(); return isNA(t) ? '' : t; };
+const letterIdx = l => l.toUpperCase().split('').reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1;
+const push = (m, k, v) => { if (!m.has(k)) m.set(k, []); m.get(k).push(v); };
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function normKey(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+}
+function comandoKey(s) {
+  let t = (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  t = t.replace(/vigili del fuoco|v\.?v\.?f\.?|\bcomando\b|\bprovinciale\b|\bdi\b|\bdel\b|\bdella\b|\bdei\b/g, ' ');
+  t = t.replace(/[^a-z0-9]/g, '');
+  // "Direzione Regionale Emilia-Romagna" = "Direzione Emilia Romagna" = "Direzione Interregionale …"
+  if (t.includes('direzione')) t = 'direzione' + t.replace(/direzione|interregionale|regionale/g, '');
+  return t;
+}
+function squadraKey(s) {
+  return normKey((s || '').replace(/\bsquadra\b|\bsq\.?|\bteam\b/gi, ' ')) || 'nonindicata';
+}
+function nomeComando(s) {
+  const t = (s || '').trim();
+  if (!t) return '';
+  if (/^(comando|direzione)/i.test(t)) return t;
+  return 'Comando ' + t;
+}
+
+// "15/01/2026", "15/01/2026 08:30:00", "2026-01-15T08:30", "Date(2026,0,15,8,30,0)"
+function parseDataOra(v) {
+  const t = (v || '').trim();
+  let m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:[\sT,]+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?)?/);
+  if (m) {
+    const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+    return { d: new Date(y, +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)), ora: m[4] != null };
+  }
+  m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[\sT]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m) return { d: new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)), ora: m[4] != null };
+  m = t.match(/Date\((\d{4}),(\d{1,2}),(\d{1,2})(?:,(\d{1,2}),(\d{1,2})(?:,(\d{1,2}))?)?/);
+  if (m) return { d: new Date(+m[1], +m[2], +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)), ora: m[4] != null };
+  return null;
+}
+const parseData = v => { const r = parseDataOra(v); return r ? new Date(r.d.getFullYear(), r.d.getMonth(), r.d.getDate()) : null; };
+const giornoKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fmtData = d => d.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+const fmtOra = d => d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+// Ore tra inizio e fine; null se mancano gli orari o la durata non è credibile
+function oreTra(inizio, fine) {
+  const a = parseDataOra(inizio), b = parseDataOra(fine);
+  if (!a || !b || !a.ora || !b.ora) return null;
+  const h = (b.d - a.d) / 3600000;
+  return h > 0 && h <= ORE_MAX ? h : null;
+}
+// Ore in formato hh:mm, come nel libretto (12:00, 108:00)
+function fmtHM(h) {
+  if (h == null) return '—';
+  const m = Math.round(h * 60);
+  return Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+}
+const fmtH = h => h == null ? '—' : fmtHM(h) + ' h';
+
+// "Ore Minime (in giorni)": durata di Google Sheets → 1 = 24 ore. Accetta anche "36:00:00".
+function parseOreMin(v) {
+  const t = val(v);
+  if (!t) return null;
+  let m = t.match(/^(\d+):(\d{2})(?::(\d{2}))?$/);
+  if (m) return +m[1] + +m[2] / 60 + (m[3] ? +m[3] / 3600 : 0);
+  m = t.replace(',', '.').match(/-?\d+(\.\d+)?/);
+  if (!m) return null;
+  const n = parseFloat(m[0]);
+  return n > 0 ? n * 24 : null;
+}
+// "Collettive (in %)": "50%", "50", "0,5" → 0.5
+function parsePct(v) {
+  const t = val(v);
+  if (!t) return null;
+  const m = t.replace(',', '.').match(/\d+(\.\d+)?/);
+  if (!m) return null;
+  let n = parseFloat(m[0]);
+  if (t.includes('%') || n > 1) n = n / 100;
+  return n >= 0 && n <= 1 ? n : null;
+}
+const siNo = v => /^(si|sì|s|true|vero|x|1|yes)$/i.test(val(v));
+
+/* =====================================================================
+   PERSONE: "COGNOME NOME - CODICE FISCALE" → nome visibile + chiave
+   ===================================================================== */
+function separaNome(raw) {
+  const t = val(raw).replace(/\s+/g, ' ');
+  const m = t.match(RE_CF);
+  const cf = m ? m[0].toUpperCase() : '';
+  const nome = (m ? t.replace(m[0], ' ') : t).replace(/\s*[-–|,;]\s*$/, '').replace(/^\s*[-–|,;]\s*/, '').replace(/\s+/g, ' ').trim();
+  return { nome, cf };
+}
+let NOME_A_CF = new Map();   // nome normalizzato → chiave CF (solo se il nome è unico)
+function chiavePersona(nome, cf) {
+  if (cf) return 'cf:' + cf;
+  const k = normKey(nome);
+  const c = NOME_A_CF.get(k);
+  return c && c !== '*' ? c : 'n:' + k;
+}
+function persona(key, nome) {
+  if (!PERSONE.has(key)) PERSONE.set(key, { key, grafie: new Map(), originali: new Map(), originaleElenco: '', comandi: new Map(), qualifica: '', corsiPossesso: new Set(), corsiTxt: [], inElenco: false, att: [] });
+  const p = PERSONE.get(key);
+  if (nome) p.grafie.set(nome, (p.grafie.get(nome) || 0) + 1);
+  return p;
+}
+
+/* =====================================================================
+   DATI
+   ===================================================================== */
+let PERSONE = new Map();   // chiave nome → { nome, comandi: Map, att: [] }
+let CORSI = [];            // righe di Formazione (un corso = una Tipologia)
+let CATEGORIE = [];        // colonna Categoria di Formazione, nell'ordine del foglio
+let EQUIVALENTE = new Map(); // corso → corso con cui si conta (es. SAF1A → Competenze primarie)
+let DI_TUTTI = [];           // corsi in possesso di tutti
+const equivalente = c => (c && EQUIVALENTE.get(c)) || c;
+let LOGHI = new Map();     // nome tipologia normalizzato → SVG del logo
+
+let MANOVRE = [];          // righe di Manovre_PREVISTE
+let colReg = {}, colPiano = {}, colElenco = {}, diag = {};
+
+function scaricaCsv(gid, header) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvUrl(gid) + '&_=' + Date.now(), {
+      download: true, header, skipEmptyLines: true,
+      complete: r => resolve(r.data), error: err => reject(err)
+    });
+  });
+}
+
+function elaboraFormazione(rows) {
+  const hi = rows.findIndex(r => r.some(c => /^sigla$/i.test((c || '').trim())));
+  const head = hi >= 0 ? rows[hi].map(c => (c || '').trim()) : [];
+  const ix = re => head.findIndex(h => re.test(h));
+  const c = {
+    sigla: ix(/^sigla$/i), tipologia: ix(/^tipologia$/i), categoria: ix(/^categoria$/i), prof: ix(/corsi\s*\(profilazione\)/i),
+    delta: ix(/delta anni/i), oreMin: ix(/ore minime/i), coll: ix(/collettive/i),
+    soloReg: ix(/stampa solo registro/i), sovra: ix(/sovraordinazione/i)
+  };
+  const g = (r, k) => c[k] >= 0 ? val(r[c[k]]) : '';
+  CORSI = [];
+  rows.slice(hi + 1).forEach(r => {
+    const sigla = g(r, 'sigla'), tipologia = g(r, 'tipologia');
+    if (!tipologia) return;
+    const corso = {
+      id: CORSI.length, nome: tipologia, sigla, tipologia, categoria: g(r, 'categoria') || tipologia, prof: g(r, 'prof'),
+      // "Delta anni per libretto": -1 = conta anche l'anno precedente, -2 = due anni prima… ; 0 o vuoto = solo l'anno scelto
+      anniPrima: Math.max(0, -(parseInt(g(r, 'delta'), 10) || 0)),
+      sovra: (() => { const n = parseFloat(g(r, 'sovra').replace(',', '.')); return isNaN(n) ? 999 : n; })(),
+      oreMin: parseOreMin(g(r, 'oreMin')), collPct: parsePct(g(r, 'coll')),
+      soloRegistro: siNo(g(r, 'soloReg')),
+      // la Sigla NON identifica il corso (NBC = NBCR 0…3): si riconosce da Tipologia e da "Corsi (Profilazione)"
+      keys: new Set([normKey(tipologia), normKey(g(r, 'prof'))].filter(k => k.length >= 2)),
+      previste: []
+    };
+    CORSI.push(corso);
+  });
+  // Ordine dei corsi: Categoria (nell'ordine in cui compare in Formazione), poi Livello Sovraordinazione, poi Progressivo
+  const ordCat = new Map();
+  CORSI.forEach(x => { const k = normKey(x.categoria); if (!ordCat.has(k)) ordCat.set(k, ordCat.size); });
+  CORSI.forEach(x => { x.ordine = ordCat.get(normKey(x.categoria)) * 1e6 + Math.min(x.sovra, 999) * 1e3 + x.id; });
+  CATEGORIE = [...new Set(CORSI.map(x => x.categoria))];
+  const perNome = n => CORSI.find(x => normKey(x.tipologia) === normKey(n));
+  EQUIVALENTE = new Map();
+  Object.entries(CORSI_EQUIVALENTI).forEach(([da, a]) => { const c1 = perNome(da), c2 = perNome(a); if (c1 && c2) EQUIVALENTE.set(c1, c2); });
+  DI_TUTTI = CORSI_DI_TUTTI.map(perNome).filter(Boolean);
+  diag.formazione = { intestazioni: hi + 1, corsi: CORSI.length, colonne: c };
+}
+
+function corsiDaSigla(t) {
+  const k = normKey(t);
+  if (!k) return [];
+  const perSigla = [...new Set(CORSI.filter(c => normKey(c.sigla) === k).map(equivalente))];
+  if (perSigla.length) return perSigla;
+  const c = corsoDaChiave(k);
+  return c ? [c] : [];
+}
+function corsoDaChiave(k) {
+  return equivalente(CORSI.find(c => c.keys.has(k))) || null;
+}
+
+function elaboraManovre(rows) {
+  MANOVRE = [];
+  let senzaCorso = 0;
+  rows.forEach(r => {
+    const a = val(r[0]), uid = val(r[1]), cod = val(r[2]), ciclo = val(r[3]), man = val(r[4]), full = val(r[5]);
+    if (!man && !full) return;
+    if (/associazione/i.test(a) || /^manovra$/i.test(man)) return;   // intestazione
+    const testo = full || [ciclo, cod, man].filter(Boolean).join(' ');
+    const m = {
+      corsoTxt: a, uid, codice: cod, ciclo, manovra: man || testo, testo,
+      kFull: normKey(testo), kMan: normKey(man),
+      reUid: uid && uid.length >= 2 ? new RegExp('(^|[^A-Za-z0-9])' + escRe(uid) + '($|[^A-Za-z0-9])', 'i') : null,
+      corsi: corsiDaSigla(a)
+    };
+    if (m.corsi.length) m.corsi.forEach(c => c.previste.push(m)); else senzaCorso++;
+    MANOVRE.push(m);
+  });
+  diag.manovre = { righe: MANOVRE.length, senzaCorso };
+}
+
+// Colore fisso per ogni Categoria (bordi, intestazione e righe tipologia)
+const COLORI_CATEGORIA = [
+  [/^saf/, '#ff9800'], [/^ssa/, '#29b6f6'], [/^usar/, '#8d6e63'], [/^tpss/, '#e53935'],
+  [/^oso/, '#7e57c2'], [/^tas/, '#43a047'], [/^cfbt/, '#c2185b'], [/^nbcr/, '#fdd835'],
+  [/^apr/, '#26a69a'], [/^cinofil|k9/, '#9e9d24'], [/^patentiterrestr/, '#5c6bc0'],
+  [/^macchinemovimento|^mmt/, '#78909c'], [/^patentinautic/, '#00838f'],
+  [/^formazionegenerale/, '#bdbdbd'], [/^varie/, '#9e9e9e']
+];
+function coloreCategoria(nome) {
+  const k = normKey(nome);
+  const c = COLORI_CATEGORIA.find(([re]) => re.test(k));
+  return c ? c[1] : '#9e9e9e';
+}
+
+// Livelli del raggruppamento: Settore (es. SAF) → Categoria → Tipologia
+const categoriaDi = c => c.categoria;
+const settoreDi = categoriaDi;      // i requisiti sono raggruppati per Categoria (colonna C)
+const tipologiaDi = c => c.tipologia;
+// Testo che è una Categoria (es. "SAF (Speleo Alpino Fluviale)") e non una Tipologia
+function trovaCategoria(t) {
+  const k = normKey(t), k2 = senzaParentesi(t);
+  if (!k) return '';
+  return CATEGORIE.find(c => normKey(c) === k) || CATEGORIE.find(c => k2.length >= 2 && senzaParentesi(c) === k2) || '';
+}
+const senzaParentesi = t => normKey((t || '').replace(/\(.*?\)/g, ' '));
+
+// "SAF (Speleo Alpino Fluviale), TAS (Topografia Applicata al Soccorso)" → due categorie
+function splitCategorie(t) {
+  return val(t).split(/\n|;|,(?![^()]*\))/).map(v => v.trim()).filter(Boolean);
+}
+// Categoria di intervento → categoria del libretto e settori dei requisiti
+function infoCategoria(cat) {
+  const label = trovaCategoria(cat) || cat;
+  return { cat, label, settori: new Set([label]) };
+}
+
+// Testo di tipologia → corsi di Formazione
+function trovaCorsi(testo) {
+  const out = new Set();
+  const t = val(testo);
+  if (!t) return out;
+  const tutto = corsoDaChiave(normKey(t));
+  if (tutto) { out.add(tutto); return out; }
+  t.split(/\n|;|,/).map(v => v.trim()).filter(Boolean).forEach(v => {
+    const k = normKey(v);
+    let c = corsoDaChiave(k) || corsoDaChiave(normKey(v.replace(/\(.*?\)/g, ' ')));
+    if (!c) {
+      let best = null, bl = 0;
+      CORSI.forEach(x => x.keys.forEach(kk => { if (kk.length >= 6 && k.includes(kk) && kk.length > bl) { best = x; bl = kk.length; } }));
+      c = equivalente(best);
+    }
+    if (c) out.add(c);
+  });
+  return out;
+}
+
+// Testo delle manovre svolte → manovre previste riconosciute
+function trovaManovre(testo, corsiAtt) {
+  const out = new Set();
+  if (!testo) return out;
+  const nk = normKey(testo);
+  MANOVRE.forEach(m => {
+    if ((m.kFull.length >= 6 && nk.includes(m.kFull)) || (m.reUid && m.reUid.test(testo)) ||
+        (m.corsi.some(c => corsiAtt.has(c)) && m.kMan.length >= 6 && nk.includes(m.kMan))) out.add(m);
+  });
+  return out;
+}
+
+function elaboraElenco(rows) {
+  const head = (rows[0] || []).map(h => (h || '').trim());
+  colElenco = {};
+  Object.entries(COL_ELENCO).forEach(([k, re]) => { colElenco[k] = head.findIndex(h => re.test(h)); });
+  PERSONE = new Map();
+  NOME_A_CF = new Map();
+  if (colElenco.nome < 0) { diag.elenco = { righe: rows.length, persone: 0, errore: 'colonna "Cognome Nome" non trovata' }; return; }
+  const g = (r, k) => colElenco[k] >= 0 ? val(r[colElenco[k]]) : '';
+  let n = 0, corsiNonTrovati = new Set();
+  rows.slice(1).forEach(r => {
+    const { nome, cf } = separaNome(r[colElenco.nome]);
+    if (nome.length < 3 || NOME_NON_REALE.test(nome)) return;
+    const key = cf ? 'cf:' + cf : 'n:' + normKey(nome);
+    const nk = normKey(nome);
+    if (cf) NOME_A_CF.set(nk, NOME_A_CF.has(nk) && NOME_A_CF.get(nk) !== key ? '*' : key);
+    const p = persona(key, nome);
+    p.inElenco = true; n++;
+    if (!p.originaleElenco) p.originaleElenco = val(r[colElenco.nome]).replace(/\s+/g, ' ');
+    const com = nomeComando(g(r, 'comando'));
+    if (com) p.comandi.set(com, (p.comandi.get(com) || 0) + 100);   // l'Elenco vale più delle registrazioni
+    if (g(r, 'qualifica')) p.qualifica = g(r, 'qualifica');
+    g(r, 'corsi').split(/\n|;|,/).map(v => v.trim()).filter(Boolean).forEach(v => {
+      const c = trovaCorsi(v);
+      if (c.size) c.forEach(x => p.corsiPossesso.add(x));
+      else { p.corsiTxt.push(v); corsiNonTrovati.add(v); }
+    });
+  });
+  diag.elenco = { righe: rows.length - 1, persone: n, corsiNonTrovati: [...corsiNonTrovati] };
+}
+
+function elaboraPiano(piano) {
+  const headers = piano.length ? Object.keys(piano[0]) : [];
+  const trova = (regole, esclusi) => { for (const r of regole) { const h = headers.find(h => r.test(h) && !(esclusi && esclusi.test(h))); if (h) return h; } return null; };
+  colPiano = {
+    comando: trova([/organizzat/i, /^comando/i], /funzione|appartenenza/i),
+    squadra: trova([/^squadra$/i, /squadra/i], /sottosquadre/i),
+    tipologia: trova([/^tipologia addestramento/i, /tipologia/i]),
+    inizio: trova([/giorno ed ora inizio/i, /inizio/i]),
+    fine: trova([/giorno ed ora fine/i, /\bfine\b/i]),
+    descr: trova([/descrizione manovre/i, /descrizione/i]),
+    area: trova([/area di addestramento/i]),
+    manovre: headers.filter(h => PIANO_MANOVRE.test(h))
+  };
+  let lista = [];
+  piano.forEach((row, i) => {
+    const d = colPiano.inizio ? parseData(row[colPiano.inizio]) : null;
+    if (!d) return;
+    const com = val(row[colPiano.comando]), tip = val(row[colPiano.tipologia]);
+    if (/\btest\d*\b/i.test(com + ' ' + tip)) return;
+    lista.push({
+      i, data: d, giorno: giornoKey(d), comandoKey: comandoKey(com) || 'nonindicato', comando: nomeComando(com),
+      squadra: val(row[colPiano.squadra]), tipologia: tip,
+      inizio: val(row[colPiano.inizio]), fine: val(row[colPiano.fine]),
+      ore: oreTra(row[colPiano.inizio], row[colPiano.fine]),
+      descr: val(row[colPiano.descr]), area: val(row[colPiano.area]),
+      manovre: colPiano.manovre.map(h => val(row[h])).filter(Boolean).join('\n'),
+      manCol: Object.fromEntries(colPiano.manovre.map(h => [h, val(row[h])]))
+    });
+  });
+  let duplicati = 0;
+  if (FILTRA_DUPLICATI) {
+    const ultimo = new Map();
+    lista.forEach((a, i) => ultimo.set(`${a.giorno}|${a.comandoKey}|${squadraKey(a.squadra)}|${normKey(a.tipologia)}`, i));
+    const tenere = new Set(ultimo.values());
+    duplicati = lista.length - tenere.size;
+    lista = lista.filter((a, i) => tenere.has(i));
+  }
+  const idx3 = new Map(), idx2 = new Map();
+  lista.forEach(p => {
+    push(idx2, p.giorno + '|' + p.comandoKey, p);
+    if (p.squadra) push(idx3, p.giorno + '|' + p.comandoKey + '|' + squadraKey(p.squadra), p);
+  });
+  diag.piano = { righe: piano.length, validi: lista.length, duplicati };
+  return { idx3, idx2 };
+}
+
+function elaboraReg(reg, pianoIdx) {
+  const head = (reg[0] || []).map(h => (h || '').trim());
+  colReg = {};
+  Object.entries(COL_REG).forEach(([k, [lettera, re]]) => {
+    const i = head.findIndex(h => re.test(h));
+    colReg[k] = i >= 0 ? i : letterIdx(lettera);
+  });
+  // "fine" non deve prendere "Giorno ed Ora Inizio"... ma neanche altre colonne con "fine" nel testo
+  const iFine = head.findIndex(h => /giorno ed ora fine/i.test(h));
+  if (iFine >= 0) colReg.fine = iFine;
+  const iIni = head.findIndex(h => /giorno ed ora inizio/i.test(h));
+  if (iIni >= 0) colReg.inizio = iIni;
+  colReg.manovre = head.map((h, i) => REG_MANOVRE.test(h) ? i : -1).filter(i => i >= 0);
+  if (!colReg.manovre.length) colReg.manovre = [letterIdx('N'), letterIdx('O')];
+
+  let righe = 0, scartate = 0, senzaData = 0, collSenzaPiano = 0, nonAttivita = 0;
+  const g = (r, k) => val(r[colReg[k]]);
+  reg.slice(1).forEach(r => {
+    const { nome, cf } = separaNome(g(r, 'nome'));
+    if (!nome && !g(r, 'cronologiche')) return;
+    righe++;
+    if (nome.length < 3 || NOME_NON_REALE.test(nome)) { scartate++; return; }
+
+    // Tipo: si incrociano più colonne.
+    //  D "Che cosa vuoi fare?": "2a - CONFERMA presenza addestramento collettivo odierno",
+    //    "2b - REGISTRAZIONE addestramenti e interventi INDIVIDUALI", "3 - STAMPA/INVIO Registro…" (non è un'attività)
+    //  I "Attività": "Addestramento" / "Intervento" (per le 2b)
+    //  L tipologia individuale, P/R categoria e numero intervento
+    const cosa = g(r, 'cosa'), attiv = g(r, 'attivita');
+    let tipo;
+    if (/collettiv/i.test(cosa)) tipo = 'collettivo';
+    else if (/^intervent/i.test(attiv)) tipo = 'intervento';
+    else if (/^addestr/i.test(attiv) || g(r, 'tipInd')) tipo = 'individuale';
+    else if (g(r, 'numInt') || g(r, 'catInt')) tipo = 'intervento';
+    else if (/stampa|invio|registro individuale/i.test(cosa)) { nonAttivita++; return; }
+    else if (g(r, 'inizio') || g(r, 'descr')) tipo = 'altro';
+    else if (!cosa && g(r, 'organizzatore')) tipo = 'collettivo';
+    else { nonAttivita++; return; }
+
+    // Data: collettivo "odierno" → H se è una data, altrimenti giorno di compilazione (A);
+    // individuali e interventi → Giorno ed Ora Inizio (J), altrimenti A. La colonna V non si usa.
+    const data = tipo === 'collettivo'
+      ? (parseData(g(r, 'dataColl')) || parseData(g(r, 'inizio')) || parseData(g(r, 'cronologiche')))
+      : (parseData(g(r, 'inizio')) || parseData(g(r, 'fine')) || parseData(g(r, 'dataColl')) || parseData(g(r, 'cronologiche')));
+    if (!data) { senzaData++; return; }
+
+    const a = {
+      tipo, data, anno: data.getFullYear(), giorno: giornoKey(data), cosa: attiv || cosa,
+      organizzatore: nomeComando(g(r, 'organizzatore')), organizzatoreRaw: g(r, 'organizzatore'), appartenenzaRaw: g(r, 'appartenenza'),
+      team: g(r, 'team'), ics: g(r, 'ics'),
+      attivita: g(r, 'attivita'), descr: g(r, 'descr'),
+      inizio: g(r, 'inizio'), fine: g(r, 'fine'),
+      ore: oreTra(g(r, 'inizio'), g(r, 'fine')), oreDa: 'registrazione',
+      tipologia: '', manovreTxt: colReg.manovre.map(i => val(r[i])).filter(Boolean).join('\n'),
+      manCol: Object.fromEntries(colReg.manovre.map(i => [head[i] || ('col' + i), val(r[i])])),
+      catInt: g(r, 'catInt'), descrInt: g(r, 'descrInt'), numInt: g(r, 'numInt'),
+      piano: null, pianiMultipli: false
+    };
+
+    if (tipo === 'collettivo') {
+      const k2 = a.giorno + '|' + comandoKey(g(r, 'organizzatore'));
+      let cand = (a.team && pianoIdx.idx3.get(k2 + '|' + squadraKey(a.team))) || pianoIdx.idx2.get(k2) || [];
+      if (cand.length > 1 && a.attivita) {
+        const ka = normKey(a.attivita);
+        const f = cand.filter(p => normKey(p.tipologia).includes(ka) || ka.includes(normKey(p.tipologia)));
+        if (f.length) cand = f;
+      }
+      if (cand.length) {
+        const p = cand[cand.length - 1];
+        a.piano = p; a.pianiMultipli = cand.length > 1;
+        a.tipologia = p.tipologia;
+        if (a.ore == null && p.ore != null) { a.ore = p.ore; a.oreDa = 'piano'; a.inizio = p.inizio; a.fine = p.fine; }
+        if (p.manovre) a.manovreTxt = [a.manovreTxt, p.manovre].filter(Boolean).join('\n');
+        if (!a.descr) a.descr = p.descr;
+      } else {
+        collSenzaPiano++;
+        a.tipologia = a.attivita;
+      }
+    } else if (tipo === 'individuale') {
+      a.tipologia = g(r, 'tipInd') || a.attivita;
+    } else if (tipo === 'altro') {
+      a.tipologia = g(r, 'tipInd') || a.attivita;
+    }
+
+    // Corsi di Formazione collegati
+    a.corsi = trovaCorsi(a.tipologia);
+    a.corsiTip = new Set(a.corsi);   // corsi dalla sola tipologia (per il libretto)
+    // Interventi: categorie accorpate ("SAF (...), TAS (...)") divise una per una
+    a.cats = tipo === 'intervento' ? splitCategorie(a.catInt).map(infoCategoria) : [];
+    a.manovre = trovaManovre(a.manovreTxt, a.corsi);
+    // una manovra riconosciuta collega l'attività al suo corso solo se la sigla è di un corso solo
+    if (!a.corsi.size) a.manovre.forEach(m => { if (m.corsi.length === 1 && tipo !== 'intervento') a.corsi.add(m.corsi[0]); });
+    if (!a.corsi.size && tipo !== 'intervento') a.categoria = trovaCategoria(a.tipologia);
+
+    const p = persona(chiavePersona(nome, cf), nome);
+    const orig = g(r, 'nome').replace(/\s+/g, ' ');
+    p.originali.set(orig, (p.originali.get(orig) || 0) + 1);
+    const app = nomeComando(g(r, 'appartenenza'));
+    if (app) p.comandi.set(app, (p.comandi.get(app) || 0) + 1);
+    p.att.push(a);
+  });
+  const piuFrequente = m => [...m.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] || '';
+  PERSONE.forEach(p => { p.nome = piuFrequente(p.grafie); p.comando = piuFrequente(p.comandi); DI_TUTTI.forEach(c => p.corsiPossesso.add(c)); });
+  const perTipo = {};
+  PERSONE.forEach(p => p.att.forEach(a => { perTipo[a.tipo] = (perTipo[a.tipo] || 0) + 1; }));
+  diag.reg = { righe, scartate, senzaData, collSenzaPiano, nonAttivita, perTipo, persone: PERSONE.size };
+}
+
+/* =====================================================================
+   DIREZIONE REGIONALE EMILIA-ROMAGNA – CONFIGURAZIONE DEI LIBRETTI
+   ===================================================================== */
+const JSPDF_URL     = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+const AUTOTABLE_URL = "https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js";
+
+// Comandi della Direzione: nome stampato nel libretto → chiavi riconosciute (comandoKey)
+const COMANDI_ER = [
+  ['Direzione Regionale Emilia-Romagna', ['direzioneemiliaromagna', 'direzioneer']],
+  ['Bologna', ['bologna']],
+  ['Ferrara', ['ferrara']],
+  ['Forlì-Cesena', ['forlicesena', 'forliecesena']],
+  ['Modena', ['modena']],
+  ['Parma', ['parma']],
+  ['Piacenza', ['piacenza']],
+  ['Ravenna', ['ravenna']],
+  ['Reggio Emilia', ['reggioemilia', 'reggionellemilia']],
+  ['Rimini', ['rimini']]
+];
+// Il primo biennio dei mantenimenti SAF Avanzato (Circolare DCF n. 01/2025); i successivi ogni 2 anni
+const BIENNIO_INIZIALE = 2025;
+const PRIMO_ANNO = 2023;          // primo anno proposto nei menu
+
+// Ore di un addestramento con più manovre: divise tra le manovre (così il totale non conta due volte le stesse ore).
+// false = ogni manovra riporta le ore intere dell'addestramento.
+const DIVIDI_ORE_TRA_MANOVRE = true;
+
+// Colonne delle manovre (intestazioni di Piano_Di_Sicurezza e Registrazione_Attivita_Semplificata)
+const RE_COL_AVANZATO = /avanzat/i;    // "Manovre SAF Avanzato previste"
+const RE_COL_BASICO   = /basic/i;      // "Attività addestrativa svolta (SAF BASICO)"
+
+// Responsabile dell'addestramento: partecipante dello stesso addestramento collettivo
+// con questo ruolo nella colonna "Incident Command System" (in ordine di preferenza)
+const RUOLI_RESPONSABILE = [/responsabile.*addestr/i, /direttore.*(addestr|eserc)/i, /\bresponsabile\b/i, /\bdirettore\b/i, /team\s*leader|capo\s*squadra|caposquadra|\bleader\b/i];
+
+// "In sede" / "Fuori sede" dall'Area di Addestramento del Piano di Sicurezza
+const RE_IN_SEDE = /\bsede\b|caserma|distaccamento|castello di manovra|torre di manovra|campo prove|\bscuola\b/i;
+
+// MODELLO SAF AVANZATO (Allegato 6): cicli e manovre come da Manuale SAF Avanzato
+const CICLI_AVA = [
+  { n: 'I', man: [
+    [31, 'Teleferica per la traslazione dell’operatore'],
+    [32, 'Teleferica per la traslazione della barella'],
+    [33, 'Teleferica con sistema pescante'],
+    [34, 'Teleferica a punti fissi con tiro guidato'],
+    [35, 'Sistemi di teleferica complessi'],
+    [38, 'Calata e recupero con verricello (winch)'],
+    [39, 'Manovra di utilizzo di attrezzature complesse di sollevamento, calata e recupero'],
+    [48, 'Recupero con la tecnica dello “stendi-panni”']] },
+  { n: 'II', man: [
+    [27, 'Autosoccorso nella progressione verticale del secondo operatore'],
+    [28, 'Discesa e accompagnamento della vittima in corda doppia'],
+    [39, 'Manovra di utilizzo di attrezzature complesse di sollevamento, calata e recupero'],
+    [41, 'Utilizzo del sistema tripode per calata e recupero'],
+    [46, 'Autosoccorso in situazioni complesse'],
+    [47, 'Risalita e discesa di emergenza su corda singola e doppia']] },
+  { n: 'III', man: [
+    [26, 'Recupero con la tecnica del contrappeso'],
+    [29, 'Soccorso uomo a uomo con approccio dal basso'],
+    [37, 'Sistema di calata e recupero con corde accoppiate'],
+    [39, 'Manovra di utilizzo di attrezzature complesse di sollevamento, calata e recupero'],
+    [42, 'Variazione dell’assetto della barella tramite corde'],
+    [44, 'Movimentazione della barella sostenuta da due operatori'],
+    [50, 'Passaggio dei nodi nei deviatori']] },
+  { n: 'IV', man: [
+    [30, 'Calata e recupero con ripresa degli ancoraggi'],
+    [36, 'Passaggio dei nodi nei sistemi di calata e recupero'],
+    [39, 'Manovra di utilizzo di attrezzature complesse di sollevamento, calata e recupero'],
+    [40, 'Utilizzo del sistema bipode per calata e recupero'],
+    [43, 'Cambio d’assetto della barella'],
+    [45, 'Manovra di movimentazione barella complessa'],
+    [49, 'Passaggio della barella su spigolo']] }
+];
+const ORE_CICLO_AVA = 36;
+
+// MODELLO SAF BASICO (Allegato 4): manovre obbligatorie, raggruppate per tempo minimo
+const VOCI_BAS = [
+  { gruppo: 0, testo: 'Esecuzione di nodi e ancoraggi', re: /\bnod[io]\b|ancoragg/i },
+  { gruppo: 0, testo: 'Calata e recupero', re: /calata|recupero/i },
+  { gruppo: 0, testo: 'Movimentazione autonoma su corda singola e frazionamenti', re: /movimentazione autonoma|corda singola|frazionament/i },
+  { gruppo: 1, testo: 'Svincolo e accompagnamento con l’impiego di paranco', re: /svincol|accompagnament|paranc/i },
+  { gruppo: 1, testo: 'Progressione dal basso', re: /progressione dal basso|dal basso/i },
+  // gli addestramenti COLLETTIVI SAF Basico senza manovre indicate vanno qui
+  { gruppo: 2, testo: 'Addestramento provinciale di gruppo su scenari urbano/industriali o naturali', re: /provincial|di gruppo|scenari/i, collettivi: true }
+];
+const GRUPPI_BAS = [6, 6, 12];   // ore minime di ciascun gruppo
+const ORE_MIN_BAS = 24;
+
+/* =====================================================================
+   UTILITÀ
+   ===================================================================== */
+const fmtGiorno = d => d ? d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+const fmtOre = h => h == null ? '' : fmtHM(h);
+const sommaOre = l => l.reduce((s, v) => s + (v.ore || 0), 0);
+const biennioLabel = y => `${y}–${y + 1}`;
+const filePart = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
+const tagliaTesto = (s, n) => { const t = (s || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1).trimEnd() + '…' : t; };
+
+function comandoER(testo) {
+  const k = comandoKey(testo);
+  if (!k) return null;
+  const c = COMANDI_ER.find(([, keys]) => keys.includes(k));
+  return c ? c[0] : null;
+}
+// Comando ER della persona (il più frequente tra quelli della Direzione)
+function comandoPersonaER(p) {
+  const cp = comandoER(p.comando);
+  if (cp) return cp;
+  const l = [...p.comandi.entries()].map(([c, n]) => [comandoER(c), n]).filter(x => x[0]).sort((a, b) => b[1] - a[1]);
+  return l.length ? l[0][0] : null;
+}
+
+// Livello SAF di un corso di Formazione
+function livelloCorso(c) {
+  if (!c) return null;
+  const t = [c.categoria, c.tipologia, c.prof].join(' ');
+  if (!/\bsaf\b|speleo/i.test(t)) return null;
+  if (/avanzat/i.test(t) || /^ava$/i.test(c.sigla)) return 'AVA';
+  if (/basic/i.test(t) || /^bas$/i.test(c.sigla)) return 'BAS';
+  return null;
+}
+const livelliPossesso = p => new Set([...p.corsiPossesso].map(livelloCorso).filter(Boolean));
+const testoColonne = (manCol, re) => Object.entries(manCol || {}).filter(([h, v]) => re.test(h) && v).map(([, v]) => v).join('\n');
+const eSaf = t => /^saf/.test(normKey(t));
+
+/* ---------- Manovre SAF Avanzato scritte nel modulo ---------- */
+const ROMANI = { I: 'I', II: 'II', III: 'III', IV: 'IV', '1': 'I', '2': 'II', '3': 'III', '4': 'IV' };
+const NUMERI_AVA = new Set(CICLI_AVA.flatMap(c => c.man.map(m => m[0])));
+// "I Ciclo - 31 - Teleferica…", "Ciclo II - 27 …", "31 - Teleferica…", o solo la descrizione
+function manovreAva(testo) {
+  const out = [], visti = new Set();
+  const add = (ciclo, n) => { n = +n; if (!NUMERI_AVA.has(n)) return; const k = (ciclo || '?') + '|' + n; if (visti.has(k)) return; visti.add(k); out.push({ ciclo: ciclo || null, n }); };
+  const t = val(testo);
+  if (!t) return out;
+  let m;
+  const re1 = /\b(IV|III|II|I|[1-4])\s*[°ºª]?\s*Ciclo\s*[-–:.]?\s*(?:Scheda\s*|n\.?\s*)?(\d{1,2})\b/gi;
+  const re2 = /\bCiclo\s*(IV|III|II|I|[1-4])\b\s*[-–:.]?\s*(?:Scheda\s*|n\.?\s*)?(\d{1,2})\b/gi;
+  while ((m = re1.exec(t))) add(ROMANI[m[1].toUpperCase()], m[2]);
+  while ((m = re2.exec(t))) add(ROMANI[m[1].toUpperCase()], m[2]);
+  // numeri senza ciclo, a inizio riga o dopo una virgola: "31 - Teleferica…"
+  const re3 = /(?:^|[\n,;])\s*(?:Scheda\s*|n\.?\s*)?(\d{2})\s*[-–:.)]\s*\S/g;
+  while ((m = re3.exec(t))) if (![...visti].some(k => k.endsWith('|' + +m[1]))) add(null, m[1]);
+  // solo descrizione, senza numero
+  const nk = normKey(t);
+  CICLI_AVA.forEach(c => c.man.forEach(([n, d]) => {
+    const kd = normKey(d);
+    if (kd.length >= 12 && nk.includes(kd) && ![...visti].some(k => k.endsWith('|' + n))) add(null, n);
+  }));
+  return out;
+}
+// Ciclo di una manovra: quello scritto, se la manovra ne fa parte; altrimenti dal semestre della data
+function cicloDi(m, data, y1) {
+  const conN = CICLI_AVA.filter(c => c.man.some(x => x[0] === m.n));
+  if (m.ciclo && conN.some(c => c.n === m.ciclo)) return m.ciclo;
+  if (conN.length === 1) return conN[0].n;
+  const sem = Math.max(0, Math.min(3, (data.getFullYear() - y1) * 2 + (data.getMonth() >= 6 ? 1 : 0)));
+  const perData = CICLI_AVA[sem];
+  return conN.includes(perData) ? perData.n : conN[0].n;
+}
+
+/* ---------- Classificazione di un'attività ---------- */
+function analizza(a) {
+  if (a._er) return a._er;
+  const liv = new Set([...a.corsi].map(livelloCorso).filter(Boolean));
+  const txtAva = [testoColonne(a.manCol, RE_COL_AVANZATO), a.piano ? testoColonne(a.piano.manCol, RE_COL_AVANZATO) : ''].filter(Boolean).join('\n');
+  const txtBas = [testoColonne(a.manCol, RE_COL_BASICO), a.piano ? testoColonne(a.piano.manCol, RE_COL_BASICO) : ''].filter(Boolean).join('\n');
+  const manAva = manovreAva(txtAva);
+  const interventoSaf = a.tipo === 'intervento' && (a.cats || []).some(c => eSaf(c.label) || eSaf(c.cat));
+  const ava = a.tipo !== 'intervento' && (liv.has('AVA') || manAva.length > 0);
+  const bas = a.tipo !== 'intervento' && (liv.has('BAS') || !!txtBas);
+  const safGenerico = a.tipo !== 'intervento' && !ava && !bas && !!a.categoria && eSaf(a.categoria);
+  return (a._er = { ava, bas, manAva, txtBas, interventoSaf, safGenerico });
+}
+
+// Attività della persona, senza doppie registrazioni dello stesso addestramento
+function attivitaPersona(p) {
+  const viste = new Map();
+  p.att.forEach(a => {
+    const k = a.giorno + '|' + a.tipo + '|' + (a.piano ? 'p' + a.piano.i : normKey([a.tipologia, a.descr, a.numInt, a.inizio].join(' ')));
+    viste.set(k, a);          // resta l'ultima registrazione
+  });
+  return [...viste.values()].sort((x, y) => x.data - y.data || String(x.inizio).localeCompare(String(y.inizio)));
+}
+
+/* ---------- Responsabile e sede ---------- */
+let PARTECIPANTI = new Map();   // addestramento collettivo (Piano) → [{ p, ics }]
+function preparaPartecipanti() {
+  PARTECIPANTI = new Map();
+  PERSONE.forEach(p => p.att.forEach(a => { if (a.piano) push(PARTECIPANTI, a.piano, { p, ics: a.ics }); }));
+}
+const nomeConQualifica = p => [p.qualifica, p.nome].filter(Boolean).join(' ');
+function responsabileDi(a) {
+  if (!a.piano) return '';
+  const part = PARTECIPANTI.get(a.piano) || [];
+  for (const re of RUOLI_RESPONSABILE) {
+    const r = [...new Set(part.filter(x => re.test(x.ics || '')).map(x => x.p))];
+    if (r.length) return r.map(nomeConQualifica).join(', ');
+  }
+  return '';
+}
+function sedeDi(a) {
+  const area = a.piano ? a.piano.area : '';
+  if (!area) return null;
+  return RE_IN_SEDE.test(area) ? 'in' : 'fuori';
+}
+function voce(a, ore) {
+  return { a, data: a.data, ore, sede: sedeDi(a), resp: responsabileDi(a) };
+}
+// Breve descrizione per le righe "altre attività / interventi"
+function descrizioneBreve(a) {
+  const tip = (a.tipologia || '').replace(/SAF\s*\(Speleo Alpino Fluviale\)\s*/i, 'SAF ').trim();
+  if (a.tipo === 'intervento') {
+    const t = ['Intervento' + (a.numInt ? ' n. ' + a.numInt : ''), a.descrInt].filter(Boolean).join(' – ');
+    return tagliaTesto(t, 140);
+  }
+  const tipoTxt = a.tipo === 'collettivo' ? 'Addestramento collettivo' : a.tipo === 'individuale' ? 'Addestramento individuale' : 'Attività';
+  return tagliaTesto([tipoTxt + (tip ? ' ' + tip : ''), a.descr].filter(Boolean).join(' – '), 140);
+}
+
+/* =====================================================================
+   COMPOSIZIONE DEI LIBRETTI
+   ===================================================================== */
+function libroAvanzato(p, y1) {
+  const y2 = y1 + 1;
+  const cicli = CICLI_AVA.map(c => ({ n: c.n, righe: c.man.map(([n, d]) => ({ n, d, voci: [] })) }));
+  const altre = [];
+  attivitaPersona(p).filter(a => a.anno === y1 || a.anno === y2).forEach(a => {
+    const an = analizza(a);
+    if (an.manAva.length) {
+      const quota = a.ore == null ? null : a.ore / (DIVIDI_ORE_TRA_MANOVRE ? an.manAva.length : 1);
+      an.manAva.forEach(m => {
+        const c = cicli.find(x => x.n === cicloDi(m, a.data, y1));
+        c.righe.find(r => r.n === m.n).voci.push(voce(a, quota));
+      });
+    } else if (an.ava || an.interventoSaf) {
+      altre.push({ ...voce(a, a.ore), descr: descrizioneBreve(a) });
+    }
+  });
+  cicli.forEach(c => { c.tot = c.righe.reduce((s, r) => s + sommaOre(r.voci), 0); });
+  const totAltre = sommaOre(altre);
+  return {
+    tipo: 'AVA', p, y1, y2, periodo: biennioLabel(y1), comando: comandoPersonaER(p) || p.comando || '',
+    cicli, altre, totAltre, tot: cicli.reduce((s, c) => s + c.tot, 0) + totAltre,
+    nAtt: cicli.reduce((s, c) => s + c.righe.reduce((t, r) => t + r.voci.length, 0), 0) + altre.length
+  };
+}
+
+function libroBasico(p, y) {
+  const voci = VOCI_BAS.map(v => ({ ...v, voci: [] }));
+  const altre = [];
+  attivitaPersona(p).filter(a => a.anno === y).forEach(a => {
+    const an = analizza(a);
+    if (an.txtBas) {
+      // una manovra per riga (o separate da virgole)
+      const righe = an.txtBas.split(/\n|;|,(?![^()]*\))/).map(s => s.trim()).filter(Boolean);
+      const trovate = new Set(), nonTrovate = [];
+      righe.forEach(t => { const v = voci.find(x => x.re.test(t)); if (v) trovate.add(v); else nonTrovate.push(t); });
+      if (a.tipo === 'collettivo' && !trovate.size) trovate.add(voci.find(v => v.collettivi));
+      const nQuote = trovate.size + (nonTrovate.length ? 1 : 0);
+      const quota = a.ore == null ? null : a.ore / (DIVIDI_ORE_TRA_MANOVRE ? Math.max(1, nQuote) : 1);
+      trovate.forEach(v => v.voci.push(voce(a, quota)));
+      if (nonTrovate.length) altre.push({ ...voce(a, quota), descr: tagliaTesto(nonTrovate.join(', '), 140) });
+    } else if (an.bas && a.tipo === 'collettivo') {
+      voci.find(v => v.collettivi).voci.push(voce(a, a.ore));
+    } else if (an.bas || an.interventoSaf || an.safGenerico) {
+      altre.push({ ...voce(a, a.ore), descr: descrizioneBreve(a) });
+    }
+  });
+  const totObbl = voci.reduce((s, v) => s + sommaOre(v.voci), 0);
+  const totGruppi = GRUPPI_BAS.map((_, g) => voci.filter(v => v.gruppo === g).reduce((s, v) => s + sommaOre(v.voci), 0));
+  return {
+    tipo: 'BAS', p, y, periodo: String(y), comando: comandoPersonaER(p) || p.comando || '',
+    voci, altre, totObbl, totGruppi, totAltre: sommaOre(altre), tot: totObbl + sommaOre(altre),
+    nAtt: voci.reduce((s, v) => s + v.voci.length, 0) + altre.length
+  };
+}
+
+// Libretti di un operatore per la scelta corrente
+function libriOperatore(p) {
+  if (state.tipo === 'AVA') {
+    const l = [libroAvanzato(p, state.periodo)];
+    if (state.allega) l.push(libroBasico(p, state.periodo), libroBasico(p, state.periodo + 1));
+    return l;
+  }
+  return [libroBasico(p, state.periodo)];
+}
+
+/* =====================================================================
+   STATO, MENU E ANTEPRIMA
+   ===================================================================== */
+const selComando = document.getElementById('sel-comando');
+const selTipo = document.getElementById('sel-tipo');
+const selPeriodo = document.getElementById('sel-periodo');
+const lblPeriodo = document.getElementById('lbl-periodo');
+const chkAllega = document.getElementById('chk-allega');
+const allegaWrap = document.getElementById('allega-wrap');
+const selOp = document.getElementById('sel-op');
+const cerca = document.getElementById('cerca');
+const pdfBtn = document.getElementById('pdf-btn');
+const pdfTuttiBtn = document.getElementById('pdf-tutti-btn');
+const refreshBtn = document.getElementById('refresh-btn');
+const report = document.getElementById('report');
+
+const bienniDefault = () => ANNO_OGGI - ((((ANNO_OGGI - BIENNIO_INIZIALE) % 2) + 2) % 2);
+const state = {
+  comando: URLP.get('comando') || '',
+  tipo: /^bas/i.test(URLP.get('libretto') || '') ? 'BAS' : 'AVA',
+  periodo: parseInt(URLP.get('anno'), 10) || null,
+  allega: URLP.get('allega') !== '0',
+  op: null
+};
+let OPERATORI = [];          // operatori ER per la scelta corrente
+let loading = false, caricato = false;
+
+function preparaMenuComandi() {
+  selComando.innerHTML = '<option value="">Tutti i Comandi della Direzione</option>' +
+    COMANDI_ER.map(([n]) => `<option value="${esc(n)}">${esc(n === COMANDI_ER[0][0] ? n : 'Comando di ' + n)}</option>`).join('');
+  if (!COMANDI_ER.some(([n]) => n === state.comando)) {
+    // nome scritto nell'indirizzo in un altro modo (es. "forli-cesena")
+    state.comando = comandoER(state.comando) || '';
+  }
+  selComando.value = state.comando;
+}
+
+function preparaMenuPeriodo() {
+  selTipo.value = state.tipo;
+  allegaWrap.style.display = state.tipo === 'AVA' ? '' : 'none';
+  chkAllega.checked = state.allega;
+  let opz;
+  if (state.tipo === 'AVA') {
+    lblPeriodo.textContent = 'Biennio';
+    const ini = [];
+    for (let y = BIENNIO_INIZIALE - 2; y <= ANNO_OGGI; y += 2) ini.push(y);
+    if (!ini.includes(bienniDefault())) ini.push(bienniDefault());
+    if (!state.periodo || (!ini.includes(state.periodo) && !ini.includes(state.periodo - 1))) state.periodo = bienniDefault();
+    if (!ini.includes(state.periodo)) state.periodo -= 1;
+    opz = ini.sort((a, b) => b - a).map(y => [y, biennioLabel(y)]);
+  } else {
+    lblPeriodo.textContent = 'Anno';
+    const anni = [];
+    for (let y = ANNO_OGGI; y >= PRIMO_ANNO; y--) anni.push(y);
+    if (!state.periodo || !anni.includes(state.periodo)) state.periodo = ANNO_OGGI;
+    opz = anni.map(y => [y, String(y)]);
+  }
+  selPeriodo.innerHTML = opz.map(([v, t]) => `<option value="${v}"${v === state.periodo ? ' selected' : ''}>${t}</option>`).join('');
+}
+
+// Operatori della Direzione da mostrare: livello in possesso oppure attività nel periodo
+function preparaOperatori() {
+  const anni = state.tipo === 'AVA' ? [state.periodo, state.periodo + 1] : [state.periodo];
+  OPERATORI = [];
+  PERSONE.forEach(p => {
+    const com = comandoPersonaER(p);
+    if (!com || (state.comando && com !== state.comando)) return;
+    const liv = livelliPossesso(p);
+    const att = attivitaPersona(p).filter(a => anni.includes(a.anno)).map(analizza);
+    const haLiv = state.tipo === 'AVA' ? liv.has('AVA') : (liv.has('BAS') || liv.has('AVA'));
+    const haAtt = state.tipo === 'AVA' ? att.some(x => x.ava) : att.some(x => x.bas);
+    if (!haLiv && !haAtt) return;
+    const lib = state.tipo === 'AVA' ? libroAvanzato(p, state.periodo) : libroBasico(p, state.periodo);
+    OPERATORI.push({ p, com, lib, senzaQualifica: !haLiv });
+  });
+  OPERATORI.sort((a, b) => a.p.nome.localeCompare(b.p.nome, 'it'));
+  aggiornaSelectOp();
+}
+
+function aggiornaSelectOp() {
+  const k = normKey(cerca.value);
+  const lista = OPERATORI.filter(o => !k || normKey(o.p.nome).includes(k));
+  const prima = state.op;
+  selOp.innerHTML = `<option value="">— ${lista.length} operatori${state.comando ? '' : ' in Emilia-Romagna'} —</option>` +
+    lista.map(o => `<option value="${esc(o.p.key)}">${esc(o.p.nome)}${o.p.qualifica ? ' · ' + esc(o.p.qualifica) : ''}${state.comando ? '' : ' · ' + esc(o.com)} — ${o.lib.nAtt} att., ${fmtOre(o.lib.tot)} h</option>`).join('');
+  if (prima && lista.some(o => o.p.key === prima)) selOp.value = prima;
+  else { state.op = lista.length === 1 ? lista[0].p.key : null; selOp.value = state.op || ''; }
+  selOp.disabled = !caricato;
+  pdfBtn.disabled = !state.op;
+  pdfTuttiBtn.disabled = !OPERATORI.length;
+  pdfTuttiBtn.textContent = `⬇ PDF di tutti (${OPERATORI.length})`;
+}
+
+function aggiornaUrl() {
+  try {
+    const u = new URL(location.href);
+    u.searchParams.set('libretto', state.tipo === 'AVA' ? 'avanzato' : 'basico');
+    u.searchParams.set('anno', state.periodo);
+    if (state.comando) u.searchParams.set('comando', state.comando); else u.searchParams.delete('comando');
+    if (state.tipo === 'AVA' && !state.allega) u.searchParams.set('allega', '0'); else u.searchParams.delete('allega');
+    history.replaceState(null, '', u);
+  } catch (e) { /* indirizzo non modificabile: nessun problema */ }
+}
+
+/* ---------- Anteprima HTML ---------- */
+const box = ch => `<span class="box">${ch ? '✕' : ''}</span>`;
+function celleVoce(v) {
+  if (!v) return { data: '', ore: '', in: box(false), fuori: box(false), resp: '' };
+  return { data: esc(fmtGiorno(v.data)), ore: esc(fmtOre(v.ore)), in: box(v.sede === 'in'), fuori: box(v.sede === 'fuori'), resp: esc(v.resp) };
+}
+function righeAltre(altre, minimo) {
+  return Math.max(minimo, altre.length + 2);
+}
+
+function htmlAvanzato(L) {
+  const op = nomeConQualifica(L.p);
+  let h = `<div class="foglio avanzato"><div class="dir">DIREZIONE REGIONALE VV.F. EMILIA ROMAGNA</div>
+  <div class="tit"><span>LIBRETTO INDIVIDUALE DEI MANTENIMENTI SAF – LIVELLO AVANZATO</span><span>BIENNIO: <span class="campo">${esc(L.periodo)}</span></span></div>
+  <div class="riga-op">Comando di <span class="campo">${esc(L.comando)}</span> &nbsp; Operatore SAF (Qualifica, Cognome e Nome) <span class="campo">${esc(op)}</span></div>`;
+  L.cicli.forEach(c => {
+    h += `<div class="ciclo">CICLO ${c.n} (${ORE_CICLO_AVA} ore)</div><div class="mn">Manovre n. ${c.righe.map(r => r.n).join(' – ')}</div>
+    <table><thead><tr><th style="width:6%">Scheda</th><th>Descrizione manovra (come da Manuale SAF Avanzato)</th><th style="width:6%">Spunta</th><th style="width:7%">Ore</th><th style="width:9%">Data</th><th style="width:5%">In Sede</th><th style="width:5%">Fuori Sede</th><th style="width:24%">Responsabile Addestramento<br>(Qualifica, Cognome e Nome)</th></tr></thead><tbody>`;
+    c.righe.forEach(r => {
+      const n = Math.max(1, r.voci.length);
+      for (let i = 0; i < n; i++) {
+        const v = celleVoce(r.voci[i]);
+        h += '<tr>' + (i === 0 ? `<td class="c" rowspan="${n}">${r.n}</td><td rowspan="${n}">${esc(r.d)}</td><td class="c" rowspan="${n}">${box(r.voci.length)}</td>` : '') +
+          `<td class="n">${v.ore}</td><td class="c">${v.data}</td><td class="c">${v.in}</td><td class="c">${v.fuori}</td><td>${v.resp}</td></tr>`;
+      }
+    });
+    h += `<tr class="${c.tot < ORE_CICLO_AVA ? 'sotto' : ''}"><td colspan="3" class="tot">Totale ore</td><td class="tot">${fmtOre(c.tot)}</td><td colspan="4"></td></tr></tbody></table>`;
+  });
+  h += `<div class="ciclo">ALTRE ATTIVITÀ</div><table><thead><tr><th style="width:6%">N.</th><th>Descrizione breve tipo attività (esercitazioni, coordinatore mantenimenti, interventi, corsi ecc...)</th><th style="width:6%">Spunta</th><th style="width:7%">Ore</th><th style="width:9%">Data</th><th style="width:5%">In Sede</th><th style="width:5%">Fuori Sede</th><th style="width:24%">Responsabile Addestramento<br>(Qualifica, Cognome e Nome)</th></tr></thead><tbody>`;
+  for (let i = 0; i < righeAltre(L.altre, 6); i++) {
+    const a = L.altre[i], v = celleVoce(a);
+    h += `<tr><td class="c">${a ? i + 1 : ''}</td><td>${a ? esc(a.descr) : ''}</td><td class="c">${box(!!a)}</td><td class="n">${v.ore}</td><td class="c">${v.data}</td><td class="c">${v.in}</td><td class="c">${v.fuori}</td><td>${v.resp}</td></tr>`;
+  }
+  h += `<tr><td colspan="3" class="tot">Totale complessivo ore</td><td class="tot">${fmtOre(L.tot)}</td><td colspan="4"></td></tr></tbody></table>
+  <div class="gen">Seguono nel PDF: testo del modello, dichiarazione dell'operatore e firme (Responsabile Operativo e Funzionario Responsabile SAF provinciale e regionale).</div></div>`;
+  return h;
+}
+
+function htmlBasico(L) {
+  const op = nomeConQualifica(L.p);
+  let h = `<div class="foglio basico"><div class="tit"><span>LIBRETTO INDIVIDUALE DEI MANTENIMENTI SAF – LIVELLO BASICO - ANNO SOLARE <span class="campo">${esc(L.periodo)}</span></span></div>
+  <div class="mn">Ai sensi della <b>Circolare DCF n. 01/2020 – Sistema di formazione del personale del CNVVF nel settore SAF</b> e del <b>Manuale Operativo SAF Basico</b> vigente.</div>
+  <div class="riga-op">Comando di <span class="campo">${esc(L.comando)}</span> &nbsp; Operatore SAF (Qualifica, Cognome e Nome) <span class="campo">${esc(op)}</span></div>
+  <table><thead><tr><th style="width:7%">Tempo minimo previsto</th><th style="width:5%">Spunta</th><th>Manovre Obbligatorie</th><th style="width:9%">Data</th><th style="width:5%">Sede</th><th style="width:5%">Fuori Sede</th><th style="width:7%">Ore</th><th style="width:26%">Responsabile Addestramento (Qualifica, Cognome e Nome)</th></tr></thead><tbody>`;
+  GRUPPI_BAS.forEach((min, g) => {
+    const vg = L.voci.filter(v => v.gruppo === g);
+    const nTot = vg.reduce((s, v) => s + Math.max(1, v.voci.length), 0);
+    vg.forEach((vv, j) => {
+      const n = Math.max(1, vv.voci.length);
+      for (let i = 0; i < n; i++) {
+        const v = celleVoce(vv.voci[i]);
+        h += '<tr>' + (j === 0 && i === 0 ? `<td class="c" rowspan="${nTot}"${L.totGruppi[g] < min ? ' style="color:#c00"' : ''}>${min} ore</td>` : '') +
+          (i === 0 ? `<td class="c" rowspan="${n}">${box(vv.voci.length)}</td><td rowspan="${n}">${esc(vv.testo)}</td>` : '') +
+          `<td class="c">${v.data}</td><td class="c">${v.in}</td><td class="c">${v.fuori}</td><td class="n">${v.ore}</td><td>${v.resp}</td></tr>`;
+      }
+    });
+  });
+  h += `<tr class="${L.totObbl < ORE_MIN_BAS ? 'sotto' : ''}"><td colspan="6" class="tot">Totale ore (minimo ${ORE_MIN_BAS})</td><td class="tot">${fmtOre(L.totObbl)}</td><td></td></tr></tbody></table>
+  <table><thead><tr><th style="width:7%"></th><th style="width:5%">Spunta</th><th>Altre Manovre o Interventi (breve descrizione e numero intervento)</th><th style="width:9%">Data</th><th style="width:5%">Sede</th><th style="width:5%">Fuori Sede</th><th style="width:7%">Ore</th><th style="width:26%">Responsabile Addestramento (Qualifica, Cognome e Nome)</th></tr></thead><tbody>`;
+  for (let i = 0; i < righeAltre(L.altre, 5); i++) {
+    const a = L.altre[i], v = celleVoce(a);
+    h += `<tr><td></td><td class="c">${box(!!a)}</td><td>${a ? esc(a.descr) : ''}</td><td class="c">${v.data}</td><td class="c">${v.in}</td><td class="c">${v.fuori}</td><td class="n">${v.ore}</td><td>${v.resp}</td></tr>`;
+  }
+  h += `</tbody></table><div class="gen">Seguono nel PDF: testo del modello, dichiarazione dell'operatore e firme del Responsabile Operativo e del Funzionario Responsabile SAF provinciale.</div></div>`;
+  return h;
+}
+
+function disegna() {
+  if (!caricato) return;
+  aggiornaUrl();
+  const o = OPERATORI.find(x => x.p.key === state.op);
+  pdfBtn.disabled = !o;
+  if (!OPERATORI.length) {
+    report.innerHTML = `<div class="msg">Nessun operatore ${state.tipo === 'AVA' ? 'SAF Avanzato' : 'SAF Basico'} trovato${state.comando ? ' per ' + esc(state.comando) : ' in Emilia-Romagna'}.<small>Compaiono gli operatori con il corso in "Corsi in possesso" (Elenco_Filtrato) oppure con attività del livello nel periodo scelto.</small></div>` + debugHtml();
+    return;
+  }
+  if (!o) {
+    const conAtt = OPERATORI.filter(x => x.lib.nAtt).length;
+    const sotto = state.tipo === 'AVA'
+      ? OPERATORI.filter(x => x.lib.cicli.some(c => c.tot < ORE_CICLO_AVA)).length
+      : OPERATORI.filter(x => x.lib.totObbl < ORE_MIN_BAS).length;
+    report.innerHTML = `<div class="stato-box">
+      <div class="st"><div class="k">Operatori ${state.tipo === 'AVA' ? 'SAF Avanzato' : 'SAF Basico'}</div><div class="v">${OPERATORI.length}</div></div>
+      <div class="st"><div class="k">Con attività nel periodo</div><div class="v">${conAtt}</div></div>
+      <div class="st ${sotto ? 'ko' : 'ok'}"><div class="k">${state.tipo === 'AVA' ? 'Con almeno un ciclo sotto le 36 ore' : 'Sotto le 24 ore obbligatorie'}</div><div class="v">${sotto}</div></div>
+    </div>
+    <div class="msg">Scegli un operatore per vedere l'anteprima del libretto,<br>oppure scarica con «PDF di tutti» un unico PDF con i libretti di tutti gli operatori elencati.</div>` + noteHtml() + debugHtml();
+    return;
+  }
+  const libri = libriOperatore(o.p);
+  report.innerHTML = `<div class="op-titolo">${esc(o.p.nome)} <small>${esc([o.p.qualifica, o.com].filter(Boolean).join(' · '))}${o.senzaQualifica ? ' · corso non indicato in "Corsi in possesso"' : ''}</small></div>` +
+    libri.map((L, i) => (i === 1 ? '<div class="gen-titolo" style="color:#aaa">Libretti SAF Basico allegati</div>' : '') + (L.tipo === 'AVA' ? htmlAvanzato(L) : htmlBasico(L))).join('') + noteHtml() + debugHtml();
+}
+
+function noteHtml() {
+  return `<div class="note-box"><b>Come vengono compilati i libretti</b><ul>
+    <li><b>SAF Avanzato:</b> le manovre sono quelle indicate in «Manovre SAF Avanzato previste» del Piano di Sicurezza; il ciclo è quello scritto nella manovra (es. «II Ciclo - 27»), altrimenti il semestre del biennio.</li>
+    <li><b>SAF Basico:</b> le manovre sono quelle indicate in «Attività addestrativa svolta (SAF BASICO)»; gli addestramenti collettivi SAF Basico senza manovre indicate vanno in «Addestramento provinciale di gruppo».</li>
+    <li>Le attività SAF senza manovre del modello e gli interventi con categoria SAF vanno nelle righe delle altre attività.</li>
+    <li>${DIVIDI_ORE_TRA_MANOVRE ? 'Le ore di un addestramento con più manovre sono divise tra le manovre: il totale corrisponde alle ore effettive.' : 'Ogni manovra riporta le ore intere dell\'addestramento.'}</li>
+    <li>Responsabile: il partecipante con ruolo di responsabile nella colonna «Incident Command System». In sede / fuori sede: dall'«Area di Addestramento» del Piano di Sicurezza.</li>
+    <li>In rosso i totali sotto il minimo (solo nell'anteprima).</li></ul></div>`;
+}
+function debugHtml() {
+  return DEBUG ? `<div class="debug-box">${esc(JSON.stringify({ diag, colPiano, colReg, operatori: OPERATORI.length }, null, 1))}</div>` : '';
+}
+
+/* =====================================================================
+   PDF (scritto direttamente con jsPDF: non dipende da zoom e schermo)
+   ===================================================================== */
+function caricaScript(src) {
+  return new Promise((ok, ko) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => ko(new Error('Impossibile caricare ' + src)); document.head.appendChild(s); });
+}
+async function caricaJsPdf() {
+  if (!(window.jspdf && window.jspdf.jsPDF)) await caricaScript(JSPDF_URL);
+  if (!window.jspdf.jsPDF.API.autoTable) await caricaScript(AUTOTABLE_URL);
+}
+const PW = 297, PH = 210, MX = 12;                // A4 orizzontale, margini laterali
+const LARGH = PW - 2 * MX;
+const ROSSO = [224, 0, 0];
+
+// Testo con parti in grassetto: [[testo, grassetto], …] a capo automatico
+function paragrafo(doc, parti, x, y, w, size, lh) {
+  doc.setFontSize(size);
+  const font = doc.getFont().fontName;
+  const parole = [];
+  parti.forEach(([t, b]) => t.split(/(\s+)/).forEach(s => { if (s) parole.push([s, b]); }));
+  let cx = x, righe = 0;
+  const spazio = () => { doc.setFont(font, 'normal'); return doc.getTextWidth(' '); };
+  parole.forEach(([s, b]) => {
+    if (/^\s+$/.test(s)) { if (cx > x) cx += spazio(); return; }
+    doc.setFont(font, b ? 'bold' : 'normal');
+    const wd = doc.getTextWidth(s);
+    if (cx + wd > x + w && cx > x) { righe++; cx = x; }
+    doc.text(s, cx, y + righe * lh);
+    cx += wd + (b ? 0.3 : 0);   // margine dopo il grassetto (alcuni lettori usano un Times più largo)
+  });
+  doc.setFont(font, 'normal');
+  return y + (righe + 1) * lh;
+}
+function campo(doc, etichetta, valore, x, y, w, size) {
+  const font = doc.getFont().fontName;
+  doc.setFontSize(size); doc.setFont(font, 'normal');
+  doc.text(etichetta, x, y);
+  const xs = x + doc.getTextWidth(etichetta) + 1.5;
+  doc.setFont(font, 'bold');
+  doc.text(valore || '', xs + 1, y);
+  doc.setLineWidth(0.2);
+  doc.line(xs, y + 1, xs + w, y + 1);
+  doc.setFont(font, 'normal');
+  return xs + w;
+}
+function casella(doc, x, y, segno) {
+  doc.setLineWidth(0.25); doc.setDrawColor(0);
+  doc.rect(x, y, 3.2, 3.2);
+  if (segno) { doc.setLineWidth(0.35); doc.line(x + 0.6, y + 0.6, x + 2.6, y + 2.6); doc.line(x + 2.6, y + 0.6, x + 0.6, y + 2.6); }
+}
+// celle con casella: { content: '', box: true/false } → disegnata al centro della cella
+function disegnaCaselle(doc) {
+  return data => {
+    const r = data.cell.raw;
+    if (r && typeof r === 'object' && 'box' in r) {
+      casella(doc, data.cell.x + data.cell.width / 2 - 1.6, data.cell.y + data.cell.height / 2 - 1.6, r.box);
+    }
+  };
+}
+const cBox = (segno, extra) => Object.assign({ content: '', box: !!segno }, extra || {});
+function piede(doc, testo) {
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(120);
+  doc.text(testo, MX, PH - 5);
+  doc.setTextColor(0);
+}
+function numeraPagine(doc, da, a, testoPiede) {
+  for (let i = da; i <= a; i++) {
+    doc.setPage(i);
+    doc.setFont('times', 'normal'); doc.setFontSize(10); doc.setTextColor(0);
+    doc.text(String(i - da + 1), PW - MX, PH - 6, { align: 'right' });
+    piede(doc, testoPiede);
+  }
+}
+const firmaGenerato = () => `Generato da PUMA – Direzione Regionale VV.F. Emilia-Romagna il ${new Date().toLocaleString('it-IT')} con i dati registrati in PUMA.`;
+const stileTab = (font, size) => ({
+  theme: 'grid',
+  styles: { font, fontSize: size, textColor: 0, lineColor: 0, lineWidth: 0.2, cellPadding: 1.2, valign: 'middle', overflow: 'linebreak' },
+  headStyles: { fillColor: [255, 255, 255], textColor: 0, fontStyle: 'bold', halign: 'center', valign: 'middle' },
+  footStyles: { fillColor: [255, 255, 255], textColor: 0, fontStyle: 'bold' },
+  bodyStyles: { fillColor: [255, 255, 255] },
+  alternateRowStyles: { fillColor: [255, 255, 255] }
+});
+// spazio rimasto in pagina: se non basta, nuova pagina
+function spazio(doc, y, serve, nuovaPagina) {
+  if (y + serve > PH - 14) { doc.addPage(); return nuovaPagina(); }
+  return y;
+}
+
+function pdfAvanzato(doc, L) {
+  const op = nomeConQualifica(L.p);
+  // intestazione rossa una sola volta per pagina (le tabelle la chiedono a ogni pagina che occupano)
+  const fatte = new Set();
+  const intest = () => {
+    const pg = doc.internal.getCurrentPageInfo().pageNumber;
+    if (fatte.has(pg)) return 20;
+    fatte.add(pg);
+    doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(...ROSSO);
+    doc.text('DIREZIONE REGIONALE VV.F. EMILIA ROMAGNA', PW / 2, 12, { align: 'center' });
+    doc.setTextColor(0); doc.setFont('times', 'normal');
+    return 20;
+  };
+  let y = intest();
+  doc.setFont('times', 'bold'); doc.setFontSize(11.5);
+  doc.text('LIBRETTO INDIVIDUALE DEI MANTENIMENTI SAF – LIVELLO AVANZATO', MX, y);
+  doc.text('BIENNIO:', PW - MX - 40 - doc.getTextWidth('BIENNIO:') - 2, y);
+  doc.text(L.periodo, PW - MX - 20, y, { align: 'center' });
+  doc.setLineWidth(0.2); doc.line(PW - MX - 40, y + 1, PW - MX, y + 1);
+  y += 7;
+  doc.setFont('times', 'normal');
+  const xe = campo(doc, 'Comando di', L.comando, MX, y, 52, 10);
+  campo(doc, 'Operatore SAF (Qualifica, Cognome e Nome)', op, xe + 4, y, PW - MX - (xe + 4) - 70, 10);
+  y += 8;
+  doc.setFont('times', 'bold'); doc.setFontSize(10);
+  doc.text('CICLI DI MANTENIMENTO DELLE COMPETENZE SAF – LIVELLO AVANZATO', MX, y);
+  y += 4.5;
+  doc.setFont('times', 'normal');
+  y = paragrafo(doc, [
+    ['Ai sensi della ', 0], ['Circolare DCF n. 01/2025', 1], [' – Sistema di formazione del personale del Corpo Nazionale dei Vigili del Fuoco nel settore SAF – ', 0],
+    ['Livello SAF Avanzato', 1], [' e del ', 0], ['Manuale Operativo SAF Avanzato', 1], [' vigente. In conformità alle disposizioni vigenti, il mantenimento delle competenze ', 0],
+    ['SAF Avanzato', 1], [' è articolato in ', 0], ['quattro cicli di aggiornamento', 1], [', da svolgersi nell’arco di ', 0], ['due anni', 1], [', con ', 0],
+    ['periodicità semestrale', 1], ['. Ogni ciclo di mantenimento prevede un impegno minimo di ', 0], ['36 ore', 1], [', da realizzarsi mediante attività di ', 0],
+    ['addestramento, simulazione o intervento reale', 1], [', coerenti con le manovre e le procedure previste dal Manuale Operativo SAF Avanzato.', 0]
+  ], MX, y, LARGH, 9, 3.9) + 1.5;
+  y = paragrafo(doc, [
+    ['Le attività svolte sono registrate nelle tabelle sottostanti, suddivise per ciclo di riferimento, con indicazione delle ', 0], ['manovre effettuate', 1],
+    [', del ', 0], ['tempo impiegato', 1], [' e del ', 0], ['responsabile dell’addestramento', 1],
+    [', al fine di documentare il mantenimento delle competenze operative previste per il livello SAF Avanzato.', 0]
+  ], MX, y, LARGH, 9, 3.9) + 3;
+
+  const larg = [16, 92, 15, 16, 22, 13, 13];
+  larg.push(LARGH - larg.reduce((s, v) => s + v, 0));
+  const colStyles = Object.fromEntries(larg.map((w, i) => [i, { cellWidth: w, halign: [0, 2, 3, 4, 5, 6].includes(i) ? 'center' : 'left' }]));
+  const intestCol = (prima, seconda) => [prima, seconda, 'Spunta', 'Ore', 'Data', 'In\nSede', 'Fuori\nSede', 'Responsabile Addestramento\n(Qualifica, Cognome e Nome)'];
+  const opzTab = (head, body, foot, pageBreak) => Object.assign(stileTab('times', 9), {
+    startY: y, pageBreak: pageBreak || 'auto', margin: { left: MX, right: MX, top: 20, bottom: 14 }, head, body, foot,
+    columnStyles: colStyles, showHead: 'everyPage', showFoot: 'lastPage', rowPageBreak: 'avoid',
+    didDrawCell: disegnaCaselle(doc),
+    didDrawPage: () => intest()
+  });
+
+  L.cicli.forEach(c => {
+    y = spazio(doc, y, 40, intest);
+    const body = [];
+    c.righe.forEach(r => {
+      const n = Math.max(1, r.voci.length);
+      for (let i = 0; i < n; i++) {
+        const v = r.voci[i];
+        const riga = i === 0 ? [{ content: String(r.n), rowSpan: n }, { content: r.d, rowSpan: n }, cBox(r.voci.length, { rowSpan: n })] : [];
+        riga.push(v ? fmtOre(v.ore) : '', v ? fmtGiorno(v.data) : '', cBox(v && v.sede === 'in'), cBox(v && v.sede === 'fuori'), v ? v.resp : '');
+        body.push(riga);
+      }
+    });
+    const head = [
+      [{ content: `CICLO ${c.n} (${ORE_CICLO_AVA} ore)`, colSpan: 8, styles: { halign: 'left', fontSize: 10 } }],
+      [{ content: 'Manovre n. ' + c.righe.map(r => r.n).join(' – '), colSpan: 8, styles: { halign: 'left', fontStyle: 'normal' } }],
+      intestCol('Scheda', 'Descrizione manovra (come da Manuale SAF Avanzato)')
+    ];
+    const foot = [[{ content: 'Totale ore', colSpan: 3, styles: { halign: 'right' } }, { content: fmtOre(c.tot), styles: { halign: 'center' } }, { content: '', colSpan: 4 }]];
+    doc.autoTable(opzTab(head, body, foot, 'avoid'));   // un ciclo non si spezza tra due pagine
+    y = doc.lastAutoTable.finalY + 6;
+  });
+
+  // Altre attività
+  y = spazio(doc, y, 30, intest);
+  const nAltre = righeAltre(L.altre, 6);
+  const bodyAltre = [];
+  for (let i = 0; i < nAltre; i++) {
+    const a = L.altre[i];
+    bodyAltre.push([a ? String(i + 1) : '', a ? a.descr : '', cBox(!!a), a ? fmtOre(a.ore) : '', a ? fmtGiorno(a.data) : '', cBox(a && a.sede === 'in'), cBox(a && a.sede === 'fuori'), a ? a.resp : '']);
+  }
+  doc.autoTable(opzTab(
+    [intestCol('N.', 'Descrizione breve tipo attività (esercitazioni, coordinatore\nmantenimenti, interventi, corsi ecc...)')],
+    bodyAltre,
+    [[{ content: 'Totale complessivo ore', colSpan: 3, styles: { halign: 'right' } }, { content: fmtOre(L.tot), styles: { halign: 'center' } }, { content: '', colSpan: 4 }]]
+  ));
+  y = doc.lastAutoTable.finalY + 8;
+
+  // Testo finale, dichiarazione e firme
+  y = spazio(doc, y, 32, intest);
+  doc.setFont('times', 'normal');
+  y = paragrafo(doc, [
+    ['Il presente libretto individuale è destinato alla registrazione delle attività di mantenimento delle competenze ', 0], ['SAF Avanzato', 1],
+    [', svolte dall’operatore nell’arco temporale di riferimento, mediante addestramenti, simulazioni o interventi reali, secondo quanto previsto dalle ', 0],
+    ['norme di settore vigenti', 1], ['. La compilazione del libretto ha finalità ', 0], ['esclusivamente documentale e ricognitiva', 1], [' delle attività svolte.', 0]
+  ], MX, y, LARGH, 9.5, 4.1) + 2;
+  y = paragrafo(doc, [
+    ['Le attività sopra riportate sono state svolte dall’operatore indicato, nei tempi e nei luoghi dichiarati, e sono riconducibili alle manovre e agli ambiti operativi previsti per il livello ', 0],
+    ['SAF Avanzato', 1], ['. Il livello ', 0], ['SAF Avanzato', 1], [' prevede anche il mantenimento del livello ', 0], ['SAF Basico', 1], ['; pertanto, ', 0],
+    ['ai fini della completezza documentale', 1], [', il presente libretto è corredato dal libretto dei mantenimenti SAF Basico.', 0]
+  ], MX, y, LARGH, 9.5, 4.1) + 5;
+  y = spazio(doc, y, 34, intest);
+  doc.setFont('times', 'bold'); doc.setFontSize(10);
+  doc.text("DICHIARAZIONE DELL'OPERATORE", PW / 2, y, { align: 'center' });
+  doc.setLineWidth(0.2); doc.line(PW / 2 - 30, y + 0.8, PW / 2 + 30, y + 0.8);
+  y += 6;
+  doc.setFont('times', 'normal');
+  y = paragrafo(doc, [['Il sottoscritto, in qualità di operatore SAF Avanzato, ', 0], ['dichiara sotto la propria responsabilità personale', 1], [' che le attività riportate nel presente libretto corrispondono a quanto effettivamente svolto.', 0]], MX, y, LARGH, 9.5, 4.1) + 6;
+  doc.setFont('times', 'bold'); doc.setFontSize(10);
+  doc.text('Firma del dichiarante _______________________________     Data ______________', 60, y);
+  y += 8;
+  doc.setFont('times', 'normal'); doc.setFontSize(9.5);
+  y = paragrafo(doc, [['Le firme apposte di seguito attestano esclusivamente la ', 0], ['presa visione', 1], [' del presente libretto.', 0]], MX, y, LARGH, 9.5, 4.1) + 6;
+  const firme = [
+    ['Responsabile Operativo Provinciale SAF', 'Funzionario Responsabile del settore SAF Provinciale'],
+    ['Responsabile Operativo Regionale SAF', 'Funzionario Responsabile del settore SAF Regionale']
+  ];
+  firme.forEach(coppia => {
+    y = spazio(doc, y, 26, intest);
+    coppia.forEach((t, i) => {
+      const x = MX + 8 + i * (LARGH / 2);
+      doc.setFont('times', 'bold'); doc.setFontSize(10); doc.text(t, x, y);
+      doc.setFont('times', 'normal');
+      doc.text('Nome e Cognome: ____________________________', x, y + 7);
+      doc.text('Firma: _______________________  Data: ______________', x, y + 14);
+    });
+    y += 24;
+  });
+}
+
+function pdfBasico(doc, L) {
+  const op = nomeConQualifica(L.p);
+  const fatte = new Set();
+  const intest = () => {
+    const pg = doc.internal.getCurrentPageInfo().pageNumber;
+    if (fatte.has(pg)) return 31;
+    fatte.add(pg);
+    let y = 13;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(0);
+    const t = 'LIBRETTO INDIVIDUALE DEI MANTENIMENTI SAF – LIVELLO BASICO - ANNO SOLARE ';
+    doc.text(t, MX, y);
+    const xa = MX + doc.getTextWidth(t);
+    doc.text(L.periodo, xa + 3, y);
+    doc.setLineWidth(0.2); doc.line(xa + 1, y + 1, xa + 40, y + 1);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    paragrafo(doc, [['Ai sensi della ', 0], ['Circolare DCF n. 01/2020 – Sistema di formazione del personale del CNVVF nel settore SAF', 1], [' e del ', 0], ['Manuale Operativo SAF Basico', 1], [' vigente.', 0]], MX, y, LARGH, 8.5, 3.8);
+    y += 6;
+    const xe = campo(doc, 'Comando di', L.comando, MX, y, 50, 9);
+    campo(doc, 'Operatore SAF (Qualifica, Cognome e Nome)', op, xe + 3, y, 95, 9);
+    return y + 6;
+  };
+  let y = intest();
+  const larg = [20, 14, 78, 24, 13, 13, 18];
+  larg.push(LARGH - larg.reduce((s, v) => s + v, 0));
+  const colStyles = Object.fromEntries(larg.map((w, i) => [i, { cellWidth: w, halign: [0, 1, 3, 4, 5, 6].includes(i) ? 'center' : 'left' }]));
+  const opzTab = (head, body, foot) => Object.assign(stileTab('helvetica', 8), {
+    startY: y, margin: { left: MX, right: MX, top: 32, bottom: 14 }, head, body, foot,
+    columnStyles: colStyles, showHead: 'everyPage', showFoot: 'lastPage', rowPageBreak: 'avoid',
+    didDrawCell: disegnaCaselle(doc),
+    didDrawPage: () => intest()
+  });
+  const body = [];
+  GRUPPI_BAS.forEach((min, g) => {
+    const vg = L.voci.filter(v => v.gruppo === g);
+    const nTot = vg.reduce((s, v) => s + Math.max(1, v.voci.length), 0);
+    vg.forEach((vv, j) => {
+      const n = Math.max(1, vv.voci.length);
+      for (let i = 0; i < n; i++) {
+        const v = vv.voci[i];
+        const riga = [];
+        if (j === 0 && i === 0) riga.push({ content: min + ' ore', rowSpan: nTot });
+        if (i === 0) riga.push(cBox(vv.voci.length, { rowSpan: n }), { content: vv.testo, rowSpan: n });
+        riga.push(v ? fmtGiorno(v.data) : '', cBox(v && v.sede === 'in'), cBox(v && v.sede === 'fuori'), v ? fmtOre(v.ore) : '', v ? v.resp : '');
+        body.push(riga);
+      }
+    });
+  });
+  doc.autoTable(opzTab(
+    [['Tempo\nminimo\nprevisto', 'Spunta', 'Manovre Obbligatorie', 'Data', 'Sede', 'Fuori\nSede', 'Ore', 'Responsabile Addestramento (Qualifica,\nCognome e Nome)']],
+    body,
+    [[{ content: `Totale ore (minimo ${ORE_MIN_BAS})`, colSpan: 6, styles: { halign: 'right', fontStyle: 'normal' } }, { content: fmtOre(L.totObbl), styles: { halign: 'center' } }, '']]
+  ));
+  y = doc.lastAutoTable.finalY;
+  const nAltre = righeAltre(L.altre, 5);
+  const bodyAltre = [];
+  for (let i = 0; i < nAltre; i++) {
+    const a = L.altre[i];
+    bodyAltre.push(['', cBox(!!a), a ? a.descr : '', a ? fmtGiorno(a.data) : '', cBox(a && a.sede === 'in'), cBox(a && a.sede === 'fuori'), a ? fmtOre(a.ore) : '', a ? a.resp : '']);
+  }
+  doc.autoTable(opzTab(
+    [['', 'Spunta', 'Altre Manovre o Interventi (breve descrizione e\nnumero intervento)', 'Data', 'Sede', 'Fuori\nSede', 'Ore', 'Responsabile Addestramento (Qualifica,\nCognome e Nome)']],
+    bodyAltre, undefined
+  ));
+  y = doc.lastAutoTable.finalY + 7;
+
+  const nuova = () => intest();
+  y = spazio(doc, y, 28, nuova);
+  doc.setFont('helvetica', 'normal');
+  y = paragrafo(doc, [['Il presente libretto individuale è destinato alla registrazione delle attività di mantenimento delle competenze ', 0], ['SAF Basico', 1], [', svolte dall’operatore nell’anno di riferimento, mediante addestramenti, simulazioni o interventi reali, secondo quanto previsto dalla normativa vigente. La compilazione del libretto ha finalità ', 0], ['esclusivamente documentale e ricognitiva', 1], [' delle attività svolte.', 0]], MX, y, LARGH, 8.5, 3.8) + 2;
+  y = paragrafo(doc, [['Le attività sopra riportate sono state svolte dall’operatore indicato, nei tempi e nei luoghi dichiarati, e risultano coerenti con le manovre e gli ambiti operativi previsti per il livello ', 0], ['SAF Basico', 1], ['.', 0]], MX, y, LARGH, 8.5, 3.8) + 5;
+  y = spazio(doc, y, 50, nuova);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+  doc.text("DICHIARAZIONE DELL'OPERATORE", PW / 2, y, { align: 'center' });
+  y += 5;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+  doc.text('Il sottoscritto, in qualità di operatore SAF Basico, dichiara sotto la propria responsabilità personale che le attività riportate nel presente libretto corrispondono', PW / 2, y, { align: 'center' });
+  doc.text('a quanto effettivamente svolto.', PW / 2, y + 3.8, { align: 'center' });
+  y += 11;
+  doc.setFont('helvetica', 'bold'); doc.text('Firma', 75, y);
+  doc.setFont('helvetica', 'normal'); doc.text('Il dichiarante _______________________________   Data _______________', 90, y);
+  y += 8;
+  doc.text('Le firme apposte di seguito attestano esclusivamente la presa visione del presente libretto.', MX, y);
+  y += 8;
+  y = spazio(doc, y, 20, nuova);
+  [['Responsabile Operativo Provinciale SAF', MX + 2], ['Funzionario Responsabile del settore SAF Provinciale', MX + LARGH / 2 + 10]].forEach(([t, x]) => {
+    doc.setFont('helvetica', 'bold'); doc.text(t, x, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Nome e Cognome: ____________________________', x, y + 7);
+    doc.text('Firma: _______________________  Data: ______________', x, y + 14);
+  });
+}
+
+// Un PDF con i libretti di uno o più operatori; ogni libretto inizia su una pagina nuova e ha la sua numerazione
+async function creaPdf(operatori, nomeFile) {
+  await caricaJsPdf();
+  const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+  doc.setProperties({ title: nomeFile.replace(/\.pdf$/, ''), author: 'PUMA – Direzione Regionale VV.F. Emilia-Romagna', creator: 'PUMA' });
+  const firma = firmaGenerato();
+  let primo = true;
+  operatori.forEach(o => {
+    libriOperatore(o.p).forEach(L => {
+      if (!primo) doc.addPage();
+      primo = false;
+      const da = doc.internal.getNumberOfPages();
+      if (L.tipo === 'AVA') pdfAvanzato(doc, L); else pdfBasico(doc, L);
+      numeraPagine(doc, da, doc.internal.getNumberOfPages(), firma);
+      doc.setPage(doc.internal.getNumberOfPages());
+    });
+  });
+  doc.save(nomeFile);
+}
+function nomeFileBase() {
+  return `Libretto_SAF_${state.tipo === 'AVA' ? 'Avanzato_' + state.periodo + '-' + (state.periodo + 1) : 'Basico_' + state.periodo}`;
+}
+async function scarica(btn, operatori, nomeFile) {
+  const testo = btn.textContent;
+  btn.disabled = true; btn.textContent = '⏳ Creo il PDF…';
+  try { await creaPdf(operatori, nomeFile); }
+  catch (err) { console.error(err); alert('Non è stato possibile creare il PDF: ' + err.message); }
+  finally { btn.textContent = testo; btn.disabled = false; }
+}
+pdfBtn.addEventListener('click', () => {
+  const o = OPERATORI.find(x => x.p.key === state.op);
+  if (o) scarica(pdfBtn, [o], `${nomeFileBase()}_${filePart(o.p.nome)}.pdf`);
+});
+pdfTuttiBtn.addEventListener('click', () => {
+  if (!OPERATORI.length) return;
+  if (OPERATORI.length > 60 && !confirm(`Creo un unico PDF con ${OPERATORI.length} operatori: può richiedere qualche secondo. Continuo?`)) return;
+  scarica(pdfTuttiBtn, OPERATORI, `${nomeFileBase().replace('Libretto_', 'Libretti_')}_${filePart(state.comando || 'Emilia-Romagna')}.pdf`);
+});
+
+/* =====================================================================
+   CARICAMENTO E EVENTI
+   ===================================================================== */
+async function caricaDati() {
+  if (loading) return;
+  loading = true;
+  refreshBtn.disabled = true; refreshBtn.textContent = '⟳ Caricamento…';
+  if (!caricato) report.innerHTML = '<div class="msg">Caricamento dati…</div>';
+  try {
+    const [reg, piano, manovre, formazione, elenco] = await Promise.all([
+      scaricaCsv(GID_REG, false), scaricaCsv(GID_PIANO, true), scaricaCsv(GID_MANOVRE, false),
+      scaricaCsv(GID_FORMAZIONE, false), scaricaCsv(GID_ELENCO, false)
+    ]);
+    diag = {};
+    elaboraFormazione(formazione);
+    elaboraManovre(manovre);
+    elaboraElenco(elenco);
+    elaboraReg(reg, elaboraPiano(piano));
+    preparaPartecipanti();
+    caricato = true;
+    document.getElementById('last-update').textContent = new Date().toLocaleString('it-IT');
+    preparaOperatori();
+    disegna();
+  } catch (err) {
+    console.error(err);
+    report.innerHTML = `<div class="msg">Errore nel caricamento dei dati PUMA.<small>${esc(err.message || err)}</small></div>`;
+  } finally {
+    loading = false; refreshBtn.disabled = false; refreshBtn.textContent = '⟳ Aggiorna';
+  }
+}
+
+selComando.addEventListener('change', () => { state.comando = selComando.value; state.op = null; cerca.value = ''; preparaOperatori(); disegna(); });
+selTipo.addEventListener('change', () => { state.tipo = selTipo.value; state.periodo = null; preparaMenuPeriodo(); if (caricato) { preparaOperatori(); disegna(); } });
+selPeriodo.addEventListener('change', () => { state.periodo = +selPeriodo.value; if (caricato) { preparaOperatori(); disegna(); } });
+chkAllega.addEventListener('change', () => { state.allega = chkAllega.checked; disegna(); });
+selOp.addEventListener('change', () => { state.op = selOp.value || null; disegna(); document.getElementById('content').scrollTop = 0; });
+cerca.addEventListener('input', () => { aggiornaSelectOp(); disegna(); });
+refreshBtn.addEventListener('click', caricaDati);
+
+preparaMenuComandi();
+preparaMenuPeriodo();
+caricaDati();
+</script>
+</body>
+</html>
