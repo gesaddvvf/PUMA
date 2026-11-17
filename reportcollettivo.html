@@ -335,7 +335,7 @@
   <label class="lbl" for="anno-select">Anno</label>
   <select id="anno-select" aria-label="Anno di riferimento"></select>
   <label class="chk-f" title="Mostra anche chi non ha il corso né attività di questa tipologia"><input type="checkbox" id="tutti-chk"> Tutto il personale</label>
-  <label class="chk-f" title="Apre il dettaglio di tutti i nominativi (attività, manovre fatte e da fare). Con un clic sul nominativo si apre o chiude solo il suo. Nel PDF vanno i dettagli aperti."><input type="checkbox" id="det-chk" checked> Dettaglio attività</label>
+  <label class="chk-f" title="Apre il dettaglio di tutti i nominativi (attività, manovre fatte e da fare). Con un clic sul nominativo si apre o chiude solo il suo. Nel PDF vanno i dettagli aperti."><input type="checkbox" id="det-chk"> Dettaglio attività</label>
   <span class="azioni">
     <button id="print-btn" type="button" disabled>🖨 Stampa</button>
     <button id="pdf-btn" type="button" disabled>⬇ PDF</button>
@@ -1258,7 +1258,7 @@ const state = {
   corso: null,
   anno: parseInt(URLP.get('anno'), 10) || ANNO_OGGI,
   tutti: URLP.has('tutti'),
-  dettaglio: !URLP.has('sintesi'),
+  dettaglio: URLP.has('dettaglio'),   // di default tutto compresso
   invertite: new Set()   // nominativi aperti/chiusi a mano, al contrario della casella
 };
 tuttiChk.checked = state.tutti;
@@ -1427,7 +1427,7 @@ function aggiornaUrl() {
   if (c) q.set('tipologia', c.tipologia);
   if (state.anno !== ANNO_OGGI) q.set('anno', state.anno);
   if (state.tutti) q.set('tutti', '1');
-  if (!state.dettaglio) q.set('sintesi', '1');
+  if (state.dettaglio) q.set('dettaglio', '1');
   if (DEBUG) q.set('debug', '1');
   history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : ''));
 }
