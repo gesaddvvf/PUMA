@@ -116,6 +116,23 @@
     .foglio .box { display: inline-block; width: 11px; height: 11px; border: 1px solid #000; line-height: 10px; text-align: center; font-size: 10px; font-weight: bold; font-family: Arial, sans-serif; }
     .foglio .gen { color: #666; font-size: 10.5px; margin-top: 8px; }
     .foglio .gen-titolo { color: #444; font-size: 11px; font-style: italic; margin: 10px 0 0; }
+    /* ---------- MODIFICA A VIDEO ---------- */
+    #mod-btn.attivo { background: #2e7d32; border-color: #2e7d32; color: #fff; }
+    .foglio .ed { cursor: text; outline: none; }
+    .foglio td.ed:hover, .foglio span.ed:hover { background: #fffbe0; }
+    .foglio td.ed:focus, .foglio span.ed:focus { background: #fff6bf; box-shadow: inset 0 0 0 2px #e0a800; }
+    .foglio.in-modifica td.ed:empty::after { content: '·'; color: #ccc; }
+    .foglio span.ed { display: inline-block; min-width: 120px; }
+    .foglio td.err, .foglio td.err:focus { background: #ffe0e0; box-shadow: inset 0 0 0 2px #e53935; }
+    .foglio button.box { padding: 0; background: #fff; color: #000; cursor: pointer; }
+    .foglio button.box:hover { background: #fff6bf; }
+    .foglio th.azn, .foglio td.azn { width: 52px; white-space: nowrap; text-align: center; border-color: #ddd; }
+    .foglio .mini { border: 1px solid #999; background: #f4f4f4; color: #333; border-radius: 3px; width: 20px; height: 20px; padding: 0; margin: 0 1px; cursor: pointer; font-size: 11px; line-height: 18px; }
+    .foglio .mini:hover { background: #ffd700; border-color: #b8860b; }
+    .foglio .mini.rm:hover { background: #ffcdd2; border-color: #c62828; color: #c62828; }
+    .mini-btn { border: 1px solid #b8860b; background: #fff8d6; color: #5a4300; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-family: Arial, sans-serif; font-size: 12px; }
+    .mini-btn:hover { background: #ffd700; }
+    .mod-bar { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: #fff8d6; border: 1px solid #e0c060; border-radius: 4px; padding: 6px 10px; margin: -6px 0 12px; font-family: Arial, sans-serif; font-size: 12px; color: #5a4300; }
     .op-titolo { color: var(--gold); font-size: 15px; margin: 4px 0 10px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
     .op-titolo small { color: #aaa; font-size: 12px; font-weight: normal; }
   </style>
@@ -145,6 +162,7 @@
   <select id="sel-periodo" aria-label="Periodo"></select>
   <label class="chk" id="allega-wrap" title="Il libretto SAF Avanzato è corredato dai libretti SAF Basico degli anni del biennio"><input type="checkbox" id="chk-allega" checked> con i libretti SAF Basico</label>
   <div class="azioni">
+    <button class="btn" id="mod-btn" type="button" disabled>✎ Modifica</button>
     <button class="btn primario" id="pdf-btn" type="button" disabled>⬇ Scarica PDF</button>
   </div>
 </div>
@@ -995,6 +1013,7 @@ const lblPeriodo = document.getElementById('lbl-periodo');
 const chkAllega = document.getElementById('chk-allega');
 const allegaWrap = document.getElementById('allega-wrap');
 const pdfBtn = document.getElementById('pdf-btn');
+const modBtn = document.getElementById('mod-btn');
 const refreshBtn = document.getElementById('refresh-btn');
 const report = document.getElementById('report');
 
@@ -1002,7 +1021,8 @@ const bienniDefault = () => ANNO_OGGI - ((((ANNO_OGGI - BIENNIO_INIZIALE) % 2) +
 const state = {
   tipo: /^bas/i.test(URLP.get('libretto') || '') ? 'BAS' : /^sfa/i.test(URLP.get('libretto') || '') ? 'SFA' : 'AVA',
   periodo: parseInt(URLP.get('anno'), 10) || null,
-  allega: URLP.get('allega') !== '0'
+  allega: URLP.get('allega') !== '0',
+  modifica: false
 };
 let OPERATORE = null;        // { p, com }
 let loading = false, caricato = false;
@@ -1053,83 +1073,206 @@ function aggiornaUrl() {
   } catch (e) { /* indirizzo non modificabile: nessun problema */ }
 }
 
-/* ---------- Anteprima HTML ---------- */
-const box = ch => `<span class="box">${ch ? '✕' : ''}</span>`;
-function celleVoce(v) {
-  if (!v) return { data: '', ore: '', in: box(false), fuori: box(false), resp: '' };
-  return { data: esc(fmtGiorno(v.data)), ore: esc(fmtOre(v.ore)), in: box(v.sede === 'in'), fuori: box(v.sede === 'fuori'), resp: esc(v.resp) };
+/* ---------- Libretto modificabile ----------
+   Ogni libretto diventa un "modello" di soli testi (date, ore, responsabili…).
+   Le modifiche fatte a video si salvano nel browser (localStorage) e valgono
+   per anteprima e PDF finché non si sceglie «Ripristina dati PUMA». */
+const PREFISSO_SALVATAGGI = 'puma-er-libretto|';
+const chiaveModello = M => `${PREFISSO_SALVATAGGI}${M.tipo}|${M.periodo}`;
+function leggiSalvato(k) { try { const t = localStorage.getItem(k); return t ? JSON.parse(t) : null; } catch (e) { return null; } }
+function salvaModello(M) {
+  M.modificato = new Date().toISOString();
+  try { localStorage.setItem(chiaveModello(M), JSON.stringify(M)); return true; } catch (e) { return false; }
 }
+function cancellaSalvato(k) { try { localStorage.removeItem(k); } catch (e) { /* niente */ } }
+
+const vTesto = v => ({ data: v ? fmtGiorno(v.data) : '', ore: v ? fmtOre(v.ore) : '', sede: v ? v.sede : null, resp: v ? v.resp || '' : '' });
+const vuota = () => ({ data: '', ore: '', sede: null, resp: '' });
+function modello(L) {
+  const base = { tipo: L.tipo, periodo: L.periodo, comando: L.comando, operatore: nomeConQualifica(L.p), modificato: null };
+  if (L.tipo === 'AVA') return Object.assign(base, {
+    cicli: L.cicli.map(c => ({ n: c.n, righe: c.righe.map(r => ({ n: r.n, d: r.d, voci: r.voci.map(vTesto) })) })),
+    altre: L.altre.map(a => Object.assign(vTesto(a), { descr: a.descr }))
+  });
+  if (L.tipo === 'BAS') return Object.assign(base, {
+    voci: L.voci.map(v => ({ gruppo: v.gruppo, testo: v.testo, voci: v.voci.map(vTesto) })),
+    altre: L.altre.map(a => Object.assign(vTesto(a), { descr: a.descr }))
+  });
+  return Object.assign(base, { righe: L.righe.map(r => Object.assign(vTesto(r), { tipo: r.tipo, descr: r.descr })) });
+}
+
+// Ore scritte a mano: "6:00", "6", "6,5", "1.30" (= 1 ora e 30 se c'è il punto con 2 cifre? no: 1,3 ore) → ore decimali
+function parseOre(t) {
+  const s = String(t || '').trim().replace(/\s*h$/i, '');
+  if (!s) return 0;
+  let m = s.match(/^(\d+)[:.](\d{2})$/);
+  if (m && s.includes(':')) return +m[1] + Math.min(59, +m[2]) / 60;
+  m = s.replace(',', '.').match(/^\d+(\.\d+)?$/);
+  return m ? parseFloat(s.replace(',', '.')) : NaN;
+}
+const sommaT = l => l.reduce((s, v) => s + (parseOre(v.ore) || 0), 0);
+const piena = v => !!(v && (v.data || v.ore || v.resp || v.descr || v.sede));
+function calcolaTotali(M) {
+  if (M.tipo === 'AVA') {
+    M.cicli.forEach(c => { c.tot = c.righe.reduce((s, r) => s + sommaT(r.voci), 0); });
+    M.totAltre = sommaT(M.altre);
+    M.tot = M.cicli.reduce((s, c) => s + c.tot, 0) + M.totAltre;
+    M.nAtt = M.cicli.reduce((s, c) => s + c.righe.reduce((t, r) => t + r.voci.filter(piena).length, 0), 0) + M.altre.filter(piena).length;
+  } else if (M.tipo === 'BAS') {
+    M.totGruppi = GRUPPI_BAS.map((_, g) => M.voci.filter(v => v.gruppo === g).reduce((s, v) => s + sommaT(v.voci), 0));
+    M.totObbl = M.totGruppi.reduce((s, v) => s + v, 0);
+    M.tot = M.totObbl + sommaT(M.altre);
+    M.nAtt = M.voci.reduce((s, v) => s + v.voci.filter(piena).length, 0) + M.altre.filter(piena).length;
+  } else {
+    M.tot = sommaT(M.righe);
+    M.nAtt = M.righe.filter(piena).length;
+  }
+  return M;
+}
+
+let MODELLI = new Map();   // chiave → modello mostrato
+// Libretti dell'operatore per la scelta corrente: versione modificata a mano se c'è, altrimenti dati PUMA
+function modelliOperatore(p) {
+  return libriOperatore(p).map(L => {
+    const m = modello(L);
+    const salvato = leggiSalvato(chiaveModello(m));
+    const M = calcolaTotali(salvato && salvato.tipo === m.tipo ? salvato : m);
+    MODELLI.set(chiaveModello(M), M);
+    return M;
+  });
+}
+
+// Lettura/scrittura con percorso "cicli.0.righe.3.voci.1.ore" (crea le righe che mancano)
+function scrivi(M, percorso, valore) {
+  const parti = percorso.split('.');
+  let o = M;
+  for (let i = 0; i < parti.length - 1; i++) {
+    const k = /^\d+$/.test(parti[i]) ? +parti[i] : parti[i];
+    if (o[k] == null) {
+      if (Array.isArray(o)) while (o.length < k) o.push(vuota());
+      o[k] = /^\d+$/.test(parti[i + 1]) ? [] : vuota();
+    }
+    o = o[k];
+  }
+  o[parti[parti.length - 1]] = valore;
+}
+function leggi(M, percorso) {
+  return percorso.split('.').reduce((o, k) => (o == null ? undefined : o[/^\d+$/.test(k) ? +k : k]), M);
+}
+
+/* ---------- Anteprima HTML (modificabile in modalità Modifica) ---------- */
+const MOD = () => state.modifica;
+// cella di testo: in modifica si scrive direttamente nella cella
+function tdE(percorso, valore, cls, extra) {
+  const err = percorso.endsWith('.ore') && isNaN(parseOre(valore)) ? ' err' : '';
+  return MOD()
+    ? `<td class="${cls || ''} ed${err}" contenteditable="true" spellcheck="false" data-p="${percorso}"${extra || ''}>${esc(valore || '')}</td>`
+    : `<td class="${cls || ''}"${extra || ''}>${esc(valore || '')}</td>`;
+}
+function campoE(percorso, valore) {
+  return MOD() ? `<span class="campo ed" contenteditable="true" spellcheck="false" data-p="${percorso}">${esc(valore || '')}</span>` : `<span class="campo">${esc(valore || '')}</span>`;
+}
+const box = ch => `<span class="box">${ch ? '✕' : ''}</span>`;
+// casella In sede / Fuori sede: in modifica si clicca
+function tdSede(percorso, v, quale) {
+  const on = !!v && v.sede === quale;
+  return MOD()
+    ? `<td class="c"><button type="button" class="box cl" data-sede="${percorso}" data-v="${quale}" aria-label="${quale === 'in' ? 'In sede' : 'Fuori sede'}" aria-pressed="${on}">${on ? '✕' : ''}</button></td>`
+    : `<td class="c">${box(on)}</td>`;
+}
+// comandi di riga (solo in modifica)
+function tdAz(lista, i, aggiungi) {
+  if (!MOD()) return '';
+  return `<td class="azn">${aggiungi ? `<button type="button" class="mini" data-add="${lista}" data-i="${i}" title="Aggiungi una data per questa manovra">＋</button>` : ''}<button type="button" class="mini rm" data-rm="${lista}" data-i="${i}" title="Togli questa riga">✕</button></td>`;
+}
+const thAz = () => MOD() ? '<th class="azn"></th>' : '';
 function righeAltre(altre, minimo) {
   return Math.max(minimo, altre.length + 2);
 }
+function testataModello(M) {
+  const quando = M.modificato ? new Date(M.modificato).toLocaleString('it-IT') : '';
+  if (!quando && !MOD()) return '';
+  return `<div class="mod-bar">${quando ? `✎ Modificato a mano il ${esc(quando)}: i nuovi dati PUMA non vengono applicati a questo libretto.` : '✎ Modalità modifica: clicca una cella per scrivere, le caselle Sede per spuntarle.'}
+    ${quando ? `<button type="button" class="mini-btn" data-reset="${esc(chiaveModello(M))}">↺ Ripristina dati PUMA</button>` : ''}</div>`;
+}
 
-function htmlAvanzato(L) {
-  const op = nomeConQualifica(L.p);
-  let h = `<div class="foglio avanzato"><div class="dir">DIREZIONE REGIONALE VV.F. EMILIA ROMAGNA</div>
-  <div class="tit"><span>LIBRETTO INDIVIDUALE DEI MANTENIMENTI SAF – LIVELLO AVANZATO</span><span>BIENNIO: <span class="campo">${esc(L.periodo)}</span></span></div>
-  <div class="riga-op">Comando di <span class="campo">${esc(L.comando)}</span> &nbsp; Operatore SAF (Qualifica, Cognome e Nome) <span class="campo">${esc(op)}</span></div>`;
-  L.cicli.forEach(c => {
+function htmlAvanzato(M) {
+  const k = chiaveModello(M);
+  let h = `<div class="foglio avanzato${MOD() ? ' in-modifica' : ''}" data-k="${esc(k)}">${testataModello(M)}<div class="dir">DIREZIONE REGIONALE VV.F. EMILIA ROMAGNA</div>
+  <div class="tit"><span>LIBRETTO INDIVIDUALE DEI MANTENIMENTI SAF – LIVELLO AVANZATO</span><span>BIENNIO: <span class="campo">${esc(M.periodo)}</span></span></div>
+  <div class="riga-op">Comando di ${campoE('comando', M.comando)} &nbsp; Operatore SAF (Qualifica, Cognome e Nome) ${campoE('operatore', M.operatore)}</div>`;
+  const testaCol = (a, b) => `<tr><th style="width:6%">${a}</th><th>${b}</th><th style="width:6%">Spunta</th><th style="width:7%">Ore</th><th style="width:10%">Data</th><th style="width:5%">In Sede</th><th style="width:5%">Fuori Sede</th><th style="width:24%">Responsabile Addestramento<br>(Qualifica, Cognome e Nome)</th>${thAz()}</tr>`;
+  M.cicli.forEach((c, ci) => {
     h += `<div class="ciclo">CICLO ${c.n} (${ORE_CICLO_AVA} ore)</div><div class="mn">Manovre n. ${c.righe.map(r => r.n).join(' – ')}</div>
-    <table><thead><tr><th style="width:6%">Scheda</th><th>Descrizione manovra (come da Manuale SAF Avanzato)</th><th style="width:6%">Spunta</th><th style="width:7%">Ore</th><th style="width:9%">Data</th><th style="width:5%">In Sede</th><th style="width:5%">Fuori Sede</th><th style="width:24%">Responsabile Addestramento<br>(Qualifica, Cognome e Nome)</th></tr></thead><tbody>`;
-    c.righe.forEach(r => {
+    <table><thead>${testaCol('Scheda', 'Descrizione manovra (come da Manuale SAF Avanzato)')}</thead><tbody>`;
+    c.righe.forEach((r, ri) => {
       const n = Math.max(1, r.voci.length);
+      const lista = `cicli.${ci}.righe.${ri}.voci`;
       for (let i = 0; i < n; i++) {
-        const v = celleVoce(r.voci[i]);
-        h += '<tr>' + (i === 0 ? `<td class="c" rowspan="${n}">${r.n}</td><td rowspan="${n}">${esc(r.d)}</td><td class="c" rowspan="${n}">${box(r.voci.length)}</td>` : '') +
-          `<td class="n">${v.ore}</td><td class="c">${v.data}</td><td class="c">${v.in}</td><td class="c">${v.fuori}</td><td>${v.resp}</td></tr>`;
+        const v = r.voci[i], p = `${lista}.${i}`;
+        h += '<tr>' + (i === 0 ? `<td class="c" rowspan="${n}">${r.n}</td><td rowspan="${n}">${esc(r.d)}</td><td class="c" rowspan="${n}">${box(r.voci.some(piena))}</td>` : '') +
+          tdE(p + '.ore', v ? v.ore : '', 'n') + tdE(p + '.data', v ? v.data : '', 'c') + tdSede(p, v, 'in') + tdSede(p, v, 'fuori') + tdE(p + '.resp', v ? v.resp : '') + tdAz(lista, i, true) + '</tr>';
       }
     });
-    h += `<tr class="${c.tot < ORE_CICLO_AVA ? 'sotto' : ''}"><td colspan="3" class="tot">Totale ore</td><td class="tot">${fmtOre(c.tot)}</td><td colspan="4"></td></tr></tbody></table>`;
+    h += `<tr class="${c.tot < ORE_CICLO_AVA ? 'sotto' : ''}"><td colspan="3" class="tot">Totale ore</td><td class="tot" data-tot="c${ci}">${fmtOre(c.tot)}</td><td colspan="${MOD() ? 5 : 4}"></td></tr></tbody></table>`;
   });
-  h += `<div class="ciclo">ALTRE ATTIVITÀ</div><table><thead><tr><th style="width:6%">N.</th><th>Descrizione breve tipo attività (esercitazioni, coordinatore mantenimenti, interventi, corsi ecc...)</th><th style="width:6%">Spunta</th><th style="width:7%">Ore</th><th style="width:9%">Data</th><th style="width:5%">In Sede</th><th style="width:5%">Fuori Sede</th><th style="width:24%">Responsabile Addestramento<br>(Qualifica, Cognome e Nome)</th></tr></thead><tbody>`;
-  for (let i = 0; i < righeAltre(L.altre, 6); i++) {
-    const a = L.altre[i], v = celleVoce(a);
-    h += `<tr><td class="c">${a ? i + 1 : ''}</td><td>${a ? esc(a.descr) : ''}</td><td class="c">${box(!!a)}</td><td class="n">${v.ore}</td><td class="c">${v.data}</td><td class="c">${v.in}</td><td class="c">${v.fuori}</td><td>${v.resp}</td></tr>`;
+  h += `<div class="ciclo">ALTRE ATTIVITÀ</div><table><thead>${testaCol('N.', 'Descrizione breve tipo attività (esercitazioni, coordinatore mantenimenti, interventi, corsi ecc...)')}</thead><tbody>`;
+  const nAltre = MOD() ? M.altre.length : righeAltre(M.altre, 6);
+  for (let i = 0; i < nAltre; i++) {
+    const a = M.altre[i], p = `altre.${i}`;
+    h += `<tr><td class="c">${a ? i + 1 : ''}</td>${tdE(p + '.descr', a ? a.descr : '')}<td class="c">${box(piena(a))}</td>${tdE(p + '.ore', a ? a.ore : '', 'n')}${tdE(p + '.data', a ? a.data : '', 'c')}${tdSede(p, a, 'in')}${tdSede(p, a, 'fuori')}${tdE(p + '.resp', a ? a.resp : '')}${tdAz('altre', i, false)}</tr>`;
   }
-  h += `<tr><td colspan="3" class="tot">Totale complessivo ore</td><td class="tot">${fmtOre(L.tot)}</td><td colspan="4"></td></tr></tbody></table>
+  if (MOD()) h += `<tr><td colspan="9" class="c"><button type="button" class="mini-btn" data-add="altre" data-i="-1">＋ Aggiungi riga</button></td></tr>`;
+  h += `<tr><td colspan="3" class="tot">Totale complessivo ore</td><td class="tot" data-tot="tot">${fmtOre(M.tot)}</td><td colspan="${MOD() ? 5 : 4}"></td></tr></tbody></table>
   <div class="gen">Seguono nel PDF: testo del modello, dichiarazione dell'operatore e firme (Responsabile Operativo e Funzionario Responsabile SAF provinciale e regionale).</div></div>`;
   return h;
 }
 
-function htmlBasico(L) {
-  const op = nomeConQualifica(L.p);
-  let h = `<div class="foglio basico"><div class="tit"><span>LIBRETTO INDIVIDUALE DEI MANTENIMENTI SAF – LIVELLO BASICO - ANNO SOLARE <span class="campo">${esc(L.periodo)}</span></span></div>
+function htmlBasico(M) {
+  const k = chiaveModello(M);
+  const testa = prima => `<tr><th style="width:7%">${prima}</th><th style="width:5%">Spunta</th><th>${prima ? 'Manovre Obbligatorie' : 'Altre Manovre o Interventi (breve descrizione e numero intervento)'}</th><th style="width:10%">Data</th><th style="width:5%">Sede</th><th style="width:5%">Fuori Sede</th><th style="width:7%">Ore</th><th style="width:26%">Responsabile Addestramento (Qualifica, Cognome e Nome)</th>${thAz()}</tr>`;
+  let h = `<div class="foglio basico${MOD() ? ' in-modifica' : ''}" data-k="${esc(k)}">${testataModello(M)}<div class="tit"><span>LIBRETTO INDIVIDUALE DEI MANTENIMENTI SAF – LIVELLO BASICO - ANNO SOLARE <span class="campo">${esc(M.periodo)}</span></span></div>
   <div class="mn">Ai sensi della <b>Circolare DCF n. 01/2020 – Sistema di formazione del personale del CNVVF nel settore SAF</b> e del <b>Manuale Operativo SAF Basico</b> vigente.</div>
-  <div class="riga-op">Comando di <span class="campo">${esc(L.comando)}</span> &nbsp; Operatore SAF (Qualifica, Cognome e Nome) <span class="campo">${esc(op)}</span></div>
-  <table><thead><tr><th style="width:7%">Tempo minimo previsto</th><th style="width:5%">Spunta</th><th>Manovre Obbligatorie</th><th style="width:9%">Data</th><th style="width:5%">Sede</th><th style="width:5%">Fuori Sede</th><th style="width:7%">Ore</th><th style="width:26%">Responsabile Addestramento (Qualifica, Cognome e Nome)</th></tr></thead><tbody>`;
+  <div class="riga-op">Comando di ${campoE('comando', M.comando)} &nbsp; Operatore SAF (Qualifica, Cognome e Nome) ${campoE('operatore', M.operatore)}</div>
+  <table><thead>${testa('Tempo minimo previsto')}</thead><tbody>`;
   GRUPPI_BAS.forEach((min, g) => {
-    const vg = L.voci.filter(v => v.gruppo === g);
-    const nTot = vg.reduce((s, v) => s + Math.max(1, v.voci.length), 0);
-    vg.forEach((vv, j) => {
+    const vg = M.voci.map((v, vi) => [v, vi]).filter(([v]) => v.gruppo === g);
+    const nTot = vg.reduce((s, [v]) => s + Math.max(1, v.voci.length), 0);
+    vg.forEach(([vv, vi], j) => {
       const n = Math.max(1, vv.voci.length);
+      const lista = `voci.${vi}.voci`;
       for (let i = 0; i < n; i++) {
-        const v = celleVoce(vv.voci[i]);
-        h += '<tr>' + (j === 0 && i === 0 ? `<td class="c" rowspan="${nTot}"${L.totGruppi[g] < min ? ' style="color:#c00"' : ''}>${min} ore</td>` : '') +
-          (i === 0 ? `<td class="c" rowspan="${n}">${box(vv.voci.length)}</td><td rowspan="${n}">${esc(vv.testo)}</td>` : '') +
-          `<td class="c">${v.data}</td><td class="c">${v.in}</td><td class="c">${v.fuori}</td><td class="n">${v.ore}</td><td>${v.resp}</td></tr>`;
+        const v = vv.voci[i], p = `${lista}.${i}`;
+        h += '<tr>' + (j === 0 && i === 0 ? `<td class="c" rowspan="${nTot}"${M.totGruppi[g] < min ? ' style="color:#c00"' : ''}>${min} ore</td>` : '') +
+          (i === 0 ? `<td class="c" rowspan="${n}">${box(vv.voci.some(piena))}</td><td rowspan="${n}">${esc(vv.testo)}</td>` : '') +
+          tdE(p + '.data', v ? v.data : '', 'c') + tdSede(p, v, 'in') + tdSede(p, v, 'fuori') + tdE(p + '.ore', v ? v.ore : '', 'n') + tdE(p + '.resp', v ? v.resp : '') + tdAz(lista, i, true) + '</tr>';
       }
     });
   });
-  h += `<tr class="${L.totObbl < ORE_MIN_BAS ? 'sotto' : ''}"><td colspan="6" class="tot">Totale ore (minimo ${ORE_MIN_BAS})</td><td class="tot">${fmtOre(L.totObbl)}</td><td></td></tr></tbody></table>
-  <table><thead><tr><th style="width:7%"></th><th style="width:5%">Spunta</th><th>Altre Manovre o Interventi (breve descrizione e numero intervento)</th><th style="width:9%">Data</th><th style="width:5%">Sede</th><th style="width:5%">Fuori Sede</th><th style="width:7%">Ore</th><th style="width:26%">Responsabile Addestramento (Qualifica, Cognome e Nome)</th></tr></thead><tbody>`;
-  for (let i = 0; i < righeAltre(L.altre, 5); i++) {
-    const a = L.altre[i], v = celleVoce(a);
-    h += `<tr><td></td><td class="c">${box(!!a)}</td><td>${a ? esc(a.descr) : ''}</td><td class="c">${v.data}</td><td class="c">${v.in}</td><td class="c">${v.fuori}</td><td class="n">${v.ore}</td><td>${v.resp}</td></tr>`;
+  h += `<tr class="${M.totObbl < ORE_MIN_BAS ? 'sotto' : ''}"><td colspan="6" class="tot">Totale ore (minimo ${ORE_MIN_BAS})</td><td class="tot" data-tot="obbl">${fmtOre(M.totObbl)}</td><td${MOD() ? ' colspan="2"' : ''}></td></tr></tbody></table>
+  <table><thead>${testa('')}</thead><tbody>`;
+  const nAltre = MOD() ? M.altre.length : righeAltre(M.altre, 5);
+  for (let i = 0; i < nAltre; i++) {
+    const a = M.altre[i], p = `altre.${i}`;
+    h += `<tr><td></td><td class="c">${box(piena(a))}</td>${tdE(p + '.descr', a ? a.descr : '')}${tdE(p + '.data', a ? a.data : '', 'c')}${tdSede(p, a, 'in')}${tdSede(p, a, 'fuori')}${tdE(p + '.ore', a ? a.ore : '', 'n')}${tdE(p + '.resp', a ? a.resp : '')}${tdAz('altre', i, false)}</tr>`;
   }
+  if (MOD()) h += `<tr><td colspan="9" class="c"><button type="button" class="mini-btn" data-add="altre" data-i="-1">＋ Aggiungi riga</button></td></tr>`;
   h += `</tbody></table><div class="gen">Seguono nel PDF: testo del modello, dichiarazione dell'operatore e firme del Responsabile Operativo e del Funzionario Responsabile SAF provinciale.</div></div>`;
   return h;
 }
 
-function htmlSfa(L) {
-  let h = `<div class="foglio basico"><div class="tit"><span>ELENCO DELLE ATTIVITÀ SFA (SOCCORSO FLUVIALE ALLUVIONALE) - ANNO SOLARE <span class="campo">${esc(L.periodo)}</span></span></div>
-  <div class="riga-op">Comando di <span class="campo">${esc(L.comando)}</span> &nbsp; Operatore (Qualifica, Cognome e Nome) <span class="campo">${esc(nomeConQualifica(L.p))}</span></div>
-  <table><thead><tr><th style="width:4%">N.</th><th style="width:9%">Data</th><th style="width:12%">Tipo</th><th>Descrizione</th><th style="width:5%">Sede</th><th style="width:5%">Fuori Sede</th><th style="width:7%">Ore</th><th style="width:22%">Responsabile Addestramento (Qualifica, Cognome e Nome)</th></tr></thead><tbody>`;
-  if (!L.righe.length) h += '<tr><td colspan="8" class="c vuota">Nessuna attività SFA registrata in PUMA nell\'anno</td></tr>';
-  L.righe.forEach((r, i) => {
-    const v = celleVoce(r);
-    h += `<tr><td class="c">${i + 1}</td><td class="c">${v.data}</td><td>${esc(r.tipo)}</td><td>${esc(r.descr)}</td><td class="c">${v.in}</td><td class="c">${v.fuori}</td><td class="n">${v.ore}</td><td>${v.resp}</td></tr>`;
+function htmlSfa(M) {
+  const k = chiaveModello(M);
+  let h = `<div class="foglio basico${MOD() ? ' in-modifica' : ''}" data-k="${esc(k)}">${testataModello(M)}<div class="tit"><span>ELENCO DELLE ATTIVITÀ SFA (SOCCORSO FLUVIALE ALLUVIONALE) - ANNO SOLARE <span class="campo">${esc(M.periodo)}</span></span></div>
+  <div class="riga-op">Comando di ${campoE('comando', M.comando)} &nbsp; Operatore (Qualifica, Cognome e Nome) ${campoE('operatore', M.operatore)}</div>
+  <table><thead><tr><th style="width:4%">N.</th><th style="width:10%">Data</th><th style="width:12%">Tipo</th><th>Descrizione</th><th style="width:5%">Sede</th><th style="width:5%">Fuori Sede</th><th style="width:7%">Ore</th><th style="width:22%">Responsabile Addestramento (Qualifica, Cognome e Nome)</th>${thAz()}</tr></thead><tbody>`;
+  if (!M.righe.length && !MOD()) h += '<tr><td colspan="8" class="c vuota">Nessuna attività SFA registrata in PUMA nell\'anno</td></tr>';
+  M.righe.forEach((r, i) => {
+    const p = `righe.${i}`;
+    h += `<tr><td class="c">${i + 1}</td>${tdE(p + '.data', r.data, 'c')}${tdE(p + '.tipo', r.tipo)}${tdE(p + '.descr', r.descr)}${tdSede(p, r, 'in')}${tdSede(p, r, 'fuori')}${tdE(p + '.ore', r.ore, 'n')}${tdE(p + '.resp', r.resp)}${tdAz('righe', i, false)}</tr>`;
   });
-  return h + `<tr><td colspan="6" class="tot">Totale ore</td><td class="tot" style="color:#000">${fmtOre(L.tot)}</td><td></td></tr></tbody></table></div>`;
+  if (MOD()) h += `<tr><td colspan="9" class="c"><button type="button" class="mini-btn" data-add="righe" data-i="-1">＋ Aggiungi riga</button></td></tr>`;
+  return h + `<tr><td colspan="6" class="tot">Totale ore</td><td class="tot" data-tot="tot" style="color:#000">${fmtOre(M.tot)}</td><td${MOD() ? ' colspan="2"' : ''}></td></tr></tbody></table></div>`;
 }
 
 function disegna() {
@@ -1137,28 +1280,144 @@ function disegna() {
   aggiornaUrl();
   const o = OPERATORE;
   pdfBtn.disabled = !o;
+  modBtn.disabled = !o;
   if (!o) {
     report.innerHTML = `<div class="msg">Operatore non trovato nei dati PUMA.<small>Il codice fiscale indicato nella pagina non compare in Elenco_Filtrato né in Registrazione_Attivita_Semplificata.</small></div>` + debugHtml();
     return;
   }
-  const libri = libriOperatore(o.p);
-  const L0 = libri[0];
-  if (L0.tipo === 'SFA') {
-    report.innerHTML = `<div class="stato-box">
-      <div class="st"><div class="k">Attività SFA nell'anno</div><div class="v">${L0.nAtt}</div></div>
-      <div class="st"><div class="k">Ore totali</div><div class="v">${fmtOre(L0.tot)} <small>h</small></div></div></div>` + htmlSfa(L0) + debugHtml();
-    return;
+  MODELLI = new Map();
+  const libri = modelliOperatore(o.p);
+  const M0 = libri[0];
+  let tiles;
+  if (M0.tipo === 'SFA') {
+    tiles = `<div class="st"><div class="k">Attività SFA nell'anno</div><div class="v">${M0.nAtt}</div></div>
+      <div class="st"><div class="k">Ore totali</div><div class="v">${fmtOre(M0.tot)} <small>h</small></div></div>`;
+  } else {
+    const sotto = M0.tipo === 'AVA' ? M0.cicli.filter(c => c.tot < ORE_CICLO_AVA).length : (M0.totObbl < ORE_MIN_BAS ? 1 : 0);
+    tiles = `<div class="st"><div class="k">Attività nel libretto</div><div class="v">${M0.nAtt}</div></div>
+      <div class="st"><div class="k">Ore totali</div><div class="v">${fmtOre(M0.tot)} <small>h</small></div></div>
+      <div class="st ${sotto ? 'ko' : 'ok'}"><div class="k">${M0.tipo === 'AVA' ? 'Cicli sotto le 36 ore' : 'Minimo 24 ore'}</div><div class="v">${M0.tipo === 'AVA' ? sotto : (sotto ? 'no' : 'sì')}</div></div>`;
   }
-  const avviso = L0.tipo === 'AVA'
-    ? L0.cicli.filter(c => c.tot < ORE_CICLO_AVA).map(c => `Ciclo ${c.n}: ${fmtOre(c.tot)} h su ${ORE_CICLO_AVA}`)
-    : (L0.totObbl < ORE_MIN_BAS ? [`Manovre obbligatorie: ${fmtOre(L0.totObbl)} h su ${ORE_MIN_BAS}`] : []);
-  report.innerHTML = `<div class="stato-box">
-      <div class="st"><div class="k">Attività nel libretto</div><div class="v">${L0.nAtt}</div></div>
-      <div class="st"><div class="k">Ore totali</div><div class="v">${fmtOre(L0.tot)} <small>h</small></div></div>
-      <div class="st ${avviso.length ? 'ko' : 'ok'}"><div class="k">${L0.tipo === 'AVA' ? 'Cicli sotto le 36 ore' : 'Minimo 24 ore'}</div><div class="v">${avviso.length ? (L0.tipo === 'AVA' ? avviso.length : 'no') : (L0.tipo === 'AVA' ? 0 : 'sì')}</div></div>
-    </div>` +
-    libri.map((L, i) => (i === 1 ? '<div class="gen-titolo" style="color:#aaa">Libretti SAF Basico allegati</div>' : '') + (L.tipo === 'AVA' ? htmlAvanzato(L) : htmlBasico(L))).join('') + noteHtml() + debugHtml();
+  report.innerHTML = `<div class="stato-box">${tiles}</div>` +
+    libri.map((M, i) => (i === 1 ? '<div class="gen-titolo" style="color:#aaa">Libretti SAF Basico allegati</div>' : '') +
+      (M.tipo === 'AVA' ? htmlAvanzato(M) : M.tipo === 'SFA' ? htmlSfa(M) : htmlBasico(M))).join('') +
+    (M0.tipo === 'SFA' ? '' : noteHtml()) + debugHtml();
 }
+
+/* ---------- Eventi della modifica ---------- */
+const modelloDi = el => { const f = el.closest('.foglio'); return f ? MODELLI.get(f.dataset.k) : null; };
+function aggiornaTotali(foglio, M) {
+  calcolaTotali(M);
+  foglio.querySelectorAll('[data-tot]').forEach(td => {
+    const t = td.dataset.tot;
+    const v = t === 'tot' ? M.tot : t === 'obbl' ? M.totObbl : M.cicli[+t.slice(1)].tot;
+    td.textContent = fmtOre(v);
+  });
+}
+// scrittura nelle celle: il modello si aggiorna a ogni tasto, il libretto si ridisegna quando si esce dalla cella
+report.addEventListener('input', e => {
+  const el = e.target.closest('[data-p]');
+  if (!el) return;
+  const M = modelloDi(el);
+  if (!M) return;
+  const testo = el.textContent.replace(/\s+/g, ' ').trim();
+  scrivi(M, el.dataset.p, testo);
+  if (el.dataset.p.endsWith('.ore')) el.classList.toggle('err', isNaN(parseOre(testo)));
+  aggiornaTotali(el.closest('.foglio'), M);
+  salvaModello(M);
+  el.closest('.foglio').dataset.cambiato = '1';
+});
+report.addEventListener('keydown', e => {
+  if (e.target.closest('[data-p]') && e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+});
+// incolla solo testo
+report.addEventListener('paste', e => {
+  if (!e.target.closest('[data-p]')) return;
+  e.preventDefault();
+  const t = (e.clipboardData || window.clipboardData).getData('text').replace(/\s+/g, ' ');
+  document.execCommand('insertText', false, t);
+});
+// Si ridisegna quando si esce da una cella modificata (spunte, numeri di riga, avviso).
+// Se si sta toccando/cliccando qualcosa, si aspetta il rilascio (altrimenti il clic andrebbe perso).
+let premendo = false, rinvia = false;
+report.addEventListener('pointerdown', () => { premendo = true; });
+document.addEventListener('pointerup', () => {
+  premendo = false;
+  if (!rinvia) return;
+  rinvia = false;
+  setTimeout(() => ridisegnaTornando(document.activeElement, false), 0);
+});
+report.addEventListener('focusout', e => {
+  if (ridisegnando) return;            // la cella è sparita perché il libretto si sta ridisegnando
+  const el = e.target.closest('[data-p]');
+  const foglio = el && el.closest('.foglio');
+  if (!foglio || !foglio.dataset.cambiato) return;
+  // ore scritte come "4" o "1,5" → "4:00", "1:30"
+  const M = modelloDi(el);
+  if (M && el.dataset.p.endsWith('.ore')) {
+    const v = leggi(M, el.dataset.p), h = parseOre(v);
+    if (v && !isNaN(h) && v !== fmtOre(h)) { scrivi(M, el.dataset.p, fmtOre(h)); salvaModello(M); }
+  }
+  if (premendo) { rinvia = true; return; }
+  const prossima = e.relatedTarget;
+  setTimeout(() => ridisegnaTornando(prossima, true), 0);
+});
+// ridisegna e rimette il cursore nella cella in cui si stava andando
+function ridisegnaTornando(prossima, selezionaTutto) {
+  const cella = prossima && prossima.closest && prossima.closest('[data-p]');
+  const dove = cella && cella.closest('.foglio') ? [cella.closest('.foglio').dataset.k, cella.dataset.p] : null;
+  ridisegnaFermo();
+  if (!dove) return;
+  const t = report.querySelector(`.foglio[data-k="${CSS.escape(dove[0])}"] [data-p="${CSS.escape(dove[1])}"]`);
+  if (!t) return;
+  t.focus();
+  const r = document.createRange();
+  r.selectNodeContents(t);
+  if (!selezionaTutto) r.collapse(false);
+  const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+}
+report.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const M = modelloDi(b);
+  if (b.dataset.reset) {
+    if (!confirm('Tolgo le modifiche fatte a mano a questo libretto e torno ai dati PUMA?')) return;
+    cancellaSalvato(b.dataset.reset);
+    return ridisegnaFermo();
+  }
+  if (!M) return;
+  if (b.dataset.sede) {
+    const v = leggi(M, b.dataset.sede);
+    const nuovo = v && v.sede === b.dataset.v ? null : b.dataset.v;
+    scrivi(M, b.dataset.sede + '.sede', nuovo);
+  } else if (b.dataset.add) {
+    const lista = leggi(M, b.dataset.add);
+    const i = +b.dataset.i;
+    const nuova = b.dataset.add === 'righe' ? Object.assign(vuota(), { tipo: '', descr: '' }) : b.dataset.add === 'altre' ? Object.assign(vuota(), { descr: '' }) : vuota();
+    if (i < 0) lista.push(nuova);
+    else { if (!lista.length) lista.push(vuota()); lista.splice(i + 1, 0, nuova); }
+  } else if (b.dataset.rm) {
+    const lista = leggi(M, b.dataset.rm);
+    const i = +b.dataset.i;
+    if (lista[i] && piena(lista[i]) && !confirm('Tolgo questa riga dal libretto?')) return;
+    lista.splice(i, 1);
+  } else return;
+  salvaModello(M);
+  ridisegnaFermo();
+});
+let ridisegnando = false;
+function ridisegnaFermo() {
+  const c = document.getElementById('content'), s = c.scrollTop;
+  ridisegnando = true;
+  try { disegna(); } finally { ridisegnando = false; }
+  c.scrollTop = s;
+}
+modBtn.addEventListener('click', () => {
+  state.modifica = !state.modifica;
+  modBtn.textContent = state.modifica ? '✔ Fine modifiche' : '✎ Modifica';
+  modBtn.classList.toggle('attivo', state.modifica);
+  ridisegnaFermo();
+});
 
 function noteHtml() {
   return `<div class="note-box"><b>Come vengono compilati i libretti</b><ul>
@@ -1167,7 +1426,8 @@ function noteHtml() {
     <li>Le attività SAF senza manovre del modello e gli interventi con categoria SAF vanno nelle righe delle altre attività. Le attività SFA non entrano nei libretti SAF: sono nell'elenco SFA.</li>
     <li>${DIVIDI_ORE_TRA_MANOVRE ? 'Le ore di un addestramento con più manovre sono divise tra le manovre: il totale corrisponde alle ore effettive.' : 'Ogni manovra riporta le ore intere dell\'addestramento.'}</li>
     <li>Responsabile: il partecipante con ruolo di responsabile nella colonna «Incident Command System». In sede / fuori sede: dall'«Area di Addestramento» del Piano di Sicurezza.</li>
-    <li>In rosso i totali sotto il minimo (solo nell'anteprima).</li></ul></div>`;
+    <li>In rosso i totali sotto il minimo (solo nell'anteprima).</li>
+    <li><b>Modifiche a mano:</b> con «✎ Modifica» si scrive nelle celle, si spuntano Sede/Fuori sede, si aggiungono o tolgono righe. Le modifiche restano salvate in questo browser e vanno nel PDF; «↺ Ripristina dati PUMA» le cancella.</li></ul></div>`;
 }
 function debugHtml() {
   return DEBUG ? `<div class="debug-box">${esc(JSON.stringify({ diag, colPiano, colReg, operatore: !!OPERATORE }, null, 1))}</div>` : '';
@@ -1262,7 +1522,7 @@ function spazio(doc, y, serve, nuovaPagina) {
 }
 
 function pdfAvanzato(doc, L) {
-  const op = nomeConQualifica(L.p);
+  const op = L.operatore;
   // intestazione rossa una sola volta per pagina (le tabelle la chiedono a ogni pagina che occupano)
   const fatte = new Set();
   const intest = () => {
@@ -1320,8 +1580,8 @@ function pdfAvanzato(doc, L) {
       const n = Math.max(1, r.voci.length);
       for (let i = 0; i < n; i++) {
         const v = r.voci[i];
-        const riga = i === 0 ? [{ content: String(r.n), rowSpan: n }, { content: r.d, rowSpan: n }, cBox(r.voci.length, { rowSpan: n })] : [];
-        riga.push(v ? fmtOre(v.ore) : '', v ? fmtGiorno(v.data) : '', cBox(v && v.sede === 'in'), cBox(v && v.sede === 'fuori'), v ? v.resp : '');
+        const riga = i === 0 ? [{ content: String(r.n), rowSpan: n }, { content: r.d, rowSpan: n }, cBox(r.voci.some(piena), { rowSpan: n })] : [];
+        riga.push(v ? v.ore : '', v ? v.data : '', cBox(v && v.sede === 'in'), cBox(v && v.sede === 'fuori'), v ? v.resp : '');
         body.push(riga);
       }
     });
@@ -1341,7 +1601,7 @@ function pdfAvanzato(doc, L) {
   const bodyAltre = [];
   for (let i = 0; i < nAltre; i++) {
     const a = L.altre[i];
-    bodyAltre.push([a ? String(i + 1) : '', a ? a.descr : '', cBox(!!a), a ? fmtOre(a.ore) : '', a ? fmtGiorno(a.data) : '', cBox(a && a.sede === 'in'), cBox(a && a.sede === 'fuori'), a ? a.resp : '']);
+    bodyAltre.push([a ? String(i + 1) : '', a ? a.descr : '', cBox(piena(a)), a ? a.ore : '', a ? a.data : '', cBox(a && a.sede === 'in'), cBox(a && a.sede === 'fuori'), a ? a.resp : '']);
   }
   doc.autoTable(opzTab(
     [intestCol('N.', 'Descrizione breve tipo attività (esercitazioni, coordinatore\nmantenimenti, interventi, corsi ecc...)')],
@@ -1393,7 +1653,7 @@ function pdfAvanzato(doc, L) {
 }
 
 function pdfBasico(doc, L) {
-  const op = nomeConQualifica(L.p);
+  const op = L.operatore;
   const fatte = new Set();
   const intest = () => {
     const pg = doc.internal.getCurrentPageInfo().pageNumber;
@@ -1434,8 +1694,8 @@ function pdfBasico(doc, L) {
         const v = vv.voci[i];
         const riga = [];
         if (j === 0 && i === 0) riga.push({ content: min + ' ore', rowSpan: nTot });
-        if (i === 0) riga.push(cBox(vv.voci.length, { rowSpan: n }), { content: vv.testo, rowSpan: n });
-        riga.push(v ? fmtGiorno(v.data) : '', cBox(v && v.sede === 'in'), cBox(v && v.sede === 'fuori'), v ? fmtOre(v.ore) : '', v ? v.resp : '');
+        if (i === 0) riga.push(cBox(vv.voci.some(piena), { rowSpan: n }), { content: vv.testo, rowSpan: n });
+        riga.push(v ? v.data : '', cBox(v && v.sede === 'in'), cBox(v && v.sede === 'fuori'), v ? v.ore : '', v ? v.resp : '');
         body.push(riga);
       }
     });
@@ -1450,7 +1710,7 @@ function pdfBasico(doc, L) {
   const bodyAltre = [];
   for (let i = 0; i < nAltre; i++) {
     const a = L.altre[i];
-    bodyAltre.push(['', cBox(!!a), a ? a.descr : '', a ? fmtGiorno(a.data) : '', cBox(a && a.sede === 'in'), cBox(a && a.sede === 'fuori'), a ? fmtOre(a.ore) : '', a ? a.resp : '']);
+    bodyAltre.push(['', cBox(piena(a)), a ? a.descr : '', a ? a.data : '', cBox(a && a.sede === 'in'), cBox(a && a.sede === 'fuori'), a ? a.ore : '', a ? a.resp : '']);
   }
   doc.autoTable(opzTab(
     [['', 'Spunta', 'Altre Manovre o Interventi (breve descrizione e\nnumero intervento)', 'Data', 'Sede', 'Fuori\nSede', 'Ore', 'Responsabile Addestramento (Qualifica,\nCognome e Nome)']],
@@ -1496,11 +1756,11 @@ function pdfSfa(doc, L) {
   y += 7;
   doc.setFont('helvetica', 'normal');
   const xe = campo(doc, 'Comando di', L.comando, MX, y, 50, 9);
-  campo(doc, 'Operatore (Qualifica, Cognome e Nome)', nomeConQualifica(L.p), xe + 3, y, 95, 9);
+  campo(doc, 'Operatore (Qualifica, Cognome e Nome)', L.operatore, xe + 3, y, 95, 9);
   y += 6;
   const larg = [10, 22, 34, 0, 13, 13, 16, 62];
   larg[3] = LARGH - larg.reduce((s, v) => s + v, 0);
-  const body = L.righe.map((r, i) => [String(i + 1), fmtGiorno(r.data), r.tipo, r.descr, cBox(r.sede === 'in'), cBox(r.sede === 'fuori'), fmtOre(r.ore), r.resp]);
+  const body = L.righe.map((r, i) => [String(i + 1), r.data, r.tipo, r.descr, cBox(r.sede === 'in'), cBox(r.sede === 'fuori'), r.ore, r.resp]);
   if (!body.length) body.push([{ content: "Nessuna attività SFA registrata in PUMA nell'anno", colSpan: 8, styles: { halign: 'center', textColor: 110 } }]);
   doc.autoTable(Object.assign(stileTab('helvetica', 8), {
     startY: y, margin: { left: MX, right: MX, top: 14, bottom: 14 },
@@ -1524,7 +1784,7 @@ async function creaPdf(operatori, nomeFile) {
   const firma = firmaGenerato();
   let primo = true;
   operatori.forEach(o => {
-    libriOperatore(o.p).forEach(L => {
+    modelliOperatore(o.p).forEach(L => {
       if (!primo) doc.addPage();
       primo = false;
       const da = doc.internal.getNumberOfPages();
