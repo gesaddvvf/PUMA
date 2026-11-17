@@ -67,23 +67,27 @@
       padding: 6px 8px; font-family: 'Comfortaa', cursive; font-size: 12.5px; max-width: 100%;
     }
     #filters select:focus { outline: none; border-color: var(--arancio); }
-    /* Comando / Direzione: si scrive per cercare, elenco in ordine alfabetico */
+    /* Comando / Direzione: si scrive e si sceglie dall'elenco */
     .combo { position: relative; display: inline-block; }
     #ente-input {
-      width: 260px; max-width: 100%; box-sizing: border-box; background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px;
-      padding: 6px 8px; font-family: 'Comfortaa', cursive; font-size: 12.5px; font-weight: bold;
+      width: 270px; max-width: 100%; box-sizing: border-box; background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px;
+      padding: 6px 26px 6px 8px; font-family: 'Comfortaa', cursive; font-size: 12.5px; font-weight: bold;
     }
     #ente-input:focus { outline: none; border-color: var(--arancio); }
+    #ente-x { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; cursor: pointer; font-size: 13px; padding: 2px 5px; }
+    #ente-x:hover { color: #ffb74d; }
     .drop {
-      position: absolute; top: 100%; left: 0; margin-top: 3px; width: max(100%, 340px); max-height: 360px; overflow-y: auto;
+      position: absolute; top: 100%; left: 0; margin-top: 3px; width: max(100%, 330px); max-height: 380px; overflow-y: auto;
       background: #1e1e1e; border: 1px solid var(--arancio); border-radius: 4px; z-index: 200; box-shadow: 0 6px 18px rgba(0,0,0,.6);
     }
-    .drop .head { position: sticky; top: 0; background: #2a2a2a; color: #ffb74d; font-size: 11.5px; font-weight: bold; padding: 6px 10px; border-bottom: 1px solid #444; }
-    .drop .opt { padding: 6px 10px; cursor: pointer; font-size: 12.5px; border-bottom: 1px solid #2a2a2a; }
-    .drop .opt small { display: block; color: #999; font-size: 11px; margin-top: 1px; }
-    .drop .opt.act, .drop .opt:hover { background: #3a2a14; }
+    .drop .head { position: sticky; top: 0; background: #2a2a2a; color: #ffb74d; font-size: 11px; font-weight: bold; padding: 5px 10px; border-bottom: 1px solid #444; text-transform: uppercase; letter-spacing: .03em; }
+    .drop .opt { padding: 6px 10px 6px 16px; cursor: pointer; font-size: 12.5px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; gap: 10px; }
+    .drop .opt small { color: #999; font-size: 11px; white-space: nowrap; }
+    .drop .opt.act, .drop .opt:hover { background: #3a3020; }
     .drop .opt.sel { border-left: 3px solid var(--arancio); }
+    .drop .opt.zero { color: #888; }
     .drop .vuoto { padding: 10px; color: #999; font-size: 12px; }
+    @media (max-width: 700px) { .combo, #ente-input { width: 100%; } }
     #tip-select { min-width: 300px; }
     #anno-select { font-weight: bold; }
     .seg { display: inline-flex; border: 1px solid var(--arancio); border-radius: 4px; overflow: hidden; }
@@ -108,8 +112,7 @@
       #nav-buttons { width: 100%; }
       .nav-btn { flex: 1 1 40%; text-align: center; }
       #filters label.lbl, #meta-info { display: none; }
-      #filters select, .combo, #ente-input { flex: 1 1 100%; width: 100%; }
-      .drop { width: 100%; }
+      #filters select { flex: 1 1 100%; }
       .azioni { margin-left: 0; width: 100%; }
       .azioni button { flex: 1 1 30%; }
       #filters { padding: 6px 10px; gap: 6px; }
@@ -158,10 +161,11 @@
     td.nome a { color: #f0f0f0; text-decoration: none; font-weight: bold; }
     td.nome a:hover { color: #ffb74d; text-decoration: underline; }
     td.nome .cf { display: block; color: #888; font-size: 10.5px; font-weight: normal; }
-    tr.grp td { background: color-mix(in srgb, var(--cc, #ef6c00) 30%, #1e1e1e) !important; color: #fff; font-weight: bold; font-size: 12.5px; border-left: 5px solid var(--cc, #ef6c00); }
+    tr.grp td { background: #6b6b6b !important; color: #fff; font-weight: bold; font-size: 12.5px; }
     tr.grp td span { font-weight: normal; color: #ddd; font-size: 11.5px; }
     tr.tot td { background: #303030 !important; font-weight: bold; }
     tr.persona td:first-child { border-left: 5px solid var(--sc, var(--nd)); }
+    tr.persona:not(.st-na) td { background: color-mix(in srgb, var(--sc) 20%, #1e1e1e) !important; }
     .stato { font-weight: bold; white-space: nowrap; color: var(--sc, var(--nd)); }
     .bar { position: relative; height: 6px; background: #333; border-radius: 3px; overflow: hidden; min-width: 60px; margin-top: 3px; }
     .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--sc, var(--anno-a)); }
@@ -235,7 +239,8 @@
       table { font-size: 8.5px; }
       td, th { border: 1px solid #000 !important; color: #000 !important; background: #fff !important; padding: 2px 4px; }
       th { background: #eee !important; }
-      tr.grp td { background: #ddd !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tr.grp td { background: #999 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tr.persona:not(.st-na) td { background: var(--sc) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       tr.grp td span, .sub-n, td.nome .cf { color: #333 !important; }
       td.nome a { color: #000 !important; }
       .stato { color: #000 !important; }
@@ -274,7 +279,8 @@
     <button type="button" data-tipo="comando" class="on">Comando</button><button type="button" data-tipo="direzione">Direzione</button>
   </span>
   <span class="combo" id="ente-combo">
-    <input id="ente-input" placeholder="Caricamento…" autocomplete="off" role="combobox" aria-label="Comando o Direzione" aria-expanded="false" aria-controls="ente-drop" disabled>
+    <input id="ente-input" placeholder="Caricamento…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ente-drop" aria-label="Comando o Direzione" disabled>
+    <button type="button" id="ente-x" title="Cancella" aria-label="Cancella">✕</button>
     <div id="ente-drop" class="drop" role="listbox" hidden></div>
   </span>
   <label class="lbl" for="tip-select">Tipologia</label>
@@ -317,7 +323,7 @@ const GID_FORMAZIONE = "1631986002";  // Formazione: requisiti per corso
 const GID_ELENCO    = "84413100";     // Elenco_Filtrato: corsi in possesso di ogni persona
 const LOGHI_URL     = "https://gesaddvvf.github.io/PUMA/images/loghi/loghi.json";   // loghi delle tipologie
 // Invio via Gmail: URL /exec dell'app web Apps Script "InvioReportCollettivo.gs" (vuoto = invio non attivo)
-const URL_INVIO_COLLETTIVO = "";
+const URL_INVIO_COLLETTIVO = "https://script.google.com/macros/s/AKfycbwXXd1cytxdt_hbsBZZJoTArkdHAwIMTZkWrAdLvS8hQ9s8OToPzccovNMAQiCAebgerg/exec";
 const DOMINI_INVIO = ["vigilfuoco.it"];     // indirizzi scritti a mano ammessi (lo script controlla di nuovo)
 // PDF scritto direttamente (non è una "fotografia" della pagina: non dipende da zoom e schermo)
 const JSPDF_URL     = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
@@ -570,24 +576,32 @@ function corsoDaChiave(k) {
   return equivalente(CORSI.find(c => c.keys.has(k))) || null;
 }
 
+// Testo di manovra confrontabile: senza la lettera finale "(A)/(B)/(C)/(N)" e senza zeri iniziali (02 = 2)
+const RE_LETTERA_MANOVRA = /\s*\(([A-Za-z])\)\s*$/;
+const chiaveManovra = t => normKey(String(t || '').replace(RE_LETTERA_MANOVRA, '').replace(/\b0+(\d)/g, '$1'));
+const chiaveTesto = t => normKey(String(t || '').replace(/\b0+(\d)/g, '$1'));
+
 function elaboraManovre(rows) {
   MANOVRE = [];
-  let senzaCorso = 0;
+  let senzaCorso = 0, escluse = 0;
   rows.forEach(r => {
     const a = val(r[0]), uid = val(r[1]), cod = val(r[2]), ciclo = val(r[3]), man = val(r[4]), full = val(r[5]);
     if (!man && !full) return;
     if (/associazione/i.test(a) || /^manovra$/i.test(man)) return;   // intestazione
     const testo = full || [ciclo, cod, man].filter(Boolean).join(' ');
+    // Lettera finale: (N) = non si considera; (C) = si cerca anche nei collettivi e nelle descrizioni
+    const lettera = ((testo.match(RE_LETTERA_MANOVRA) || man.match(RE_LETTERA_MANOVRA) || [])[1] || '').toUpperCase();
+    if (lettera === 'N') { escluse++; return; }
     const m = {
-      corsoTxt: a, uid, codice: cod, ciclo, manovra: man || testo, testo,
-      kFull: normKey(testo), kMan: normKey(man),
+      corsoTxt: a, uid, codice: cod, ciclo, manovra: man || testo, testo, lettera,
+      kFull: chiaveTesto(testo), kBase: chiaveManovra(testo), kMan: chiaveManovra(man),
       reUid: uid && uid.length >= 2 ? new RegExp('(^|[^A-Za-z0-9])' + escRe(uid) + '($|[^A-Za-z0-9])', 'i') : null,
       corsi: corsiDaSigla(a)
     };
     if (m.corsi.length) m.corsi.forEach(c => c.previste.push(m)); else senzaCorso++;
     MANOVRE.push(m);
   });
-  diag.manovre = { righe: MANOVRE.length, senzaCorso };
+  diag.manovre = { righe: MANOVRE.length, senzaCorso, escluse };
 }
 
 // Colore fisso per ogni Categoria (bordi, intestazione e righe tipologia)
@@ -647,13 +661,17 @@ function trovaCorsi(testo) {
 }
 
 // Testo delle manovre svolte → manovre previste riconosciute
-function trovaManovre(testo, corsiAtt) {
+// testo = colonne delle manovre svolte; descrizioni = descrizione della registrazione e del Piano di Sicurezza
+function trovaManovre(testo, corsiAtt, descrizioni) {
   const out = new Set();
-  if (!testo) return out;
-  const nk = normKey(testo);
+  if (!testo && !descrizioni) return out;
+  const nk = chiaveTesto(testo), nd = chiaveTesto(descrizioni);
   MANOVRE.forEach(m => {
-    if ((m.kFull.length >= 6 && nk.includes(m.kFull)) || (m.reUid && m.reUid.test(testo)) ||
-        (m.corsi.some(c => corsiAtt.has(c)) && m.kMan.length >= 6 && nk.includes(m.kMan))) out.add(m);
+    const nelleManovre = !!testo && ((m.kFull.length >= 6 && nk.includes(m.kFull)) || (m.kBase.length >= 10 && nk.includes(m.kBase)) ||
+      (m.reUid && m.reUid.test(testo)) || (m.corsi.some(c => corsiAtt.has(c)) && m.kMan.length >= 6 && nk.includes(m.kMan)));
+    // (C): vale anche se è scritta nella descrizione di un collettivo o di un individuale
+    const nelleDescrizioni = m.lettera === 'C' && !!descrizioni && m.kBase.length >= 10 && nd.includes(m.kBase);
+    if (nelleManovre || nelleDescrizioni) out.add(m);
   });
   return out;
 }
@@ -822,7 +840,7 @@ function elaboraReg(reg, pianoIdx) {
     a.corsiTip = new Set(a.corsi);   // corsi dalla sola tipologia (per il libretto)
     // Interventi: categorie accorpate ("SAF (...), TAS (...)") divise una per una
     a.cats = tipo === 'intervento' ? splitCategorie(a.catInt).map(infoCategoria) : [];
-    a.manovre = trovaManovre(a.manovreTxt, a.corsi);
+    a.manovre = trovaManovre(a.manovreTxt, a.corsi, [a.descr, a.piano && a.piano.descr].filter(Boolean).join('\n'));
     // una manovra riconosciuta collega l'attività al suo corso solo se la sigla è di un corso solo
     if (!a.corsi.size) a.manovre.forEach(m => { if (m.corsi.length === 1 && tipo !== 'intervento') a.corsi.add(m.corsi[0]); });
     if (!a.corsi.size && tipo !== 'intervento') a.categoria = trovaCategoria(a.tipologia);
@@ -880,8 +898,12 @@ function riepilogoCorsi(p, y) {
     const oreColl = coll.reduce((s, a) => s + (a.ore || 0), 0);
     const oreAnno = add.filter(a => a.anno === y).reduce((s, a) => s + (a.ore || 0), 0);
     const fatte = new Map();
-    nel.forEach(a => a.manovre.forEach(m => {
+    // le manovre (C) valgono in qualunque addestramento della persona nel periodo (collettivo o individuale,
+    // anche di un'altra tipologia); le altre solo nelle attività del corso
+    const nelCorso = new Set(nel);
+    att.filter(a => a.tipo !== 'intervento' && inFinestra(a, c)).forEach(a => a.manovre.forEach(m => {
       if (!m.corsi.includes(c)) return;
+      if (!nelCorso.has(a) && m.lettera !== 'C') return;
       const f = fatte.get(m) || { n: 0, ultima: null };
       f.n++; if (!f.ultima || a.data > f.ultima) f.ultima = a.data;
       fatte.set(m, f);
@@ -1032,16 +1054,21 @@ Object.entries(ORGANIGRAMMA).forEach(([dir, comandi]) => {
 const direzioneDi = k => DIREZIONE_DI.get(k) || (k.startsWith('direzione') ? NOME_ENTE.get(k) || '' : '');
 const comandiDi = dir => [...DIREZIONE_DI.entries()].filter(([, d]) => comandoKey(d) === comandoKey(dir)).map(([k]) => k);
 
-// Stati del personale con il corso
+// Stati del personale con il corso: colori e logica del foglio Stampa_Report_Collettivo
+//   R  rosso     ore svolte < 75% delle ore previste
+//   Ar arancione ore svolte tra 75% e 100%
+//   A  giallo    ore raggiunte ma: individuali+interventi < quota individuali, collettive < quota collettive,
+//                oppure mancano manovre previste
+//   V  verde     tutto raggiunto
 const STATI = {
-  ok:    { t: 'Idoneo',                 c: '#66bb6a', o: 1 },
-  man:   { t: 'Verificare manovre',     c: '#fdd835', o: 2 },
-  quasi: { t: 'Almeno 75% delle ore',   c: '#ffa726', o: 3 },
-  ko:    { t: 'Non idoneo',             c: '#ef5350', o: 4 },
-  nd:    { t: 'Nessun minimo',          c: '#9e9e9e', o: 5 },
-  na:    { t: 'Senza corso',            c: '#616161', o: 6 }
+  ok:    { t: 'Idoneo',                  c: '#26a69a' },
+  man:   { t: 'Verificare',              c: '#ffff00' },
+  quasi: { t: '75% delle ore previste',  c: '#ff9900' },
+  ko:    { t: 'Non idoneo',              c: '#e06666' },
+  na:    { t: 'Senza corso',             c: '#757575' }
 };
-const ORDINE_STATI = ['ok', 'man', 'quasi', 'ko', 'nd'];
+const ORDINE_STATI = ['ok', 'man', 'quasi', 'ko'];
+const GRIGIO_GRUPPO = '#999999';   // righe "Personale con/senza corso", come nel foglio
 
 let RESP = new Map();    // "rop|settore|ente" → [nominativi]
 let PIANI = [];          // Piani di Sicurezza validi (addestramenti collettivi)
@@ -1106,8 +1133,8 @@ const corsoScelto = () => CORSI.find(c => c.id === state.corso) || null;
 function schedaPersona(p, c, y) {
   const r = riepilogoCorsi(p, y).find(x => x.c === c);
   const cat = c.categoria;
-  // interventi del settore nell'anno (gli interventi non hanno tipologia)
-  const intv = p.att.filter(a => a.tipo === 'intervento' && a.anno === y && a.cats.some(i => i.label === cat));
+  // interventi del settore nel periodo della tipologia (gli interventi non hanno tipologia)
+  const intv = p.att.filter(a => a.tipo === 'intervento' && a.anno <= y && a.anno >= y - c.anniPrima && a.cats.some(i => i.label === cat));
   const oreInt = intv.reduce((t, a) => t + (a.ore || 0), 0);
   const con = p.corsiPossesso.has(c);
   const altri = [...p.corsiPossesso].filter(x => x !== c && x.categoria === cat && !(DI_TUTTI.includes(x) && !x.oreMin)).sort((a, b) => a.ordine - b.ordine);
@@ -1119,11 +1146,18 @@ function schedaPersona(p, c, y) {
     tot, minTot: con && c.oreMin ? c.oreMin : 0, oreColl, collMin: con && c.oreMin && c.collPct ? c.oreMin * c.collPct : 0,
     fatte: r ? r.fatte.size : 0, prev: c.previste.length, dal: y - c.anniPrima
   };
-  s.pct = s.minTot ? s.tot / s.minTot : 0;
+  s.pct = s.minTot ? s.tot / s.minTot : null;
+  // Logica del foglio Stampa_Report_Collettivo (colonna M: R, Ar, A, V)
+  const eps = 1e-4, indMin = s.minTot - s.collMin;
+  s.motivi = [];
   if (!con) s.stato = 'na';
-  else if (!s.minTot) s.stato = 'nd';
-  else if (s.tot >= s.minTot - 1e-6 && oreColl >= s.collMin - 1e-6) s.stato = s.prev && s.fatte < s.prev ? 'man' : 'ok';
-  else s.stato = s.tot >= s.minTot * SOGLIA_QUASI - 1e-6 ? 'quasi' : 'ko';
+  else if (s.tot < s.minTot - eps) s.stato = s.tot < s.minTot * SOGLIA_QUASI - eps ? 'ko' : 'quasi';
+  else {
+    if (s.ind + (INTERVENTI_NEL_TOTALE ? s.int : 0) < indMin - eps) s.motivi.push('individuali sotto ' + fmtHM(indMin));
+    if (s.coll < s.collMin - eps) s.motivi.push('collettive sotto ' + fmtHM(s.collMin));
+    if (s.prev && s.fatte < s.prev) s.motivi.push(`mancano ${s.prev - s.fatte} manovre`);
+    s.stato = s.motivi.length ? 'man' : 'ok';
+  }
   return s;
 }
 
@@ -1240,58 +1274,51 @@ function preparaFiltri() {
   preparaAnni();
 }
 
-// Elenco di Comandi (o Direzioni) in ordine alfabetico; si sceglie scrivendo nel campo
-let ENTI = [];
-const nomeOrdine = n => (n || '').replace(/^comando\s+(di\s+)?/i, '');
+// Elenco degli enti per la casella digitabile: { k, nome, gruppo, n }
+let ENTI_LISTA = [];
 function preparaEnti() {
   document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.tipo === state.tipo));
   const nPers = k => (PER_ENTE.get(k) || []).length;
   if (state.tipo === 'direzione') {
-    const dirs = [...new Set([...Object.keys(ORGANIGRAMMA), ...[...DIREZIONE_DI.values()]])];
+    const dirs = [...new Set([...Object.keys(ORGANIGRAMMA), ...[...DIREZIONE_DI.values()]])].sort((a, b) => a.localeCompare(b, 'it'));
     if (state.ente && !state.ente.startsWith('direzione')) state.ente = comandoKey(direzioneDi(state.ente) || '');
-    ENTI = dirs.map(d => {
-      const k = comandoKey(d);
-      return { k, nome: d, sub: `${comandiDi(d).length} Comandi`, n: nPers(k) + comandiDi(d).reduce((t, c) => t + nPers(c), 0) };
-    });
+    ENTI_LISTA = dirs.map(d => { const k = comandoKey(d); return { k, nome: d, gruppo: 'Direzioni', n: nPers(k) + comandiDi(d).reduce((t, c) => t + nPers(c), 0) }; });
   } else {
-    // tutti i Comandi, e anche le Direzioni come ente (il loro personale)
+    // Comandi raggruppati per Direzione; anche la Direzione come ente (il suo personale)
     const enti = new Set([...DIREZIONE_DI.keys(), ...PER_ENTE.keys()]);
     Object.keys(ORGANIGRAMMA).forEach(d => enti.add(comandoKey(d)));
     if (state.ente && !enti.has(state.ente)) state.ente = '';
-    ENTI = [...enti].map(k => ({ k, nome: NOME_ENTE.get(k) || k, sub: k.startsWith('direzione') ? 'personale della Direzione' : direzioneDi(k), n: nPers(k) }));
+    ENTI_LISTA = [...enti].map(k => ({ k, nome: NOME_ENTE.get(k) || k, gruppo: direzioneDi(k) || 'Altri enti', n: nPers(k) }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'it'));   // ordine alfabetico
   }
-  ENTI.sort((a, b) => nomeOrdine(a.nome).localeCompare(nomeOrdine(b.nome), 'it'));
-  const sel = ENTI.find(e => e.k === state.ente);
-  enteInput.value = sel ? sel.nome : '';
   enteInput.placeholder = state.tipo === 'direzione' ? 'Scrivi la Direzione…' : 'Scrivi il Comando…';
+  enteInput.value = state.ente ? (NOME_ENTE.get(state.ente) || '') : '';
   enteInput.disabled = false;
 }
 
+/* Casella Comando / Direzione: si scrive, compare l'elenco filtrato */
 let dropVoci = [], dropAtt = -1;
-function testoEnte() {
-  // se nel campo c'è l'ente già scelto, non lo uso come filtro (si vede tutto l'elenco)
-  const sel = ENTI.find(e => e.k === state.ente);
-  return sel && enteInput.value === sel.nome ? '' : enteInput.value;
-}
-function apriEnti() {
+const chiaveRicerca = t => normKey(String(t || '').replace(/^\s*(comando|direzione)\b/i, ''));
+function apriDrop(tutto) {
   if (enteInput.disabled) return;
-  const k = normKey(testoEnte());
-  dropVoci = ENTI.filter(e => !k || normKey(e.nome + ' ' + (e.sub || '')).includes(k));
-  dropAtt = -1;
-  enteDrop.innerHTML = `<div class="head">${dropVoci.length} ${state.tipo === 'direzione' ? (dropVoci.length === 1 ? 'Direzione' : 'Direzioni') : (dropVoci.length === 1 ? 'ente' : 'enti')}${k ? ' contenenti «' + esc(testoEnte().trim()) + '»' : ' · in ordine alfabetico'}</div>` +
-    (dropVoci.length
-      ? dropVoci.map((e, i) => `<div class="opt${e.k === state.ente ? ' sel' : ''}" role="option" data-i="${i}">${esc(e.nome)} <span style="color:#999">(${e.n})</span>${e.sub ? `<small>${esc(e.sub)}</small>` : ''}</div>`).join('')
-      : '<div class="vuoto">Nessun risultato</div>');
+  const scelto = state.ente && enteInput.value === (NOME_ENTE.get(state.ente) || '');
+  const q = tutto || scelto ? '' : chiaveRicerca(enteInput.value);
+  dropVoci = ENTI_LISTA.filter(e => !q || chiaveRicerca(e.nome).includes(q) || normKey(e.gruppo).includes(q));
+  // prima chi inizia con il testo scritto
+  if (q) dropVoci.sort((a, b) => (chiaveRicerca(b.nome).startsWith(q) - chiaveRicerca(a.nome).startsWith(q)) || ENTI_LISTA.indexOf(a) - ENTI_LISTA.indexOf(b));
+  dropAtt = dropVoci.length === 1 || (q && dropVoci.length) ? 0 : -1;
+  let html = '';
+  dropVoci.forEach((e, i) => {
+    html += `<div class="opt${e.n ? '' : ' zero'}${e.k === state.ente ? ' sel' : ''}${i === dropAtt ? ' act' : ''}" role="option" data-i="${i}">${esc(e.nome)}<small>${e.n} in PUMA${state.tipo === 'comando' && !e.k.startsWith('direzione') ? ' · ' + esc(e.gruppo.replace(/^Direzione\s+/, '')) : ''}</small></div>`;
+  });
+  enteDrop.innerHTML = html || '<div class="vuoto">Nessun ente trovato</div>';
   enteDrop.hidden = false;
   enteInput.setAttribute('aria-expanded', 'true');
-  const sel = enteDrop.querySelector('.opt.sel');
-  if (sel && !k) sel.scrollIntoView({ block: 'center' }); else enteDrop.scrollTop = 0;
+  if (!q) { const s = enteDrop.querySelector('.opt.sel'); if (s) s.scrollIntoView({ block: 'center' }); else enteDrop.scrollTop = 0; }
+  else enteDrop.scrollTop = 0;
 }
-function chiudiEnti() {
-  enteDrop.hidden = true;
-  enteInput.setAttribute('aria-expanded', 'false');
-}
-function evidenziaEnte(i) {
+function chiudiDrop() { enteDrop.hidden = true; enteInput.setAttribute('aria-expanded', 'false'); }
+function evidenzia(i) {
   const opts = enteDrop.querySelectorAll('.opt');
   if (!opts.length) return;
   dropAtt = Math.max(0, Math.min(opts.length - 1, i));
@@ -1299,10 +1326,9 @@ function evidenziaEnte(i) {
   opts[dropAtt].scrollIntoView({ block: 'nearest' });
 }
 function scegliEnte(e) {
-  state.ente = e.k;
-  enteInput.value = e.nome;
-  chiudiEnti();
-  enteInput.blur();
+  state.ente = e ? e.k : '';
+  enteInput.value = e ? e.nome : '';
+  chiudiDrop();
   disegna();
   document.getElementById('content').scrollTop = 0;
 }
@@ -1311,26 +1337,23 @@ enteDrop.addEventListener('mousedown', ev => {
   if (!o) return;
   ev.preventDefault();
   scegliEnte(dropVoci[+o.dataset.i]);
+  enteInput.blur();
 });
-enteInput.addEventListener('focus', () => { enteInput.select(); apriEnti(); });
-enteInput.addEventListener('click', () => { if (enteDrop.hidden) apriEnti(); });
-enteInput.addEventListener('input', apriEnti);
+enteInput.addEventListener('focus', () => { enteInput.select(); apriDrop(true); });
+enteInput.addEventListener('click', () => { if (enteDrop.hidden) apriDrop(true); });
+enteInput.addEventListener('input', () => apriDrop(false));
 enteInput.addEventListener('keydown', ev => {
-  if (ev.key === 'ArrowDown') { ev.preventDefault(); if (enteDrop.hidden) apriEnti(); evidenziaEnte(dropAtt + 1); }
-  else if (ev.key === 'ArrowUp') { ev.preventDefault(); evidenziaEnte(dropAtt - 1); }
-  else if (ev.key === 'Escape') { chiudiEnti(); enteInput.blur(); }
+  if (ev.key === 'ArrowDown') { ev.preventDefault(); if (enteDrop.hidden) apriDrop(true); evidenzia(dropAtt + 1); }
+  else if (ev.key === 'ArrowUp') { ev.preventDefault(); evidenzia(dropAtt - 1); }
+  else if (ev.key === 'Escape') { chiudiDrop(); enteInput.value = state.ente ? NOME_ENTE.get(state.ente) || '' : ''; }
   else if (ev.key === 'Enter') {
     ev.preventDefault();
-    if (!enteDrop.hidden && dropAtt >= 0) return scegliEnte(dropVoci[dropAtt]);
-    if (!enteDrop.hidden && dropVoci.length) return scegliEnte(dropVoci[0]);
+    if (!enteDrop.hidden && dropAtt >= 0 && dropVoci[dropAtt]) { scegliEnte(dropVoci[dropAtt]); enteInput.blur(); }
   }
 });
-// uscendo dal campo senza scegliere, torna il nome dell'ente scelto
-enteInput.addEventListener('blur', () => setTimeout(() => {
-  chiudiEnti();
-  const sel = ENTI.find(e => e.k === state.ente);
-  enteInput.value = sel ? sel.nome : '';
-}, 150));
+// uscendo senza scegliere, torna il nome dell'ente già scelto
+enteInput.addEventListener('blur', () => setTimeout(() => { chiudiDrop(); enteInput.value = state.ente ? NOME_ENTE.get(state.ente) || '' : ''; }, 150));
+document.getElementById('ente-x').addEventListener('click', () => { scegliEnte(null); enteInput.focus(); });
 
 function preparaAnni() {
   const anni = new Set([ANNO_OGGI]);
@@ -1378,7 +1401,7 @@ const periodoDi = (c, y) => c.anniPrima ? `${y - c.anniPrima}–${y}` : String(y
 function rigaPersona(s, i, y) {
   const p = s.p, col = STATI[s.stato].c;
   const pct = s.minTot ? Math.min(100, s.pct * 100) : 0;
-  return `<tr class="persona" style="--sc:${col}">
+  return `<tr class="persona st-${s.stato}" style="--sc:${col}">
     <td class="c">${i}</td>
     <td class="nome"><a href="${linkIndividuale(p, y)}" target="_blank" rel="noopener" title="Apri il report individuale">${esc(p.nome)}</a>${p.key.startsWith('cf:') ? `<span class="cf">${esc(p.key.slice(3))}</span>` : ''}</td>
     <td class="c">${esc(p.qualifica || '')}</td>
@@ -1388,29 +1411,29 @@ function rigaPersona(s, i, y) {
     <td class="n">${fmtOre(s.int)}${s.nInt ? `<span class="sub-n">${s.nInt} interv.</span>` : ''}</td>
     <td class="n"><b>${fmtOre(s.tot)}</b>${s.minTot ? ` / ${fmtHM(s.minTot)}<div class="bar"><i style="width:${pct}%"></i></div>` : ''}</td>
     <td class="n">${s.collMin ? `${fmtOre(s.oreColl)} / ${fmtHM(s.collMin)}` : '—'}</td>
-    <td class="c">${s.prev ? `<b class="${s.fatte >= s.prev ? 'ok-t' : ''}">${s.fatte}</b> / ${s.prev}` : '—'}</td>
-    <td>${statoHtml(s)}</td>
+    <td class="c">${s.prev ? `<b>${s.fatte}</b> / ${s.prev}` : '—'}</td>
+    <td class="n">${s.con && s.pct != null ? Math.round(s.pct * 100) + '%' : '—'}</td>
+    <td>${statoHtml(s)}${s.motivi && s.motivi.length ? `<span class="sub-n">${esc(s.motivi.join(' · '))}</span>` : ''}</td>
   </tr>`;
 }
-const TESTA_TABELLA = `<thead><tr><th>#</th><th>Nominativo</th><th>Qualifica</th><th>Altri corsi del settore</th><th>Collettivi</th><th>Individuali</th><th>Interventi del settore</th><th>Ore svolte / richieste</th><th>di cui collettive</th><th>Manovre previste</th><th>Stato</th></tr></thead>`;
+const TESTA_TABELLA = `<thead><tr><th>#</th><th>Nominativo</th><th>Qualifica</th><th>Altri corsi del settore</th><th>Collettivi</th><th>Individuali</th><th>Interventi del settore</th><th>Ore svolte / richieste</th><th>di cui collettive</th><th>Manovre previste</th><th>OK%</th><th>Stato</th></tr></thead>`;
 const GRUPPI = [
   ['con', 'Personale con corso', 'il corso è tra quelli in possesso in Elenco_Filtrato'],
   ['senza', 'Personale senza corso', 'con attività di questa tipologia nel periodo'],
   ['altri', 'Altro personale senza corso', 'nessuna attività di questa tipologia']
 ];
 function tabellaPersonale(E, y, c) {
-  const cc = coloreCategoria(c.categoria);
   let h = `<div class="table-scroll"><table class="pers">${TESTA_TABELLA}<tbody>`, i = 0;
   GRUPPI.forEach(([k, titolo, nota]) => {
     const l = E[k];
     if (!l.length) return;
-    h += `<tr class="grp" style="--cc:${cc}"><td colspan="11">${titolo} · ${l.length} <span>· ${nota}</span></td></tr>`;
+    h += `<tr class="grp"><td colspan="12">${titolo} · ${l.length} <span>· ${nota}</span></td></tr>`;
     l.forEach(s => { h += rigaPersona(s, ++i, y); });
   });
-  if (!i) h += `<tr><td colspan="11" class="vuoto">Nessuno con il corso o con attività di questa tipologia.${E.totale ? ` ${E.totale} persone del ${esc(E.nome)} in PUMA: spunta «Tutto il personale» per vederle.` : ''}</td></tr>`;
+  if (!i) h += `<tr><td colspan="12" class="vuoto">Nessuno con il corso o con attività di questa tipologia.${E.totale ? ` ${E.totale} persone del ${esc(E.nome)} in PUMA: spunta «Tutto il personale» per vederle.` : ''}</td></tr>`;
   else {
     const o = E.ore;
-    h += `<tr class="tot"><td colspan="4" style="text-align:right">Totale ore (con e senza corso)</td><td class="n">${fmtHM(o.coll)}</td><td class="n">${fmtHM(o.ind)}</td><td class="n">${fmtHM(o.int)}</td><td class="n">${fmtHM(o.tot)}</td><td colspan="3"></td></tr>`;
+    h += `<tr class="tot"><td colspan="4" style="text-align:right">Totale ore (con e senza corso)</td><td class="n">${fmtHM(o.coll)}</td><td class="n">${fmtHM(o.ind)}</td><td class="n">${fmtHM(o.int)}</td><td class="n">${fmtHM(o.tot)}</td><td colspan="4"></td></tr>`;
   }
   return h + '</tbody></table></div>';
 }
@@ -1442,8 +1465,8 @@ function requisitoTxt(c, y) {
 function noteHtml(c, y) {
   return `<div class="note-box solo-schermo"><b>Come si calcola</b><ul>
     <li>Requisito di ${esc(c.tipologia)}: ${requisitoTxt(c, y)}.</li>
-    <li>Ore svolte = addestramenti collettivi e individuali di questa tipologia nel periodo${INTERVENTI_NEL_TOTALE ? ` + interventi del settore ${esc(c.categoria)} nell'anno` : ''}. Gli interventi non hanno una tipologia: si contano per settore, come nel Libretto.</li>
-    <li><b style="color:${STATI.ok.c}">Idoneo</b>: ore e quota collettive raggiunte e tutte le manovre previste svolte · <b style="color:${STATI.man.c}">Verificare manovre</b>: ore raggiunte ma mancano manovre previste · <b style="color:${STATI.quasi.c}">Almeno 75%</b>: ore svolte tra il 75% e il 100% del richiesto (o manca la quota collettive) · <b style="color:${STATI.ko.c}">Non idoneo</b>: meno del 75%.</li>
+    <li>Ore svolte = addestramenti collettivi e individuali di questa tipologia${INTERVENTI_NEL_TOTALE ? ` + interventi del settore ${esc(c.categoria)}` : ''}, nel periodo ${periodoDi(c, y)}. Gli interventi non hanno una tipologia: si contano per settore, come nel Libretto.</li>
+    <li>Colori e stato come nel Report Collettivo del foglio: <b style="color:${STATI.ko.c}">Non idoneo</b> sotto il 75% delle ore previste · <b style="color:${STATI.quasi.c}">75% delle ore previste</b> tra il 75% e il 100% · <b style="color:${STATI.man.c}">Verificare</b> ore raggiunte ma individuali (con interventi) o collettive sotto la loro quota, oppure mancano manovre previste · <b style="color:${STATI.ok.c}">Idoneo</b> tutto raggiunto. OK% = ore svolte / ore previste.</li>
     <li>Con corso = il corso è tra quelli in possesso in Elenco_Filtrato${DI_TUTTI.includes(c) ? ' (questa tipologia la hanno tutti)' : ''}. Il Comando di ognuno è quello di appartenenza. Clic su un nominativo per il suo report individuale.</li>
   </ul></div>`;
 }
@@ -1593,17 +1616,17 @@ async function creaPdf() {
   yy += 3;
 
   const col = rgbDi(coloreCategoria(c.categoria)), chiaro = rgbDi(schiarisci(coloreCategoria(c.categoria), 0.3));
-  const testa = [['#', 'Nominativo', 'Qualifica', 'Altri corsi del settore', 'Collettivi', 'Individuali', 'Interventi del settore', 'Ore svolte / richieste', 'di cui collettive', 'Manovre previste', 'Stato']];
+  const testa = [['#', 'Nominativo', 'Qualifica', 'Altri corsi del settore', 'Collettivi', 'Individuali', 'Interventi del settore', 'Ore svolte / richieste', 'di cui collettive', 'Manovre previste', 'OK%', 'Stato']];
   const stili = { font: 'helvetica', fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.15, textColor: [0, 0, 0], valign: 'middle', overflow: 'linebreak' };
   const colonne = { 0: { cellWidth: 7, halign: 'center' }, 1: { cellWidth: 52 }, 2: { cellWidth: 15, halign: 'center' }, 3: { cellWidth: 'auto' },
     4: { cellWidth: 17, halign: 'right' }, 5: { cellWidth: 17, halign: 'right' }, 6: { cellWidth: 19, halign: 'right' }, 7: { cellWidth: 25, halign: 'right' },
-    8: { cellWidth: 22, halign: 'right' }, 9: { cellWidth: 16, halign: 'center' }, 10: { cellWidth: 33 } };
+    8: { cellWidth: 21, halign: 'right' }, 9: { cellWidth: 15, halign: 'center' }, 10: { cellWidth: 11, halign: 'right' }, 11: { cellWidth: 34 } };
   const o = v => fmtOre(v).replace('—', '-');
   const corpo = E => {
     const b = []; let i = 0;
     GRUPPI.forEach(([k, titolo]) => {
       if (!E[k].length) return;
-      b.push([{ content: testoPdf(`${titolo} (${E[k].length})`), colSpan: 11, styles: { fillColor: chiaro, fontStyle: 'bold' } }]);
+      b.push([{ content: testoPdf(`${titolo} (${E[k].length})`), colSpan: 12, styles: { fillColor: rgbDi(GRIGIO_GRUPPO), fontStyle: 'bold' } }]);
       E[k].forEach(s => {
         const p = s.p, cf = p.key.startsWith('cf:') ? p.key.slice(3) : '';
         b.push([String(++i), testoPdf(p.nome + (cf ? '\n' + cf : '')), testoPdf(p.qualifica || ''), testoPdf(s.altri.map(SIGLA_BREVE).join(', ') || '-'),
@@ -1611,28 +1634,24 @@ async function creaPdf() {
           o(s.tot) + (s.minTot ? ' / ' + fmtHM(s.minTot) : ''),
           s.collMin ? `${o(s.oreColl)} / ${fmtHM(s.collMin)}` : '-',
           s.prev ? `${s.fatte} / ${s.prev}` : '-',
-          { content: testoPdf(STATI[s.stato].t), stato: s.stato, styles: { cellPadding: { top: 1, bottom: 1, right: 1, left: 4.5 } } }]);
+          s.con && s.pct != null ? Math.round(s.pct * 100) + '%' : '-',
+          { content: testoPdf(STATI[s.stato].t + (s.motivi && s.motivi.length ? '\n' + s.motivi.join(', ') : '')), stato: s.stato }]);
       });
     });
     if (i) b.push([{ content: 'Totale ore (con e senza corso)', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
       ...[E.ore.coll, E.ore.ind, E.ore.int, E.ore.tot].map(v => ({ content: fmtHM(v), styles: { halign: 'right', fontStyle: 'bold' } })),
-      { content: '', colSpan: 3 }]);
-    else b.push([{ content: 'Nessuno con il corso o con attività di questa tipologia.', colSpan: 11, styles: { textColor: [100, 100, 100] } }]);
+      { content: '', colSpan: 4 }]);
+    else b.push([{ content: 'Nessuno con il corso o con attività di questa tipologia.', colSpan: 12, styles: { textColor: [100, 100, 100] } }]);
     return b;
   };
   const tabella = (body, startY) => doc.autoTable({
     startY, margin: { left: M, right: M, top: M, bottom: 8 }, head: testa, body, theme: 'grid',
     styles: stili, headStyles: { fillColor: [235, 235, 235], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', lineWidth: 0.2 },
     columnStyles: colonne, rowPageBreak: 'avoid', showHead: 'everyPage',
-    didDrawCell: d => {
-      if (d.section === 'body' && d.cell.raw && d.cell.raw.stato) {
-        doc.setFillColor(...rgbDi(STATI[d.cell.raw.stato].c));
-        doc.circle(d.cell.x + 2.3, d.cell.y + d.cell.height / 2, 1.2, 'F');
-      }
-      if (d.section === 'body' && d.column.index === 0 && d.row.raw && d.row.raw[10] && d.row.raw[10].stato) {
-        doc.setFillColor(...rgbDi(STATI[d.row.raw[10].stato].c));
-        doc.rect(d.cell.x, d.cell.y, 1, d.cell.height, 'F');
-      }
+    // riga intera colorata come nel foglio (senza corso: bianca)
+    didParseCell: d => {
+      const st = d.section === 'body' && d.row.raw && d.row.raw[11] && d.row.raw[11].stato;
+      if (st && st !== 'na') d.cell.styles.fillColor = rgbDi(STATI[st].c);
     }
   });
   const conteggi = E => ORDINE_STATI.slice(0, 4).map(k => `${STATI[k].t} ${E.conta[k]}`).join(' - ');
