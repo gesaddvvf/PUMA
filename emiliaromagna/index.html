@@ -786,7 +786,12 @@ const VOCI_BAS = [
 ];
 // SFA (Soccorso Fluviale Alluvionale): nessun modello di libretto, elenco semplice delle attività
 const RE_SFA = /\bSFA\b|fluviale[\s-]*alluvional|alluvional/i;
-const GRUPPI_BAS = [6, 6, 12];   // ore minime di ciascun gruppo
+// ore minime di ciascun gruppo; l'ultimo (null) = voci in più di Manovre_PREVISTE, senza tempo minimo
+const GRUPPI_BAS = [6, 6, 12, null];
+// Lettera finale delle manovre in Manovre_PREVISTE: (N) = non è una manovra prevista ma le ore contano;
+// (C) = si cerca anche negli altri addestramenti dell'anno (collettivi o individuali, anche di altre tipologie)
+const RE_LETTERA_MAN = /\s*\(([A-Za-z])\)\s*$/;
+const chiaveMan = t => normKey(String(t || '').replace(RE_LETTERA_MAN, '').replace(/\b0+(\d)/g, '$1'));
 const ORE_MIN_BAS = 24;
 
 /* =====================================================================
@@ -953,27 +958,77 @@ function libroAvanzato(p, y1) {
   };
 }
 
+// Manovre SAF Basico di Manovre_PREVISTE (Associazione Corso = BAS): quelle del modello si riconoscono,
+// le altre (es. con (N) o (C)) diventano righe in più del libretto
+function manovreBasicoPuma() {
+  const out = [], viste = new Set();
+  const uffKey = VOCI_BAS.map(v => normKey(v.testo));
+  MANOVRE.forEach(m => {
+    if (!(/^bas$/i.test(m.corsoTxt) || m.corsi.some(c => livelloCorso(c) === 'BAS'))) return;
+    const testo = (m.manovra || m.testo || '').trim();
+    const k = chiaveMan(testo);
+    if (k.length < 5 || viste.has(k)) return;
+    viste.add(k);
+    const lettera = ((testo.match(RE_LETTERA_MAN) || String(m.testo || '').match(RE_LETTERA_MAN) || [])[1] || '').toUpperCase();
+    // voce del modello: stesso testo (a meno della lettera), oppure contenuto l'uno nell'altro
+    let uff = uffKey.findIndex(u => u === k || (u.length >= 8 && k.includes(u)) || (k.length >= 8 && u.includes(k)));
+    out.push({ testo, k, lettera, uff });
+  });
+  return out;
+}
+
 function libroBasico(p, y) {
-  const voci = VOCI_BAS.map(v => ({ ...v, voci: [] }));
+  const puma = manovreBasicoPuma();
+  const voci = VOCI_BAS.map(v => ({ ...v, voci: [], usate: new Set() }));
+  // voci in più (nell'ordine di Manovre_PREVISTE)
+  puma.filter(m => m.uff < 0).forEach(m => { m.voce = voci.length; voci.push({ gruppo: 3, testo: m.testo, lettera: m.lettera, voci: [], usate: new Set() }); });
+  puma.filter(m => m.uff >= 0).forEach(m => { m.voce = m.uff; if (m.lettera) voci[m.uff].lettera = m.lettera; });
+  // riga del libretto → voce: prima il testo di Manovre_PREVISTE, poi le parole chiave del modello
+  const vocePerTesto = t => {
+    const k = chiaveMan(t);
+    if (k.length >= 5) {
+      const c = puma.filter(m => k.includes(m.k) || (k.length >= 8 && m.k.includes(k))).sort((a, b) => b.k.length - a.k.length)[0];
+      if (c) return voci[c.voce];
+    }
+    return voci.slice(0, VOCI_BAS.length).find(x => x.re.test(t)) || null;
+  };
   const altre = [];
-  attivitaPersona(p).filter(a => a.anno === y).forEach(a => {
+  const usateBas = new Set();   // attività già nel libretto (le ore non si contano due volte)
+  const att = attivitaPersona(p).filter(a => a.anno === y);
+  att.forEach(a => {
     const an = analizza(a);
     if (an.txtBas) {
       // una manovra per riga (o separate da virgole)
       const righe = an.txtBas.split(/\n|;|,(?![^()]*\))/).map(s => s.trim()).filter(Boolean);
       const trovate = new Set(), nonTrovate = [];
-      righe.forEach(t => { const v = voci.find(x => x.re.test(t)); if (v) trovate.add(v); else nonTrovate.push(t); });
+      righe.forEach(t => { const v = vocePerTesto(t); if (v) trovate.add(v); else nonTrovate.push(t); });
       if (a.tipo === 'collettivo' && !trovate.size) trovate.add(voci.find(v => v.collettivi));
       const nQuote = trovate.size + (nonTrovate.length ? 1 : 0);
       const quota = a.ore == null ? null : a.ore / (DIVIDI_ORE_TRA_MANOVRE ? Math.max(1, nQuote) : 1);
-      trovate.forEach(v => v.voci.push(voce(a, quota)));
+      trovate.forEach(v => { v.voci.push(voce(a, quota)); v.usate.add(a); });
       if (nonTrovate.length) altre.push({ ...voce(a, quota), descr: tagliaTesto(nonTrovate.join(', '), 140) });
+      usateBas.add(a);
     } else if (an.bas && a.tipo === 'collettivo') {
-      voci.find(v => v.collettivi).voci.push(voce(a, a.ore));
+      const v = voci.find(x => x.collettivi);
+      v.voci.push(voce(a, a.ore)); v.usate.add(a); usateBas.add(a);
     } else if (an.bas || an.interventoSaf || an.safGenerico) {
       altre.push({ ...voce(a, a.ore), descr: descrizioneBreve(a) });
+      usateBas.add(a);
     }
   });
+  // Manovre (C): cercate in tutti gli addestramenti dell'anno (manovre svolte, descrizioni, Piano di Sicurezza)
+  puma.filter(m => m.lettera === 'C').forEach(m => {
+    const v = voci[m.voce];
+    att.forEach(a => {
+      if (a.tipo === 'intervento' || v.usate.has(a) || analizza(a).sfa) return;
+      const testo = [a.manovreTxt, a.descr, a.piano ? a.piano.descr : '', a.piano ? a.piano.manovre : ''].join('\n');
+      if (!chiaveMan(testo).includes(m.k) && !normKey(testo).includes(m.k)) return;
+      // attività già contata nel libretto: solo la data, senza ore (non si contano due volte)
+      v.voci.push(voce(a, usateBas.has(a) ? null : a.ore));
+      v.usate.add(a);
+    });
+  });
+  voci.forEach(v => { v.voci.sort((x, z) => x.data - z.data); delete v.usate; });
   const totObbl = voci.reduce((s, v) => s + sommaOre(v.voci), 0);
   const totGruppi = GRUPPI_BAS.map((_, g) => voci.filter(v => v.gruppo === g).reduce((s, v) => s + sommaOre(v.voci), 0));
   return {
@@ -1099,7 +1154,7 @@ function modello(L) {
     altre: L.altre.map(a => Object.assign(vTesto(a), { descr: a.descr }))
   });
   if (L.tipo === 'BAS') return Object.assign(base, {
-    voci: L.voci.map(v => ({ gruppo: v.gruppo, testo: v.testo, voci: v.voci.map(vTesto) })),
+    voci: L.voci.map(v => ({ gruppo: v.gruppo, testo: v.testo, lettera: v.lettera || '', voci: v.voci.map(vTesto) })),
     altre: L.altre.map(a => Object.assign(vTesto(a), { descr: a.descr }))
   });
   return Object.assign(base, { righe: L.righe.map(r => Object.assign(vTesto(r), { tipo: r.tipo, descr: r.descr })) });
@@ -1247,7 +1302,7 @@ function htmlBasico(M) {
       const lista = `voci.${vi}.voci`;
       for (let i = 0; i < n; i++) {
         const v = vv.voci[i], p = `${lista}.${i}`;
-        h += '<tr>' + (j === 0 && i === 0 ? `<td class="c" rowspan="${nTot}"${M.totGruppi[g] < min ? ' style="color:#c00"' : ''}>${min} ore</td>` : '') +
+        h += '<tr>' + (j === 0 && i === 0 ? (min == null ? `<td class="c" rowspan="${nTot}" style="color:#666;font-size:10px">altre voci</td>` : `<td class="c" rowspan="${nTot}"${M.totGruppi[g] < min ? ' style="color:#c00"' : ''}>${min} ore</td>`) : '') +
           (i === 0 ? `<td class="c" rowspan="${n}">${box(vv.voci.some(piena))}</td><td rowspan="${n}">${esc(vv.testo)}</td>` : '') +
           tdE(p + '.data', v ? v.data : '', 'c') + tdSede(p, v, 'in') + tdSede(p, v, 'fuori') + tdE(p + '.ore', v ? v.ore : '', 'n') + tdE(p + '.resp', v ? v.resp : '') + tdAz(lista, i, true) + '</tr>';
       }
@@ -1432,7 +1487,7 @@ modBtn.addEventListener('click', () => {
 function noteHtml() {
   return `<div class="note-box"><b>Come vengono compilati i libretti</b><ul>
     <li><b>SAF Avanzato:</b> le manovre sono quelle indicate in «Manovre SAF Avanzato previste» del Piano di Sicurezza; il ciclo è quello scritto nella manovra (es. «II Ciclo - 27»), altrimenti il semestre del biennio.</li>
-    <li><b>SAF Basico:</b> le manovre sono quelle indicate in «Attività addestrativa svolta (SAF BASICO)»; gli addestramenti collettivi SAF Basico senza manovre indicate vanno in «Addestramento provinciale di gruppo».</li>
+    <li><b>SAF Basico:</b> le manovre sono quelle indicate in «Attività addestrativa svolta (SAF BASICO)»; gli addestramenti collettivi SAF Basico senza manovre indicate vanno in «Addestramento provinciale di gruppo». Le manovre BAS di Manovre_PREVISTE che non sono nel modello (es. con (N)) sono righe in più in fondo alla tabella; le manovre (C) si cercano in tutti gli addestramenti dell'anno (se l'attività è già nel libretto, solo la data, senza ore).</li>
     <li>Le attività SAF senza manovre del modello e gli interventi con categoria SAF vanno nelle righe delle altre attività. Le attività SFA non entrano nei libretti SAF: sono nell'elenco SFA.</li>
     <li>${DIVIDI_ORE_TRA_MANOVRE ? 'Le ore di un addestramento con più manovre sono divise tra le manovre: il totale corrisponde alle ore effettive.' : 'Ogni manovra riporta le ore intere dell\'addestramento.'}</li>
     <li>Responsabile: il partecipante con ruolo di responsabile nella colonna «Incident Command System». In sede / fuori sede: dall'«Area di Addestramento» del Piano di Sicurezza.</li>
@@ -1703,7 +1758,7 @@ function pdfBasico(doc, L) {
       for (let i = 0; i < n; i++) {
         const v = vv.voci[i];
         const riga = [];
-        if (j === 0 && i === 0) riga.push({ content: min + ' ore', rowSpan: nTot });
+        if (j === 0 && i === 0) riga.push({ content: min == null ? '' : min + ' ore', rowSpan: nTot });
         if (i === 0) riga.push(cBox(vv.voci.some(piena), { rowSpan: n }), { content: vv.testo, rowSpan: n });
         riga.push(v ? v.data : '', cBox(v && v.sede === 'in'), cBox(v && v.sede === 'fuori'), v ? v.ore : '', v ? v.resp : '');
         body.push(riga);
