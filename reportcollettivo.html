@@ -335,7 +335,7 @@
   <label class="lbl" for="anno-select">Anno</label>
   <select id="anno-select" aria-label="Anno di riferimento"></select>
   <label class="chk-f" title="Mostra anche chi non ha il corso né attività di questa tipologia"><input type="checkbox" id="tutti-chk"> Tutto il personale</label>
-  <label class="chk-f" title="Per ogni nominativo: attività, interventi e manovre svolte o mancanti (anche nel PDF)"><input type="checkbox" id="det-chk" checked> Dettaglio attività</label>
+  <label class="chk-f" title="Apre il dettaglio di tutti i nominativi (attività, manovre fatte e da fare). Con un clic sul nominativo si apre o chiude solo il suo. Nel PDF vanno i dettagli aperti."><input type="checkbox" id="det-chk" checked> Dettaglio attività</label>
   <span class="azioni">
     <button id="print-btn" type="button" disabled>🖨 Stampa</button>
     <button id="pdf-btn" type="button" disabled>⬇ PDF</button>
@@ -1259,7 +1259,7 @@ const state = {
   anno: parseInt(URLP.get('anno'), 10) || ANNO_OGGI,
   tutti: URLP.has('tutti'),
   dettaglio: !URLP.has('sintesi'),
-  chiuse: new Set()      // nominativi con il dettaglio chiuso a mano
+  invertite: new Set()   // nominativi aperti/chiusi a mano, al contrario della casella
 };
 tuttiChk.checked = state.tutti;
 const detChk = document.getElementById('det-chk');
@@ -1441,7 +1441,7 @@ document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click'
 tipSelect.addEventListener('change', () => { state.corso = +tipSelect.value; disegna(); });
 annoSelect.addEventListener('change', () => { state.anno = +annoSelect.value; disegna(); });
 tuttiChk.addEventListener('change', () => { state.tutti = tuttiChk.checked; disegna(); });
-detChk.addEventListener('change', () => { state.dettaglio = detChk.checked; state.chiuse.clear(); disegna(); });
+detChk.addEventListener('change', () => { state.dettaglio = detChk.checked; state.invertite.clear(); disegna(); });
 refreshBtn.addEventListener('click', caricaDati);
 printBtn.addEventListener('click', () => window.print());
 
@@ -1460,7 +1460,7 @@ const periodoDi = (c, y) => c.anniPrima ? `${y - c.anniPrima}–${y}` : String(y
 function rigaPersona(s, i, y) {
   const p = s.p, col = STATI[s.stato].c;
   const pct = s.minTot ? Math.min(100, s.pct * 100) : 0;
-  const det = state.dettaglio && haDettaglio(s), chiusa = state.chiuse.has(p.key);
+  const det = haDettaglio(s), chiusa = !dettaglioAperto(s);
   return `<tr class="persona st-${s.stato}${det ? ' apribile' + (chiusa ? ' chiusa' : '') : ''}" data-key="${esc(p.key)}" style="--sc:${col}">
     <td class="c">${i}</td>
     <td class="nome"><a href="${linkIndividuale(p, y)}" target="_blank" rel="noopener" title="Apri il report individuale">${esc(p.nome)}</a>${p.key.startsWith('cf:') ? `<span class="cf">${esc(p.key.slice(3))}</span>` : ''}</td>
@@ -1484,6 +1484,8 @@ const nomeMan = m => `${m.ciclo ? m.ciclo + ' Ciclo - ' : ''}${m.codice ? m.codi
 const dataBreve = d => d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' });
 const enteBreve = t => String(t || '').replace(/^\s*comando\s+(vv\.?\s*f\.?\s*)?(di\s+)?/i, '').replace(/^\s*direzione\s+(regionale\s+)?/i, 'Dir. ');
 const TIPO_ATT = { collettivo: 'Collettivo', individuale: 'Individuale', intervento: 'Intervento', altro: 'Altro' };
+// dettaglio aperto: come la casella "Dettaglio attività", salvo i nominativi aperti/chiusi con un clic
+const dettaglioAperto = s => state.dettaglio !== state.invertite.has(s.p.key);
 const haDettaglio = s => s.attivita.length || s.interventi.length || s.fatteList.length || (s.con && s.mancanti.length);
 // manovre del corso riconosciute in un'attività
 const manovreAtt = (a, c) => [...a.manovre].filter(m => m.corsi.includes(c));
@@ -1617,8 +1619,9 @@ function disegna() {
   report.innerHTML = html;
   report.querySelectorAll('tr.persona.apribile').forEach(tr => tr.addEventListener('click', ev => {
     if (ev.target.closest('a')) return;
-    const k = tr.dataset.key, chiudi = !state.chiuse.has(k);
-    chiudi ? state.chiuse.add(k) : state.chiuse.delete(k);
+    const k = tr.dataset.key;
+    state.invertite.has(k) ? state.invertite.delete(k) : state.invertite.add(k);
+    const chiudi = state.dettaglio === state.invertite.has(k);
     tr.classList.toggle('chiusa', chiudi);
     report.querySelectorAll(`tr.det[data-for="${CSS.escape(k)}"]`).forEach(d => { d.style.display = chiudi ? 'none' : ''; });
   }));
@@ -1769,7 +1772,7 @@ async function creaPdf() {
           s.prev ? `${s.fatte} / ${s.prev}` : '-',
           s.con && s.pct != null ? Math.round(s.pct * 100) + '%' : '-',
           { content: testoPdf(STATI[s.stato].t + (s.motivi && s.motivi.length ? '\n' + s.motivi.join(', ') : '')), stato: s.stato }]);
-        if (state.dettaglio && haDettaglio(s)) {
+        if (haDettaglio(s) && dettaglioAperto(s)) {
           const T = testoDettaglio(s), st = { fontSize: 6, textColor: [40, 40, 40], fillColor: [255, 255, 255], valign: 'top', halign: 'left', cellPadding: { top: 0.6, bottom: 0.8, left: 2, right: 1 } };
           b.push([{ content: '', styles: { fillColor: [255, 255, 255] } },
             { content: testoPdf(T.att), colSpan: 6, dett: 'att', styles: st },
