@@ -154,6 +154,7 @@
 <div class="filters">
   <label class="lbl" for="sel-tipo">Libretto</label>
   <select id="sel-tipo" aria-label="Libretto">
+    <option value="TUT">Export completo: SAF Basico + SFA dell'anno + SAF Avanzato del biennio</option>
     <option value="AVA">SAF Avanzato (biennio)</option>
     <option value="BAS">SAF Basico (anno solare)</option>
     <option value="SFA">SFA – elenco attività (anno solare)</option>
@@ -1001,6 +1002,8 @@ function libriOperatore(p) {
     return l;
   }
   if (state.tipo === 'SFA') return [libroSfa(p, state.periodo)];
+  // export completo: SAF Basico dell'anno + SFA dell'anno + SAF Avanzato del biennio che contiene l'anno
+  if (state.tipo === 'TUT') return [libroBasico(p, state.periodo), libroSfa(p, state.periodo), libroAvanzato(p, inizioBiennio(state.periodo))];
   return [libroBasico(p, state.periodo)];
 }
 
@@ -1017,9 +1020,10 @@ const modBtn = document.getElementById('mod-btn');
 const refreshBtn = document.getElementById('refresh-btn');
 const report = document.getElementById('report');
 
+const inizioBiennio = y => y - ((((y - BIENNIO_INIZIALE) % 2) + 2) % 2);
 const bienniDefault = () => ANNO_OGGI - ((((ANNO_OGGI - BIENNIO_INIZIALE) % 2) + 2) % 2);
 const state = {
-  tipo: /^bas/i.test(URLP.get('libretto') || '') ? 'BAS' : /^sfa/i.test(URLP.get('libretto') || '') ? 'SFA' : 'AVA',
+  tipo: ({ basico: 'BAS', sfa: 'SFA', avanzato: 'AVA' })[(URLP.get('libretto') || '').toLowerCase()] || 'TUT',
   periodo: parseInt(URLP.get('anno'), 10) || null,
   allega: URLP.get('allega') !== '0',
   modifica: false
@@ -1066,7 +1070,7 @@ async function trovaOperatore() {
 function aggiornaUrl() {
   try {
     const u = new URL(location.href);
-    u.searchParams.set('libretto', { AVA: 'avanzato', BAS: 'basico', SFA: 'sfa' }[state.tipo]);
+    u.searchParams.set('libretto', { AVA: 'avanzato', BAS: 'basico', SFA: 'sfa', TUT: 'completo' }[state.tipo]);
     u.searchParams.set('anno', state.periodo);
     if (state.tipo === 'AVA' && !state.allega) u.searchParams.set('allega', '0'); else u.searchParams.delete('allega');
     history.replaceState(null, '', u);
@@ -1289,7 +1293,13 @@ function disegna() {
   const libri = modelliOperatore(o.p);
   const M0 = libri[0];
   let tiles;
-  if (M0.tipo === 'SFA') {
+  if (state.tipo === 'TUT') {
+    const [B, S, A] = libri;
+    const sottoA = A.cicli.filter(c => c.tot < ORE_CICLO_AVA).length;
+    tiles = `<div class="st ${B.totObbl < ORE_MIN_BAS ? 'ko' : 'ok'}"><div class="k">SAF Basico ${esc(B.periodo)} · manovre obbligatorie</div><div class="v">${fmtOre(B.totObbl)} <small>h su ${ORE_MIN_BAS}</small></div></div>
+      <div class="st"><div class="k">SFA ${esc(S.periodo)}</div><div class="v">${S.nAtt} <small>attività · ${fmtOre(S.tot)} h</small></div></div>
+      <div class="st ${sottoA ? 'ko' : 'ok'}"><div class="k">SAF Avanzato ${esc(A.periodo)}</div><div class="v">${fmtOre(A.tot)} <small>h · ${sottoA} cicli sotto le 36 h</small></div></div>`;
+  } else if (M0.tipo === 'SFA') {
     tiles = `<div class="st"><div class="k">Attività SFA nell'anno</div><div class="v">${M0.nAtt}</div></div>
       <div class="st"><div class="k">Ore totali</div><div class="v">${fmtOre(M0.tot)} <small>h</small></div></div>`;
   } else {
@@ -1299,7 +1309,7 @@ function disegna() {
       <div class="st ${sotto ? 'ko' : 'ok'}"><div class="k">${M0.tipo === 'AVA' ? 'Cicli sotto le 36 ore' : 'Minimo 24 ore'}</div><div class="v">${M0.tipo === 'AVA' ? sotto : (sotto ? 'no' : 'sì')}</div></div>`;
   }
   report.innerHTML = `<div class="stato-box">${tiles}</div>` +
-    libri.map((M, i) => (i === 1 ? '<div class="gen-titolo" style="color:#aaa">Libretti SAF Basico allegati</div>' : '') +
+    libri.map((M, i) => (state.tipo === 'TUT' ? `<div class="gen-titolo" style="color:#ffd700;font-size:13px;font-style:normal;font-weight:bold">${i + 1}. ${M.tipo === 'BAS' ? 'SAF Basico ' : M.tipo === 'SFA' ? 'SFA (Fluviale) ' : 'SAF Avanzato '}${esc(M.periodo)}</div>` : (i === 1 ? '<div class="gen-titolo" style="color:#aaa">Libretti SAF Basico allegati</div>' : '')) +
       (M.tipo === 'AVA' ? htmlAvanzato(M) : M.tipo === 'SFA' ? htmlSfa(M) : htmlBasico(M))).join('') +
     (M0.tipo === 'SFA' ? '' : noteHtml()) + debugHtml();
 }
@@ -1797,6 +1807,7 @@ async function creaPdf(operatori, nomeFile) {
 }
 function nomeFileBase() {
   if (state.tipo === 'SFA') return `Elenco_SFA_${state.periodo}`;
+  if (state.tipo === 'TUT') { const b = inizioBiennio(state.periodo); return `Export_SAF_Basico_${state.periodo}_SFA_${state.periodo}_SAF_Avanzato_${b}-${b + 1}`; }
   return `Libretto_SAF_${state.tipo === 'AVA' ? 'Avanzato_' + state.periodo + '-' + (state.periodo + 1) : 'Basico_' + state.periodo}`;
 }
 async function scarica(btn, operatori, nomeFile) {
