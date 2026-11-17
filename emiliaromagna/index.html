@@ -139,6 +139,7 @@
   <select id="sel-tipo" aria-label="Libretto">
     <option value="AVA">SAF Avanzato (biennio)</option>
     <option value="BAS">SAF Basico (anno solare)</option>
+    <option value="SFA">SFA – elenco attività (anno solare)</option>
   </select>
   <label class="lbl" for="sel-periodo" id="lbl-periodo">Biennio</label>
   <select id="sel-periodo" aria-label="Periodo"></select>
@@ -764,6 +765,8 @@ const VOCI_BAS = [
   // gli addestramenti COLLETTIVI SAF Basico senza manovre indicate vanno qui
   { gruppo: 2, testo: 'Addestramento provinciale di gruppo su scenari urbano/industriali o naturali', re: /provincial|di gruppo|scenari/i, collettivi: true }
 ];
+// SFA (Soccorso Fluviale Alluvionale): nessun modello di libretto, elenco semplice delle attività
+const RE_SFA = /\bSFA\b|fluviale[\s-]*alluvional|alluvional/i;
 const GRUPPI_BAS = [6, 6, 12];   // ore minime di ciascun gruppo
 const ORE_MIN_BAS = 24;
 
@@ -840,6 +843,10 @@ function cicloDi(m, data, y1) {
 }
 
 /* ---------- Classificazione di un'attività ---------- */
+function eSfa(a) {
+  const testi = [a.tipologia, a.attivita, a.catInt, ...[...a.corsi].map(c => [c.tipologia, c.sigla, c.prof].join(' '))];
+  return testi.some(t => RE_SFA.test(t || '')) || Object.entries(a.manCol || {}).some(([h, v]) => v && RE_SFA.test(h));
+}
 function analizza(a) {
   if (a._er) return a._er;
   const liv = new Set([...a.corsi].map(livelloCorso).filter(Boolean));
@@ -849,8 +856,9 @@ function analizza(a) {
   const interventoSaf = a.tipo === 'intervento' && (a.cats || []).some(c => eSaf(c.label) || eSaf(c.cat));
   const ava = a.tipo !== 'intervento' && (liv.has('AVA') || manAva.length > 0);
   const bas = a.tipo !== 'intervento' && (liv.has('BAS') || !!txtBas);
-  const safGenerico = a.tipo !== 'intervento' && !ava && !bas && !!a.categoria && eSaf(a.categoria);
-  return (a._er = { ava, bas, manAva, txtBas, interventoSaf, safGenerico });
+  const sfa = eSfa(a);
+  const safGenerico = a.tipo !== 'intervento' && !ava && !bas && !sfa && !!a.categoria && eSaf(a.categoria);
+  return (a._er = { ava, bas, manAva, txtBas, interventoSaf: interventoSaf && !sfa, safGenerico, sfa });
 }
 
 // Attività della persona, senza doppie registrazioni dello stesso addestramento
@@ -956,6 +964,17 @@ function libroBasico(p, y) {
   };
 }
 
+function libroSfa(p, y) {
+  const righe = attivitaPersona(p).filter(a => a.anno === y && analizza(a).sfa).map(a => {
+    const man = Object.entries(a.manCol || {}).filter(([h, v]) => v && RE_SFA.test(h)).map(([, v]) => v)
+      .concat(a.piano ? Object.entries(a.piano.manCol || {}).filter(([h, v]) => v && RE_SFA.test(h)).map(([, v]) => v) : []);
+    const tipo = { collettivo: 'Addestramento collettivo', individuale: 'Addestramento individuale', intervento: 'Intervento' }[a.tipo] || 'Attività';
+    const base = a.tipo === 'intervento' ? descrizioneBreve(a) : (a.descr || (a.tipologia || '').replace(/SAF\s*\(Speleo Alpino Fluviale\)\s*/i, 'SAF '));
+    return { ...voce(a, a.ore), tipo, descr: tagliaTesto(base + (man.length ? ' – Manovre: ' + man.join(', ') : ''), 220) };
+  });
+  return { tipo: 'SFA', p, y, periodo: String(y), comando: comandoPersonaER(p) || p.comando || '', righe, tot: sommaOre(righe), nAtt: righe.length };
+}
+
 // Libretti di un operatore per la scelta corrente
 function libriOperatore(p) {
   if (state.tipo === 'AVA') {
@@ -963,6 +982,7 @@ function libriOperatore(p) {
     if (state.allega) l.push(libroBasico(p, state.periodo), libroBasico(p, state.periodo + 1));
     return l;
   }
+  if (state.tipo === 'SFA') return [libroSfa(p, state.periodo)];
   return [libroBasico(p, state.periodo)];
 }
 
@@ -980,7 +1000,7 @@ const report = document.getElementById('report');
 
 const bienniDefault = () => ANNO_OGGI - ((((ANNO_OGGI - BIENNIO_INIZIALE) % 2) + 2) % 2);
 const state = {
-  tipo: /^bas/i.test(URLP.get('libretto') || '') ? 'BAS' : 'AVA',
+  tipo: /^bas/i.test(URLP.get('libretto') || '') ? 'BAS' : /^sfa/i.test(URLP.get('libretto') || '') ? 'SFA' : 'AVA',
   periodo: parseInt(URLP.get('anno'), 10) || null,
   allega: URLP.get('allega') !== '0'
 };
@@ -1026,7 +1046,7 @@ async function trovaOperatore() {
 function aggiornaUrl() {
   try {
     const u = new URL(location.href);
-    u.searchParams.set('libretto', state.tipo === 'AVA' ? 'avanzato' : 'basico');
+    u.searchParams.set('libretto', { AVA: 'avanzato', BAS: 'basico', SFA: 'sfa' }[state.tipo]);
     u.searchParams.set('anno', state.periodo);
     if (state.tipo === 'AVA' && !state.allega) u.searchParams.set('allega', '0'); else u.searchParams.delete('allega');
     history.replaceState(null, '', u);
@@ -1100,6 +1120,18 @@ function htmlBasico(L) {
   return h;
 }
 
+function htmlSfa(L) {
+  let h = `<div class="foglio basico"><div class="tit"><span>ELENCO DELLE ATTIVITÀ SFA (SOCCORSO FLUVIALE ALLUVIONALE) - ANNO SOLARE <span class="campo">${esc(L.periodo)}</span></span></div>
+  <div class="riga-op">Comando di <span class="campo">${esc(L.comando)}</span> &nbsp; Operatore (Qualifica, Cognome e Nome) <span class="campo">${esc(nomeConQualifica(L.p))}</span></div>
+  <table><thead><tr><th style="width:4%">N.</th><th style="width:9%">Data</th><th style="width:12%">Tipo</th><th>Descrizione</th><th style="width:5%">Sede</th><th style="width:5%">Fuori Sede</th><th style="width:7%">Ore</th><th style="width:22%">Responsabile Addestramento (Qualifica, Cognome e Nome)</th></tr></thead><tbody>`;
+  if (!L.righe.length) h += '<tr><td colspan="8" class="c vuota">Nessuna attività SFA registrata in PUMA nell\'anno</td></tr>';
+  L.righe.forEach((r, i) => {
+    const v = celleVoce(r);
+    h += `<tr><td class="c">${i + 1}</td><td class="c">${v.data}</td><td>${esc(r.tipo)}</td><td>${esc(r.descr)}</td><td class="c">${v.in}</td><td class="c">${v.fuori}</td><td class="n">${v.ore}</td><td>${v.resp}</td></tr>`;
+  });
+  return h + `<tr><td colspan="6" class="tot">Totale ore</td><td class="tot" style="color:#000">${fmtOre(L.tot)}</td><td></td></tr></tbody></table></div>`;
+}
+
 function disegna() {
   if (!caricato) return;
   aggiornaUrl();
@@ -1111,6 +1143,12 @@ function disegna() {
   }
   const libri = libriOperatore(o.p);
   const L0 = libri[0];
+  if (L0.tipo === 'SFA') {
+    report.innerHTML = `<div class="stato-box">
+      <div class="st"><div class="k">Attività SFA nell'anno</div><div class="v">${L0.nAtt}</div></div>
+      <div class="st"><div class="k">Ore totali</div><div class="v">${fmtOre(L0.tot)} <small>h</small></div></div></div>` + htmlSfa(L0) + debugHtml();
+    return;
+  }
   const avviso = L0.tipo === 'AVA'
     ? L0.cicli.filter(c => c.tot < ORE_CICLO_AVA).map(c => `Ciclo ${c.n}: ${fmtOre(c.tot)} h su ${ORE_CICLO_AVA}`)
     : (L0.totObbl < ORE_MIN_BAS ? [`Manovre obbligatorie: ${fmtOre(L0.totObbl)} h su ${ORE_MIN_BAS}`] : []);
@@ -1126,7 +1164,7 @@ function noteHtml() {
   return `<div class="note-box"><b>Come vengono compilati i libretti</b><ul>
     <li><b>SAF Avanzato:</b> le manovre sono quelle indicate in «Manovre SAF Avanzato previste» del Piano di Sicurezza; il ciclo è quello scritto nella manovra (es. «II Ciclo - 27»), altrimenti il semestre del biennio.</li>
     <li><b>SAF Basico:</b> le manovre sono quelle indicate in «Attività addestrativa svolta (SAF BASICO)»; gli addestramenti collettivi SAF Basico senza manovre indicate vanno in «Addestramento provinciale di gruppo».</li>
-    <li>Le attività SAF senza manovre del modello e gli interventi con categoria SAF vanno nelle righe delle altre attività.</li>
+    <li>Le attività SAF senza manovre del modello e gli interventi con categoria SAF vanno nelle righe delle altre attività. Le attività SFA non entrano nei libretti SAF: sono nell'elenco SFA.</li>
     <li>${DIVIDI_ORE_TRA_MANOVRE ? 'Le ore di un addestramento con più manovre sono divise tra le manovre: il totale corrisponde alle ore effettive.' : 'Ogni manovra riporta le ore intere dell\'addestramento.'}</li>
     <li>Responsabile: il partecipante con ruolo di responsabile nella colonna «Incident Command System». In sede / fuori sede: dall'«Area di Addestramento» del Piano di Sicurezza.</li>
     <li>In rosso i totali sotto il minimo (solo nell'anteprima).</li></ul></div>`;
@@ -1447,6 +1485,37 @@ function pdfBasico(doc, L) {
   });
 }
 
+function pdfSfa(doc, L) {
+  let y = 13;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(0);
+  const t = 'ELENCO DELLE ATTIVITÀ SFA (SOCCORSO FLUVIALE ALLUVIONALE) - ANNO SOLARE ';
+  doc.text(t, MX, y);
+  const xa = MX + doc.getTextWidth(t);
+  doc.text(L.periodo, xa + 3, y);
+  doc.setLineWidth(0.2); doc.line(xa + 1, y + 1, xa + 30, y + 1);
+  y += 7;
+  doc.setFont('helvetica', 'normal');
+  const xe = campo(doc, 'Comando di', L.comando, MX, y, 50, 9);
+  campo(doc, 'Operatore (Qualifica, Cognome e Nome)', nomeConQualifica(L.p), xe + 3, y, 95, 9);
+  y += 6;
+  const larg = [10, 22, 34, 0, 13, 13, 16, 62];
+  larg[3] = LARGH - larg.reduce((s, v) => s + v, 0);
+  const body = L.righe.map((r, i) => [String(i + 1), fmtGiorno(r.data), r.tipo, r.descr, cBox(r.sede === 'in'), cBox(r.sede === 'fuori'), fmtOre(r.ore), r.resp]);
+  if (!body.length) body.push([{ content: "Nessuna attività SFA registrata in PUMA nell'anno", colSpan: 8, styles: { halign: 'center', textColor: 110 } }]);
+  doc.autoTable(Object.assign(stileTab('helvetica', 8), {
+    startY: y, margin: { left: MX, right: MX, top: 14, bottom: 14 },
+    head: [['N.', 'Data', 'Tipo', 'Descrizione', 'Sede', 'Fuori\nSede', 'Ore', 'Responsabile Addestramento (Qualifica,\nCognome e Nome)']],
+    body,
+    foot: [[{ content: 'Totale ore', colSpan: 6, styles: { halign: 'right' } }, { content: fmtOre(L.tot), styles: { halign: 'center' } }, '']],
+    columnStyles: Object.fromEntries(larg.map((w, i) => [i, { cellWidth: w, halign: [0, 1, 4, 5, 6].includes(i) ? 'center' : 'left' }])),
+    showHead: 'everyPage', showFoot: 'lastPage', rowPageBreak: 'avoid',
+    didDrawCell: disegnaCaselle(doc)
+  }));
+  y = spazio(doc, doc.lastAutoTable.finalY + 12, 12, () => 20);
+  doc.setFontSize(9);
+  doc.text('Firma _______________________________     Data _______________', PW - MX, y, { align: 'right' });
+}
+
 // Un PDF con i libretti di uno o più operatori; ogni libretto inizia su una pagina nuova e ha la sua numerazione
 async function creaPdf(operatori, nomeFile) {
   await caricaJsPdf();
@@ -1459,7 +1528,7 @@ async function creaPdf(operatori, nomeFile) {
       if (!primo) doc.addPage();
       primo = false;
       const da = doc.internal.getNumberOfPages();
-      if (L.tipo === 'AVA') pdfAvanzato(doc, L); else pdfBasico(doc, L);
+      if (L.tipo === 'AVA') pdfAvanzato(doc, L); else if (L.tipo === 'SFA') pdfSfa(doc, L); else pdfBasico(doc, L);
       numeraPagine(doc, da, doc.internal.getNumberOfPages(), firma);
       doc.setPage(doc.internal.getNumberOfPages());
     });
@@ -1467,6 +1536,7 @@ async function creaPdf(operatori, nomeFile) {
   doc.save(nomeFile);
 }
 function nomeFileBase() {
+  if (state.tipo === 'SFA') return `Elenco_SFA_${state.periodo}`;
   return `Libretto_SAF_${state.tipo === 'AVA' ? 'Avanzato_' + state.periodo + '-' + (state.periodo + 1) : 'Basico_' + state.periodo}`;
 }
 async function scarica(btn, operatori, nomeFile) {
