@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>P.U.M.A. - Direzione Regionale Emilia-Romagna - Libretti SAF</title>
+  <title>P.U.M.A. - Libretti SAF</title>
+  <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -123,7 +124,7 @@
 <header id="page-header">
   <div>
     <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Direzione Regionale Emilia-Romagna <span class="badge-er">VV.F. E-R</span></h1>
-    <h2>Export dei <b>libretti individuali dei mantenimenti SAF</b> (modelli della Direzione Regionale)</h2>
+    <h2>Libretti individuali dei mantenimenti SAF: <b id="op-nome">—</b></h2>
     <div id="meta-info">Dati caricati: <span id="last-update">—</span></div>
   </div>
   <div id="nav-buttons">
@@ -134,8 +135,6 @@
 </header>
 
 <div class="filters">
-  <label class="lbl" for="sel-comando">Comando</label>
-  <select id="sel-comando" aria-label="Comando"></select>
   <label class="lbl" for="sel-tipo">Libretto</label>
   <select id="sel-tipo" aria-label="Libretto">
     <option value="AVA">SAF Avanzato (biennio)</option>
@@ -144,14 +143,8 @@
   <label class="lbl" for="sel-periodo" id="lbl-periodo">Biennio</label>
   <select id="sel-periodo" aria-label="Periodo"></select>
   <label class="chk" id="allega-wrap" title="Il libretto SAF Avanzato è corredato dai libretti SAF Basico degli anni del biennio"><input type="checkbox" id="chk-allega" checked> con i libretti SAF Basico</label>
-</div>
-<div class="filters">
-  <label class="lbl" for="sel-op">Operatore</label>
-  <input id="cerca" placeholder="Filtra per nome…" autocomplete="off" aria-label="Filtra operatori">
-  <select id="sel-op" aria-label="Operatore" disabled></select>
   <div class="azioni">
-    <button class="btn primario" id="pdf-btn" type="button" disabled>⬇ PDF operatore</button>
-    <button class="btn" id="pdf-tutti-btn" type="button" disabled>⬇ PDF di tutti</button>
+    <button class="btn primario" id="pdf-btn" type="button" disabled>⬇ Scarica PDF</button>
   </div>
 </div>
 
@@ -689,6 +682,9 @@ function elaboraReg(reg, pianoIdx) {
 const JSPDF_URL     = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
 const AUTOTABLE_URL = "https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js";
 
+// Operatore della pagina: impronta SHA-256 del codice fiscale (il codice fiscale non è scritto nel sorgente pubblico)
+const OPERATORE_CF_SHA256 = 'bc757ce3ef86ac88ec76f3aacddd5b3a7b0c4962f14c00bc93ca48777d90433d';
+
 // Comandi della Direzione: nome stampato nel libretto → chiavi riconosciute (comandoKey)
 const COMANDI_ER = [
   ['Direzione Regionale Emilia-Romagna', ['direzioneemiliaromagna', 'direzioneer']],
@@ -971,41 +967,25 @@ function libriOperatore(p) {
 }
 
 /* =====================================================================
-   STATO, MENU E ANTEPRIMA
+   STATO E MENU
    ===================================================================== */
-const selComando = document.getElementById('sel-comando');
 const selTipo = document.getElementById('sel-tipo');
 const selPeriodo = document.getElementById('sel-periodo');
 const lblPeriodo = document.getElementById('lbl-periodo');
 const chkAllega = document.getElementById('chk-allega');
 const allegaWrap = document.getElementById('allega-wrap');
-const selOp = document.getElementById('sel-op');
-const cerca = document.getElementById('cerca');
 const pdfBtn = document.getElementById('pdf-btn');
-const pdfTuttiBtn = document.getElementById('pdf-tutti-btn');
 const refreshBtn = document.getElementById('refresh-btn');
 const report = document.getElementById('report');
 
 const bienniDefault = () => ANNO_OGGI - ((((ANNO_OGGI - BIENNIO_INIZIALE) % 2) + 2) % 2);
 const state = {
-  comando: URLP.get('comando') || '',
   tipo: /^bas/i.test(URLP.get('libretto') || '') ? 'BAS' : 'AVA',
   periodo: parseInt(URLP.get('anno'), 10) || null,
-  allega: URLP.get('allega') !== '0',
-  op: null
+  allega: URLP.get('allega') !== '0'
 };
-let OPERATORI = [];          // operatori ER per la scelta corrente
+let OPERATORE = null;        // { p, com }
 let loading = false, caricato = false;
-
-function preparaMenuComandi() {
-  selComando.innerHTML = '<option value="">Tutti i Comandi della Direzione</option>' +
-    COMANDI_ER.map(([n]) => `<option value="${esc(n)}">${esc(n === COMANDI_ER[0][0] ? n : 'Comando di ' + n)}</option>`).join('');
-  if (!COMANDI_ER.some(([n]) => n === state.comando)) {
-    // nome scritto nell'indirizzo in un altro modo (es. "forli-cesena")
-    state.comando = comandoER(state.comando) || '';
-  }
-  selComando.value = state.comando;
-}
 
 function preparaMenuPeriodo() {
   selTipo.value = state.tipo;
@@ -1030,37 +1010,17 @@ function preparaMenuPeriodo() {
   selPeriodo.innerHTML = opz.map(([v, t]) => `<option value="${v}"${v === state.periodo ? ' selected' : ''}>${t}</option>`).join('');
 }
 
-// Operatori della Direzione da mostrare: livello in possesso oppure attività nel periodo
-function preparaOperatori() {
-  const anni = state.tipo === 'AVA' ? [state.periodo, state.periodo + 1] : [state.periodo];
-  OPERATORI = [];
-  PERSONE.forEach(p => {
-    const com = comandoPersonaER(p);
-    if (!com || (state.comando && com !== state.comando)) return;
-    const liv = livelliPossesso(p);
-    const att = attivitaPersona(p).filter(a => anni.includes(a.anno)).map(analizza);
-    const haLiv = state.tipo === 'AVA' ? liv.has('AVA') : (liv.has('BAS') || liv.has('AVA'));
-    const haAtt = state.tipo === 'AVA' ? att.some(x => x.ava) : att.some(x => x.bas);
-    if (!haLiv && !haAtt) return;
-    const lib = state.tipo === 'AVA' ? libroAvanzato(p, state.periodo) : libroBasico(p, state.periodo);
-    OPERATORI.push({ p, com, lib, senzaQualifica: !haLiv });
-  });
-  OPERATORI.sort((a, b) => a.p.nome.localeCompare(b.p.nome, 'it'));
-  aggiornaSelectOp();
+// L'operatore della pagina: quello con il codice fiscale indicato in OPERATORE_CF_SHA256
+async function sha256(t) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
 }
-
-function aggiornaSelectOp() {
-  const k = normKey(cerca.value);
-  const lista = OPERATORI.filter(o => !k || normKey(o.p.nome).includes(k));
-  const prima = state.op;
-  selOp.innerHTML = `<option value="">— ${lista.length} operatori${state.comando ? '' : ' in Emilia-Romagna'} —</option>` +
-    lista.map(o => `<option value="${esc(o.p.key)}">${esc(o.p.nome)}${o.p.qualifica ? ' · ' + esc(o.p.qualifica) : ''}${state.comando ? '' : ' · ' + esc(o.com)} — ${o.lib.nAtt} att., ${fmtOre(o.lib.tot)} h</option>`).join('');
-  if (prima && lista.some(o => o.p.key === prima)) selOp.value = prima;
-  else { state.op = lista.length === 1 ? lista[0].p.key : null; selOp.value = state.op || ''; }
-  selOp.disabled = !caricato;
-  pdfBtn.disabled = !state.op;
-  pdfTuttiBtn.disabled = !OPERATORI.length;
-  pdfTuttiBtn.textContent = `⬇ PDF di tutti (${OPERATORI.length})`;
+async function trovaOperatore() {
+  for (const p of PERSONE.values()) {
+    if (!p.key.startsWith('cf:')) continue;
+    if (await sha256(p.key.slice(3).toUpperCase()) === OPERATORE_CF_SHA256) return { p, com: comandoPersonaER(p) || p.comando || '' };
+  }
+  return null;
 }
 
 function aggiornaUrl() {
@@ -1068,7 +1028,6 @@ function aggiornaUrl() {
     const u = new URL(location.href);
     u.searchParams.set('libretto', state.tipo === 'AVA' ? 'avanzato' : 'basico');
     u.searchParams.set('anno', state.periodo);
-    if (state.comando) u.searchParams.set('comando', state.comando); else u.searchParams.delete('comando');
     if (state.tipo === 'AVA' && !state.allega) u.searchParams.set('allega', '0'); else u.searchParams.delete('allega');
     history.replaceState(null, '', u);
   } catch (e) { /* indirizzo non modificabile: nessun problema */ }
@@ -1144,27 +1103,22 @@ function htmlBasico(L) {
 function disegna() {
   if (!caricato) return;
   aggiornaUrl();
-  const o = OPERATORI.find(x => x.p.key === state.op);
+  const o = OPERATORE;
   pdfBtn.disabled = !o;
-  if (!OPERATORI.length) {
-    report.innerHTML = `<div class="msg">Nessun operatore ${state.tipo === 'AVA' ? 'SAF Avanzato' : 'SAF Basico'} trovato${state.comando ? ' per ' + esc(state.comando) : ' in Emilia-Romagna'}.<small>Compaiono gli operatori con il corso in "Corsi in possesso" (Elenco_Filtrato) oppure con attività del livello nel periodo scelto.</small></div>` + debugHtml();
-    return;
-  }
   if (!o) {
-    const conAtt = OPERATORI.filter(x => x.lib.nAtt).length;
-    const sotto = state.tipo === 'AVA'
-      ? OPERATORI.filter(x => x.lib.cicli.some(c => c.tot < ORE_CICLO_AVA)).length
-      : OPERATORI.filter(x => x.lib.totObbl < ORE_MIN_BAS).length;
-    report.innerHTML = `<div class="stato-box">
-      <div class="st"><div class="k">Operatori ${state.tipo === 'AVA' ? 'SAF Avanzato' : 'SAF Basico'}</div><div class="v">${OPERATORI.length}</div></div>
-      <div class="st"><div class="k">Con attività nel periodo</div><div class="v">${conAtt}</div></div>
-      <div class="st ${sotto ? 'ko' : 'ok'}"><div class="k">${state.tipo === 'AVA' ? 'Con almeno un ciclo sotto le 36 ore' : 'Sotto le 24 ore obbligatorie'}</div><div class="v">${sotto}</div></div>
-    </div>
-    <div class="msg">Scegli un operatore per vedere l'anteprima del libretto,<br>oppure scarica con «PDF di tutti» un unico PDF con i libretti di tutti gli operatori elencati.</div>` + noteHtml() + debugHtml();
+    report.innerHTML = `<div class="msg">Operatore non trovato nei dati PUMA.<small>Il codice fiscale indicato nella pagina non compare in Elenco_Filtrato né in Registrazione_Attivita_Semplificata.</small></div>` + debugHtml();
     return;
   }
   const libri = libriOperatore(o.p);
-  report.innerHTML = `<div class="op-titolo">${esc(o.p.nome)} <small>${esc([o.p.qualifica, o.com].filter(Boolean).join(' · '))}${o.senzaQualifica ? ' · corso non indicato in "Corsi in possesso"' : ''}</small></div>` +
+  const L0 = libri[0];
+  const avviso = L0.tipo === 'AVA'
+    ? L0.cicli.filter(c => c.tot < ORE_CICLO_AVA).map(c => `Ciclo ${c.n}: ${fmtOre(c.tot)} h su ${ORE_CICLO_AVA}`)
+    : (L0.totObbl < ORE_MIN_BAS ? [`Manovre obbligatorie: ${fmtOre(L0.totObbl)} h su ${ORE_MIN_BAS}`] : []);
+  report.innerHTML = `<div class="stato-box">
+      <div class="st"><div class="k">Attività nel libretto</div><div class="v">${L0.nAtt}</div></div>
+      <div class="st"><div class="k">Ore totali</div><div class="v">${fmtOre(L0.tot)} <small>h</small></div></div>
+      <div class="st ${avviso.length ? 'ko' : 'ok'}"><div class="k">${L0.tipo === 'AVA' ? 'Cicli sotto le 36 ore' : 'Minimo 24 ore'}</div><div class="v">${avviso.length ? (L0.tipo === 'AVA' ? avviso.length : 'no') : (L0.tipo === 'AVA' ? 0 : 'sì')}</div></div>
+    </div>` +
     libri.map((L, i) => (i === 1 ? '<div class="gen-titolo" style="color:#aaa">Libretti SAF Basico allegati</div>' : '') + (L.tipo === 'AVA' ? htmlAvanzato(L) : htmlBasico(L))).join('') + noteHtml() + debugHtml();
 }
 
@@ -1178,7 +1132,7 @@ function noteHtml() {
     <li>In rosso i totali sotto il minimo (solo nell'anteprima).</li></ul></div>`;
 }
 function debugHtml() {
-  return DEBUG ? `<div class="debug-box">${esc(JSON.stringify({ diag, colPiano, colReg, operatori: OPERATORI.length }, null, 1))}</div>` : '';
+  return DEBUG ? `<div class="debug-box">${esc(JSON.stringify({ diag, colPiano, colReg, operatore: !!OPERATORE }, null, 1))}</div>` : '';
 }
 
 /* =====================================================================
@@ -1523,13 +1477,7 @@ async function scarica(btn, operatori, nomeFile) {
   finally { btn.textContent = testo; btn.disabled = false; }
 }
 pdfBtn.addEventListener('click', () => {
-  const o = OPERATORI.find(x => x.p.key === state.op);
-  if (o) scarica(pdfBtn, [o], `${nomeFileBase()}_${filePart(o.p.nome)}.pdf`);
-});
-pdfTuttiBtn.addEventListener('click', () => {
-  if (!OPERATORI.length) return;
-  if (OPERATORI.length > 60 && !confirm(`Creo un unico PDF con ${OPERATORI.length} operatori: può richiedere qualche secondo. Continuo?`)) return;
-  scarica(pdfTuttiBtn, OPERATORI, `${nomeFileBase().replace('Libretto_', 'Libretti_')}_${filePart(state.comando || 'Emilia-Romagna')}.pdf`);
+  if (OPERATORE) scarica(pdfBtn, [OPERATORE], `${nomeFileBase()}_${filePart(OPERATORE.p.nome)}.pdf`);
 });
 
 /* =====================================================================
@@ -1551,9 +1499,10 @@ async function caricaDati() {
     elaboraElenco(elenco);
     elaboraReg(reg, elaboraPiano(piano));
     preparaPartecipanti();
+    OPERATORE = await trovaOperatore();
     caricato = true;
     document.getElementById('last-update').textContent = new Date().toLocaleString('it-IT');
-    preparaOperatori();
+    document.getElementById('op-nome').textContent = OPERATORE ? [OPERATORE.p.qualifica, OPERATORE.p.nome, OPERATORE.com].filter(Boolean).join(' · ') : 'operatore non trovato';
     disegna();
   } catch (err) {
     console.error(err);
@@ -1563,15 +1512,11 @@ async function caricaDati() {
   }
 }
 
-selComando.addEventListener('change', () => { state.comando = selComando.value; state.op = null; cerca.value = ''; preparaOperatori(); disegna(); });
-selTipo.addEventListener('change', () => { state.tipo = selTipo.value; state.periodo = null; preparaMenuPeriodo(); if (caricato) { preparaOperatori(); disegna(); } });
-selPeriodo.addEventListener('change', () => { state.periodo = +selPeriodo.value; if (caricato) { preparaOperatori(); disegna(); } });
+selTipo.addEventListener('change', () => { state.tipo = selTipo.value; state.periodo = null; preparaMenuPeriodo(); disegna(); });
+selPeriodo.addEventListener('change', () => { state.periodo = +selPeriodo.value; disegna(); });
 chkAllega.addEventListener('change', () => { state.allega = chkAllega.checked; disegna(); });
-selOp.addEventListener('change', () => { state.op = selOp.value || null; disegna(); document.getElementById('content').scrollTop = 0; });
-cerca.addEventListener('input', () => { aggiornaSelectOp(); disegna(); });
 refreshBtn.addEventListener('click', caricaDati);
 
-preparaMenuComandi();
 preparaMenuPeriodo();
 caricaDati();
 </script>
