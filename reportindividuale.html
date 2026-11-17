@@ -537,6 +537,10 @@ const CORSI_DI_TUTTI = ['SAF (Speleo Alpino Fluviale) Competenze primarie', 'TPS
 // Corsi da contare come un altro: tipologia registrata → tipologia del libretto
 const CORSI_EQUIVALENTI = { 'SAF (Speleo Alpino Fluviale) SAF1A': 'SAF (Speleo Alpino Fluviale) Competenze primarie' };
 
+// Registrazioni individuali che in realtà sono addestramenti di gruppo: si contano come collettivi
+// (cercato nelle manovre svolte e nella descrizione, es. "Addestramento provinciale di gruppo (C)")
+const RE_DI_GRUPPO = /addestramento\s+provinciale\s+di\s+gruppo/i;
+
 // Registrazioni da scartare (prove)
 const NOME_NON_REALE = /\b(test\d*|prova\d*|demo|esempio|fake)\b|^x+$|^-+$|^\.+$/i;   // anche TEST1, TEST2, TEST3…
 // Durata massima credibile di un'attività (ore): oltre, l'orario è considerato sbagliato
@@ -1010,6 +1014,11 @@ function elaboraReg(reg, pianoIdx) {
     // una manovra riconosciuta collega l'attività al suo corso solo se la sigla è di un corso solo
     if (!a.corsi.size) a.manovre.forEach(m => { if (m.corsi.length === 1 && tipo !== 'intervento') a.corsi.add(m.corsi[0]); });
     if (!a.corsi.size && tipo !== 'intervento') a.categoria = trovaCategoria(a.tipologia);
+    // "Addestramento provinciale di gruppo": è un addestramento di gruppo, conta come collettivo
+    if ((tipo === 'individuale' || tipo === 'altro') && RE_DI_GRUPPO.test(a.manovreTxt + '\n' + a.descr)) {
+      a.tipo = 'collettivo';
+      a.diGruppo = true;
+    }
 
     const p = persona(chiavePersona(nome, cf), nome);
     const orig = g(r, 'nome').replace(/\s+/g, ' ');
@@ -1510,7 +1519,7 @@ function disegna() {
   const note = [];
   const senzaOre = anno.filter(a => a.ore == null && a.tipo !== 'intervento').length;
   if (senzaOre) note.push(`${senzaOre} attività senza orario di inizio/fine valido: contano come attività ma con 0 ore.`);
-  const senzaPiano = anno.filter(a => a.tipo === 'collettivo' && !a.piano).length;
+  const senzaPiano = anno.filter(a => a.tipo === 'collettivo' && !a.piano && !a.diGruppo).length;
   if (senzaPiano) note.push(`${senzaPiano} addestramenti collettivi senza Piano di Sicurezza corrispondente (stesso giorno, Comando organizzatore e squadra).`);
   const senzaCorso = [...new Set(anno.filter(a => a.tipo !== 'intervento' && !a.corsi.size && !a.categoria && a.tipologia).map(a => a.tipologia))];
   if (senzaCorso.length) note.push(`Tipologie non collegate a un corso di Formazione: ${senzaCorso.map(esc).join(' · ')}`);
@@ -1589,7 +1598,7 @@ function righeManovre(txt) {
 }
 function datiRiga(a, catSezione) {
   const prima = a.anno !== state.anno;
-  const comando = a.tipo === 'collettivo' ? (a.organizzatoreRaw || a.organizzatore) : a.appartenenzaRaw;
+  const comando = a.tipo === 'collettivo' ? (a.organizzatoreRaw || a.organizzatore || a.appartenenzaRaw) : a.appartenenzaRaw;
   const righe = [];
   if (a.tipo === 'intervento') {
     righe.push(a.numInt, a.descrInt, catSezione ? catSezione.join(', ') : a.catInt);
@@ -1599,7 +1608,7 @@ function datiRiga(a, catSezione) {
     // manovre come scritte nel modulo (già complete), una riga ciascuna, senza ripetizioni
     const giaScritto = normKey(righe.join(' '));
     righeManovre(a.manovreTxt).forEach(t => { if (!giaScritto.includes(normKey(t))) righe.push(t); });
-    if (a.tipo === 'collettivo' && !a.piano) righe.push('⚠ Piano di Sicurezza non trovato');
+    if (a.tipo === 'collettivo' && !a.piano && !a.diGruppo) righe.push('⚠ Piano di Sicurezza non trovato');
   }
   return {
     prima, comando: comando || '', tipo: TIPO_LIBRETTO[a.tipo] || a.cosa || 'Altro', righe: righe.filter(Boolean),
