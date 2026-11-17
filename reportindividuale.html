@@ -1248,8 +1248,12 @@ function riepilogoCorsi(p, y) {
     const oreColl = coll.reduce((s, a) => s + (a.ore || 0), 0);
     const oreAnno = add.filter(a => a.anno === y).reduce((s, a) => s + (a.ore || 0), 0);
     const fatte = new Map();
-    nel.forEach(a => a.manovre.forEach(m => {
+    // le manovre (C) valgono in qualunque addestramento della persona nel periodo (collettivo o individuale,
+    // anche di un'altra tipologia); le altre solo nelle attività del corso
+    const nelCorso = new Set(nel);
+    att.filter(a => a.tipo !== 'intervento' && inFinestra(a, c)).forEach(a => a.manovre.forEach(m => {
       if (!m.corsi.includes(c)) return;
+      if (!nelCorso.has(a) && m.lettera !== 'C') return;
       const f = fatte.get(m) || { n: 0, ultima: null };
       f.n++; if (!f.ultima || a.data > f.ultima) f.ultima = a.data;
       fatte.set(m, f);
