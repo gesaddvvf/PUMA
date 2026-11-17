@@ -174,9 +174,30 @@
     tr.persona.apribile { cursor: pointer; }
     tr.persona.apribile td.nome::before { content: '▾ '; color: #ffb74d; }
     tr.persona.apribile.chiusa td.nome::before { content: '▸ '; }
-    tr.det td { background: #191919 !important; padding: 5px 10px 7px 30px; font-size: 11.5px; line-height: 1.55; color: #ccc; border-top: none; }
-    tr.det td:first-child { border-left: 5px solid var(--sc, #444); padding: 0; }
-    tr.det .riga { margin: 1px 0; }
+    tr.det > td { background: #191919 !important; padding: 5px 10px 7px 30px; font-size: 11.5px; line-height: 1.55; color: #ccc; border-top: none; }
+    tr.det > td:first-child { border-left: 5px solid var(--sc, #444); padding: 0; }
+    .det-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 14px; }
+    @media (max-width: 900px) { .det-grid { grid-template-columns: 1fr; } }
+    .dh { color: #ffb74d; font-weight: bold; font-size: 11.5px; margin: 2px 0 4px; text-transform: uppercase; letter-spacing: .02em; }
+    .dh span { color: #999; font-weight: normal; text-transform: none; }
+    .dh.si { color: #4db6ac; } .dh.no { color: #e57373; margin-top: 8px; }
+    table.dtab { font-size: 11px; width: 100%; }
+    table.dtab td { border: none; border-bottom: 1px solid #2c2c2c; padding: 2px 6px 2px 0; background: transparent !important; vertical-align: top; }
+    table.dtab td.dd { white-space: nowrap; color: #ddd; }
+    table.dtab td.n { width: 38px; }
+    table.dtab td.inf { color: #aaa; }
+    table.dtab td.mm { white-space: normal; }
+    table.dtab tr.prima td { color: #888; }
+    .ty { display: inline-block; font-size: 10px; font-weight: bold; border-radius: 8px; padding: 0 6px; color: #1e1e1e; white-space: nowrap; }
+    .ty-collettivo { background: #4fc3f7; } .ty-individuale { background: #ce93d8; } .ty-intervento { background: #ff8a65; } .ty-altro { background: #bdbdbd; }
+    ul.ml { list-style: none; margin: 0; padding: 0; font-size: 11px; }
+    ul.ml li { padding: 1px 0 1px 16px; position: relative; color: #ddd; }
+    ul.ml li::before { position: absolute; left: 0; font-weight: bold; }
+    ul.ml li.si::before { content: '✔'; color: #4db6ac; }
+    ul.ml li.no::before { content: '✘'; color: #e57373; }
+    ul.ml li b { color: #fff; margin-right: 3px; }
+    ul.ml li i { color: #888; font-style: normal; font-size: 10.5px; }
+    tr.det .vuoto { padding: 2px 0; font-size: 11px; }
     tr.det .riga b { color: #ffb74d; font-weight: bold; }
     tr.det .att { display: inline-block; margin-right: 12px; white-space: nowrap; }
     tr.det .att i { font-style: normal; color: #999; }
@@ -257,8 +278,11 @@
       th { background: #eee !important; }
       tr.grp td { background: #999 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       tr.persona:not(.st-na) td { background: var(--sc) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      tr.det td { background: #fff !important; color: #000 !important; font-size: 7.5px; padding: 1px 4px 2px 12px; }
-      tr.det .riga b, tr.det .att i { color: #000 !important; }
+      tr.det > td { background: #fff !important; color: #000 !important; font-size: 7.5px; padding: 1px 4px 2px 12px; }
+      .dh, .dh span, .dh.si, .dh.no, table.dtab td, ul.ml li, ul.ml li b, ul.ml li i, table.dtab tr.prima td { color: #000 !important; }
+      .ty { background: none !important; color: #000 !important; padding: 0; border: 1px solid #999; }
+      ul.ml li.si::before, ul.ml li.no::before { color: #000 !important; }
+      .det-grid { grid-template-columns: 1.45fr 1fr !important; gap: 8px; }
       tr.det .mc { background: none !important; color: #000 !important; padding: 0; }
       tr.det .mc.manca { text-decoration: underline; }
       tr.persona.apribile td.nome::before { content: '' !important; }
@@ -1175,6 +1199,7 @@ function schedaPersona(p, c, y) {
   s.attivita = p.att.filter(a => a.tipo !== 'intervento' && a.corsi.has(c) && a.anno <= y && a.anno >= y - c.anniPrima).sort((a, b) => a.data - b.data);
   s.interventi = intv.slice().sort((a, b) => a.data - b.data);
   s.mancanti = c.previste.filter(m => !(r && r.fatte.has(m)));
+  s.fatteList = r ? [...r.fatte.keys()] : [];
   // Logica del foglio Stampa_Report_Collettivo (colonna M: R, Ar, A, V)
   const eps = 1e-4, indMin = s.minTot - s.collMin;
   s.motivi = [];
@@ -1458,37 +1483,60 @@ const codiceMan = m => m.ciclo && m.codice ? `${m.ciclo}-${m.codice}` : (m.codic
 const nomeMan = m => `${m.ciclo ? m.ciclo + ' Ciclo - ' : ''}${m.codice ? m.codice + ' - ' : ''}${m.manovra}`;
 const dataBreve = d => d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' });
 const enteBreve = t => String(t || '').replace(/^\s*comando\s+(vv\.?\s*f\.?\s*)?(di\s+)?/i, '').replace(/^\s*direzione\s+(regionale\s+)?/i, 'Dir. ');
-const TIPO_BREVE = { collettivo: 'Collettivi', individuale: 'Individuali', altro: 'Altre attività' };
-const haDettaglio = s => s.attivita.length || s.interventi.length || (s.con && s.mancanti.length);
+const TIPO_ATT = { collettivo: 'Collettivo', individuale: 'Individuale', intervento: 'Intervento', altro: 'Altro' };
+const haDettaglio = s => s.attivita.length || s.interventi.length || s.fatteList.length || (s.con && s.mancanti.length);
 // manovre del corso riconosciute in un'attività
 const manovreAtt = (a, c) => [...a.manovre].filter(m => m.corsi.includes(c));
-// Dati del dettaglio, uguali per pagina e PDF
-function righeDettaglio(s) {
-  const out = [];
-  ['collettivo', 'individuale', 'altro'].forEach(t => {
-    const l = s.attivita.filter(a => (a.tipo === 'collettivo' || a.tipo === 'individuale' ? a.tipo : 'altro') === t);
-    if (!l.length) return;
-    out.push({ titolo: `${TIPO_BREVE[t]} (${l.length})`, voci: l.map(a => ({
-      testo: `${dataBreve(a.data)} ${a.ore == null ? '—' : fmtHM(a.ore)}${t === 'collettivo' ? ' ' + enteBreve(a.organizzatoreRaw || a.organizzatore) : ''}${a.anno !== state.anno ? ' (' + a.anno + ')' : ''}`,
-      manovre: manovreAtt(a, s.c)
-    })) });
+const ordManovre = (a, b) => (a.ciclo || '').localeCompare(b.ciclo || '') || (parseInt(a.codice, 10) || 0) - (parseInt(b.codice, 10) || 0);
+
+// Dati del dettaglio, uguali per pagina e PDF:
+//   attività svolte (collettivi, individuali, interventi) in ordine di data
+//   manovre previste: fatte (quante volte, ultima data) / da fare
+function datiDettaglio(s) {
+  const att = [...s.attivita, ...s.interventi].sort((a, b) => a.data - b.data).map(a => {
+    const tipo = a.tipo === 'collettivo' || a.tipo === 'individuale' || a.tipo === 'intervento' ? a.tipo : 'altro';
+    let info = '';
+    if (tipo === 'collettivo') info = enteBreve(a.organizzatoreRaw || a.organizzatore) + (a.team ? ' · sq. ' + a.team : '');
+    else if (tipo === 'intervento') info = [a.numInt ? 'n. ' + a.numInt : '', (a.descrInt || '').slice(0, 70)].filter(Boolean).join(' · ');
+    else info = (a.descr || a.tipologia || '').replace(/\s+/g, ' ').slice(0, 70);
+    return { data: dataBreve(a.data), prima: a.anno !== state.anno, tipo, ore: a.ore == null ? '—' : fmtHM(a.ore), info, manovre: tipo === 'intervento' ? [] : manovreAtt(a, s.c).sort(ordManovre) };
   });
-  if (s.interventi.length) out.push({ titolo: `Interventi ${s.c.categoria.replace(/\s*\(.*\)\s*/, '')} (${s.interventi.length})`, voci: s.interventi.map(a => ({
-    testo: `${dataBreve(a.data)} ${a.ore == null ? '—' : fmtHM(a.ore)}${a.numInt ? ' n. ' + a.numInt : ''}${a.descrInt ? ' ' + a.descrInt.slice(0, 60) : ''}`, manovre: []
-  })) });
-  if (s.con && s.mancanti.length) out.push({ titolo: `Manovre previste mancanti (${s.mancanti.length})`, mancanti: s.mancanti });
-  return out;
+  const fatte = (s.r ? [...s.r.fatte.entries()] : []).map(([m, f]) => ({ m, n: f.n, ultima: f.ultima })).sort((a, b) => ordManovre(a.m, b.m));
+  const daFare = s.con ? s.mancanti.slice().sort(ordManovre) : [];
+  return { att, fatte, daFare };
 }
 function dettaglioHtml(s) {
-  const mc = (m, cls) => `<span class="mc${cls || ''}" title="${esc(nomeMan(m))}">${esc(codiceMan(m))}</span>`;
-  return righeDettaglio(s).map(r => `<div class="riga"><b>${esc(r.titolo)}:</b> ` + (r.mancanti
-    ? r.mancanti.map(m => mc(m, ' manca')).join('')
-    : r.voci.map(v => `<span class="att">${esc(v.testo)}${v.manovre.length ? ' <i>·</i> ' + v.manovre.map(m => mc(m)).join('') : ''}</span>`).join('')) + '</div>').join('');
+  const D = datiDettaglio(s);
+  const mc = m => `<span class="mc" title="${esc(nomeMan(m))}">${esc(codiceMan(m))}</span>`;
+  let h = `<div class="det-grid"><div class="det-col">`;
+  h += `<div class="dh">Attività svolte <span>· ${D.att.length}${s.c.anniPrima ? ' · periodo ' + periodoDi(s.c, state.anno) : ''}</span></div>`;
+  h += D.att.length ? `<table class="dtab"><tbody>${D.att.map(a => `<tr${a.prima ? ' class="prima"' : ''}>
+      <td class="dd">${esc(a.data)}</td><td><span class="ty ty-${a.tipo}">${TIPO_ATT[a.tipo]}</span></td><td class="n">${esc(a.ore)}</td>
+      <td class="inf">${esc(a.info)}</td><td class="mm">${a.manovre.map(mc).join('')}</td></tr>`).join('')}</tbody></table>`
+    : '<div class="vuoto">Nessuna attività di questa tipologia nel periodo.</div>';
+  h += `</div><div class="det-col man">`;
+  if (s.prev) {
+    h += `<div class="dh si">✔ Manovre fatte <span>· ${D.fatte.length} / ${s.prev}</span></div>`;
+    h += D.fatte.length ? `<ul class="ml">${D.fatte.map(f => `<li class="si"><b>${esc(codiceMan(f.m))}</b> ${esc(f.m.manovra)} <i>${f.n}× · ultima ${dataBreve(f.ultima)}</i></li>`).join('')}</ul>` : '<div class="vuoto">Nessuna</div>';
+    if (s.con) {
+      h += `<div class="dh no">✘ Manovre da fare <span>· ${D.daFare.length}</span></div>`;
+      h += D.daFare.length ? `<ul class="ml">${D.daFare.map(m => `<li class="no"><b>${esc(codiceMan(m))}</b> ${esc(m.manovra)}</li>`).join('')}</ul>` : '<div class="vuoto ok-t">Tutte fatte</div>';
+    }
+  } else h += `<div class="dh">Manovre previste <span>· nessuna per questa tipologia</span></div>`;
+  return h + `</div></div>`;
 }
+// Testo per il PDF: [attività una per riga, manovre fatte / da fare]
 function testoDettaglio(s) {
-  return righeDettaglio(s).map(r => r.titolo + ': ' + (r.mancanti
-    ? r.mancanti.map(codiceMan).join(', ')
-    : r.voci.map(v => v.testo + (v.manovre.length ? ' [' + v.manovre.map(codiceMan).join(', ') + ']' : '')).join('; '))).join('\n');
+  const D = datiDettaglio(s);
+  const att = D.att.length
+    ? `ATTIVITA' SVOLTE (${D.att.length})\n` + D.att.map(a => `${a.data}  ${TIPO_ATT[a.tipo]}  ${a.ore}${a.info ? '  ' + a.info : ''}${a.manovre.length ? '  [' + a.manovre.map(codiceMan).join(', ') + ']' : ''}`).join('\n')
+    : "ATTIVITA' SVOLTE: nessuna nel periodo";
+  let man = '';
+  if (s.prev) {
+    man = `MANOVRE FATTE (${D.fatte.length}/${s.prev})\n` + (D.fatte.length ? D.fatte.map(f => `${codiceMan(f.m)}  ${f.m.manovra}  (${f.n}x, ultima ${dataBreve(f.ultima)})`).join('\n') : '-');
+    if (s.con) man += `\nMANOVRE DA FARE (${D.daFare.length})\n` + (D.daFare.length ? D.daFare.map(m => `${codiceMan(m)}  ${m.manovra}`).join('\n') : 'tutte fatte');
+  }
+  return { att, man };
 }
 function legendaManovre(c) {
   if (!c.previste.length) return '';
@@ -1721,8 +1769,12 @@ async function creaPdf() {
           s.prev ? `${s.fatte} / ${s.prev}` : '-',
           s.con && s.pct != null ? Math.round(s.pct * 100) + '%' : '-',
           { content: testoPdf(STATI[s.stato].t + (s.motivi && s.motivi.length ? '\n' + s.motivi.join(', ') : '')), stato: s.stato }]);
-        if (state.dettaglio && haDettaglio(s)) b.push([{ content: '', styles: { fillColor: [255, 255, 255] } },
-          { content: testoPdf(testoDettaglio(s)), colSpan: 11, styles: { fontSize: 6.2, textColor: [45, 45, 45], fillColor: [255, 255, 255], cellPadding: { top: 0.6, bottom: 0.8, left: 2, right: 1 } } }]);
+        if (state.dettaglio && haDettaglio(s)) {
+          const T = testoDettaglio(s), st = { fontSize: 6, textColor: [40, 40, 40], fillColor: [255, 255, 255], valign: 'top', halign: 'left', cellPadding: { top: 0.6, bottom: 0.8, left: 2, right: 1 } };
+          b.push([{ content: '', styles: { fillColor: [255, 255, 255] } },
+            { content: testoPdf(T.att), colSpan: 6, dett: 'att', styles: st },
+            { content: testoPdf(T.man), colSpan: 5, dett: 'man', styles: st }]);
+        }
       });
     });
     if (i) b.push([{ content: 'Totale ore (con e senza corso)', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
