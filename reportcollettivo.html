@@ -170,6 +170,22 @@
     .bar { position: relative; height: 6px; background: #333; border-radius: 3px; overflow: hidden; min-width: 60px; margin-top: 3px; }
     .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--sc, var(--anno-a)); }
     .ok-t { color: var(--ok); font-weight: bold; }
+    /* Dettaglio attività sotto ogni nominativo */
+    tr.persona.apribile { cursor: pointer; }
+    tr.persona.apribile td.nome::before { content: '▾ '; color: #ffb74d; }
+    tr.persona.apribile.chiusa td.nome::before { content: '▸ '; }
+    tr.det td { background: #191919 !important; padding: 5px 10px 7px 30px; font-size: 11.5px; line-height: 1.55; color: #ccc; border-top: none; }
+    tr.det td:first-child { border-left: 5px solid var(--sc, #444); padding: 0; }
+    tr.det .riga { margin: 1px 0; }
+    tr.det .riga b { color: #ffb74d; font-weight: bold; }
+    tr.det .att { display: inline-block; margin-right: 12px; white-space: nowrap; }
+    tr.det .att i { font-style: normal; color: #999; }
+    tr.det .mc { display: inline-block; background: #333; border-radius: 3px; padding: 0 4px; margin: 0 2px 0 0; font-size: 10.5px; color: #eee; cursor: help; }
+    tr.det .mc.manca { background: #5a2a2a; color: #f4b4b4; }
+    details.legman { margin-top: 10px; font-size: 12px; color: #ccc; }
+    details.legman summary { cursor: pointer; color: #ffb74d; }
+    details.legman ul { columns: 2; margin: 6px 0 0; padding-left: 18px; }
+    details.legman li { break-inside: avoid; margin-bottom: 2px; }
     .vuoto { color: #999; font-size: 12px; padding: 8px 0; }
 
     /* Direzione: riepilogo per Comando */
@@ -241,6 +257,13 @@
       th { background: #eee !important; }
       tr.grp td { background: #999 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       tr.persona:not(.st-na) td { background: var(--sc) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tr.det td { background: #fff !important; color: #000 !important; font-size: 7.5px; padding: 1px 4px 2px 12px; }
+      tr.det .riga b, tr.det .att i { color: #000 !important; }
+      tr.det .mc { background: none !important; color: #000 !important; padding: 0; }
+      tr.det .mc.manca { text-decoration: underline; }
+      tr.persona.apribile td.nome::before { content: '' !important; }
+      details.legman { display: block; } details.legman summary { color: #000; }
+      details.legman ul { columns: 3; font-size: 8px; color: #000; }
       tr.grp td span, .sub-n, td.nome .cf { color: #333 !important; }
       td.nome a { color: #000 !important; }
       .stato { color: #000 !important; }
@@ -288,6 +311,7 @@
   <label class="lbl" for="anno-select">Anno</label>
   <select id="anno-select" aria-label="Anno di riferimento"></select>
   <label class="chk-f" title="Mostra anche chi non ha il corso né attività di questa tipologia"><input type="checkbox" id="tutti-chk"> Tutto il personale</label>
+  <label class="chk-f" title="Per ogni nominativo: attività, interventi e manovre svolte o mancanti (anche nel PDF)"><input type="checkbox" id="det-chk" checked> Dettaglio attività</label>
   <span class="azioni">
     <button id="print-btn" type="button" disabled>🖨 Stampa</button>
     <button id="pdf-btn" type="button" disabled>⬇ PDF</button>
@@ -1147,6 +1171,10 @@ function schedaPersona(p, c, y) {
     fatte: r ? r.fatte.size : 0, prev: c.previste.length, dal: y - c.anniPrima
   };
   s.pct = s.minTot ? s.tot / s.minTot : null;
+  // Dettaglio: attività della tipologia nel periodo, interventi del settore, manovre previste mancanti
+  s.attivita = p.att.filter(a => a.tipo !== 'intervento' && a.corsi.has(c) && a.anno <= y && a.anno >= y - c.anniPrima).sort((a, b) => a.data - b.data);
+  s.interventi = intv.slice().sort((a, b) => a.data - b.data);
+  s.mancanti = c.previste.filter(m => !(r && r.fatte.has(m)));
   // Logica del foglio Stampa_Report_Collettivo (colonna M: R, Ar, A, V)
   const eps = 1e-4, indMin = s.minTot - s.collMin;
   s.motivi = [];
@@ -1204,9 +1232,13 @@ const state = {
   tipologiaUrl: URLP.get('tipologia') || '',
   corso: null,
   anno: parseInt(URLP.get('anno'), 10) || ANNO_OGGI,
-  tutti: URLP.has('tutti')
+  tutti: URLP.has('tutti'),
+  dettaglio: !URLP.has('sintesi'),
+  chiuse: new Set()      // nominativi con il dettaglio chiuso a mano
 };
 tuttiChk.checked = state.tutti;
+const detChk = document.getElementById('det-chk');
+detChk.checked = state.dettaglio;
 let ULTIMO = null;   // ultimo report disegnato (per PDF e invio)
 
 function scaricaGviz(foglio, range) {
@@ -1370,6 +1402,7 @@ function aggiornaUrl() {
   if (c) q.set('tipologia', c.tipologia);
   if (state.anno !== ANNO_OGGI) q.set('anno', state.anno);
   if (state.tutti) q.set('tutti', '1');
+  if (!state.dettaglio) q.set('sintesi', '1');
   if (DEBUG) q.set('debug', '1');
   history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : ''));
 }
@@ -1383,6 +1416,7 @@ document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click'
 tipSelect.addEventListener('change', () => { state.corso = +tipSelect.value; disegna(); });
 annoSelect.addEventListener('change', () => { state.anno = +annoSelect.value; disegna(); });
 tuttiChk.addEventListener('change', () => { state.tutti = tuttiChk.checked; disegna(); });
+detChk.addEventListener('change', () => { state.dettaglio = detChk.checked; state.chiuse.clear(); disegna(); });
 refreshBtn.addEventListener('click', caricaDati);
 printBtn.addEventListener('click', () => window.print());
 
@@ -1401,7 +1435,8 @@ const periodoDi = (c, y) => c.anniPrima ? `${y - c.anniPrima}–${y}` : String(y
 function rigaPersona(s, i, y) {
   const p = s.p, col = STATI[s.stato].c;
   const pct = s.minTot ? Math.min(100, s.pct * 100) : 0;
-  return `<tr class="persona st-${s.stato}" style="--sc:${col}">
+  const det = state.dettaglio && haDettaglio(s), chiusa = state.chiuse.has(p.key);
+  return `<tr class="persona st-${s.stato}${det ? ' apribile' + (chiusa ? ' chiusa' : '') : ''}" data-key="${esc(p.key)}" style="--sc:${col}">
     <td class="c">${i}</td>
     <td class="nome"><a href="${linkIndividuale(p, y)}" target="_blank" rel="noopener" title="Apri il report individuale">${esc(p.nome)}</a>${p.key.startsWith('cf:') ? `<span class="cf">${esc(p.key.slice(3))}</span>` : ''}</td>
     <td class="c">${esc(p.qualifica || '')}</td>
@@ -1414,7 +1449,50 @@ function rigaPersona(s, i, y) {
     <td class="c">${s.prev ? `<b>${s.fatte}</b> / ${s.prev}` : '—'}</td>
     <td class="n">${s.con && s.pct != null ? Math.round(s.pct * 100) + '%' : '—'}</td>
     <td>${statoHtml(s)}${s.motivi && s.motivi.length ? `<span class="sub-n">${esc(s.motivi.join(' · '))}</span>` : ''}</td>
-  </tr>`;
+  </tr>${det ? `<tr class="det" data-for="${esc(p.key)}" style="--sc:${col}${chiusa ? ';display:none' : ''}"><td></td><td colspan="11">${dettaglioHtml(s)}</td></tr>` : ''}`;
+}
+
+/* ---------------- dettaglio delle attività di un nominativo ---------------- */
+// Manovra in breve: "III-26" (Ciclo-codice); il nome intero nel suggerimento e nella legenda
+const codiceMan = m => m.ciclo && m.codice ? `${m.ciclo}-${m.codice}` : (m.codice || m.uid || m.manovra);
+const nomeMan = m => `${m.ciclo ? m.ciclo + ' Ciclo - ' : ''}${m.codice ? m.codice + ' - ' : ''}${m.manovra}`;
+const dataBreve = d => d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' });
+const enteBreve = t => String(t || '').replace(/^\s*comando\s+(vv\.?\s*f\.?\s*)?(di\s+)?/i, '').replace(/^\s*direzione\s+(regionale\s+)?/i, 'Dir. ');
+const TIPO_BREVE = { collettivo: 'Collettivi', individuale: 'Individuali', altro: 'Altre attività' };
+const haDettaglio = s => s.attivita.length || s.interventi.length || (s.con && s.mancanti.length);
+// manovre del corso riconosciute in un'attività
+const manovreAtt = (a, c) => [...a.manovre].filter(m => m.corsi.includes(c));
+// Dati del dettaglio, uguali per pagina e PDF
+function righeDettaglio(s) {
+  const out = [];
+  ['collettivo', 'individuale', 'altro'].forEach(t => {
+    const l = s.attivita.filter(a => (a.tipo === 'collettivo' || a.tipo === 'individuale' ? a.tipo : 'altro') === t);
+    if (!l.length) return;
+    out.push({ titolo: `${TIPO_BREVE[t]} (${l.length})`, voci: l.map(a => ({
+      testo: `${dataBreve(a.data)} ${a.ore == null ? '—' : fmtHM(a.ore)}${t === 'collettivo' ? ' ' + enteBreve(a.organizzatoreRaw || a.organizzatore) : ''}${a.anno !== state.anno ? ' (' + a.anno + ')' : ''}`,
+      manovre: manovreAtt(a, s.c)
+    })) });
+  });
+  if (s.interventi.length) out.push({ titolo: `Interventi ${s.c.categoria.replace(/\s*\(.*\)\s*/, '')} (${s.interventi.length})`, voci: s.interventi.map(a => ({
+    testo: `${dataBreve(a.data)} ${a.ore == null ? '—' : fmtHM(a.ore)}${a.numInt ? ' n. ' + a.numInt : ''}${a.descrInt ? ' ' + a.descrInt.slice(0, 60) : ''}`, manovre: []
+  })) });
+  if (s.con && s.mancanti.length) out.push({ titolo: `Manovre previste mancanti (${s.mancanti.length})`, mancanti: s.mancanti });
+  return out;
+}
+function dettaglioHtml(s) {
+  const mc = (m, cls) => `<span class="mc${cls || ''}" title="${esc(nomeMan(m))}">${esc(codiceMan(m))}</span>`;
+  return righeDettaglio(s).map(r => `<div class="riga"><b>${esc(r.titolo)}:</b> ` + (r.mancanti
+    ? r.mancanti.map(m => mc(m, ' manca')).join('')
+    : r.voci.map(v => `<span class="att">${esc(v.testo)}${v.manovre.length ? ' <i>·</i> ' + v.manovre.map(m => mc(m)).join('') : ''}</span>`).join('')) + '</div>').join('');
+}
+function testoDettaglio(s) {
+  return righeDettaglio(s).map(r => r.titolo + ': ' + (r.mancanti
+    ? r.mancanti.map(codiceMan).join(', ')
+    : r.voci.map(v => v.testo + (v.manovre.length ? ' [' + v.manovre.map(codiceMan).join(', ') + ']' : '')).join('; '))).join('\n');
+}
+function legendaManovre(c) {
+  if (!c.previste.length) return '';
+  return `<details class="legman"${state.dettaglio ? ' open' : ''}><summary>Manovre previste di ${esc(c.tipologia)} (${c.previste.length})</summary><ul>${c.previste.map(m => `<li><b>${esc(codiceMan(m))}</b> ${esc(m.manovra)}</li>`).join('')}</ul></details>`;
 }
 const TESTA_TABELLA = `<thead><tr><th>#</th><th>Nominativo</th><th>Qualifica</th><th>Altri corsi del settore</th><th>Collettivi</th><th>Individuali</th><th>Interventi del settore</th><th>Ore svolte / richieste</th><th>di cui collettive</th><th>Manovre previste</th><th>OK%</th><th>Stato</th></tr></thead>`;
 const GRUPPI = [
@@ -1489,6 +1567,13 @@ function disegna() {
   if (state.tipo === 'comando') html += disegnaComando(k, c, y);
   else html += disegnaDirezione(k, c, y);
   report.innerHTML = html;
+  report.querySelectorAll('tr.persona.apribile').forEach(tr => tr.addEventListener('click', ev => {
+    if (ev.target.closest('a')) return;
+    const k = tr.dataset.key, chiudi = !state.chiuse.has(k);
+    chiudi ? state.chiuse.add(k) : state.chiuse.delete(k);
+    tr.classList.toggle('chiusa', chiudi);
+    report.querySelectorAll(`tr.det[data-for="${CSS.escape(k)}"]`).forEach(d => { d.style.display = chiudi ? 'none' : ''; });
+  }));
   report.querySelectorAll('table.riep tr[data-k]').forEach(tr => tr.addEventListener('click', () => {
     const el = document.getElementById('sez-' + tr.dataset.k);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1514,7 +1599,7 @@ function disegnaComando(k, c, y) {
   h += `<div class="solo-schermo">${tessere(E.conta, E.con.length, E.senza.length, E.collettivi, E.collPrec, y)}</div>`;
   h += `<h4 class="sec">Personale ${y} <span>· clic su un nominativo per il report individuale</span></h4>`;
   h += legendaHtml() + tabellaPersonale(E, y, c);
-  return h + noteHtml(c, y);
+  return h + legendaManovre(c) + noteHtml(c, y);
 }
 
 function disegnaDirezione(k, c, y) {
@@ -1564,7 +1649,7 @@ function disegnaDirezione(k, c, y) {
       ${tabellaPersonale(E, y, c)}</div>`;
   });
   if (vuoti.length) h += `<div class="note-box"><b>Nessuno con il corso o con attività di questa tipologia</b>: ${vuoti.map(esc).join(' · ')}</div>`;
-  return h + noteHtml(c, y);
+  return h + legendaManovre(c) + noteHtml(c, y);
 }
 
 /* =====================================================================
@@ -1636,6 +1721,8 @@ async function creaPdf() {
           s.prev ? `${s.fatte} / ${s.prev}` : '-',
           s.con && s.pct != null ? Math.round(s.pct * 100) + '%' : '-',
           { content: testoPdf(STATI[s.stato].t + (s.motivi && s.motivi.length ? '\n' + s.motivi.join(', ') : '')), stato: s.stato }]);
+        if (state.dettaglio && haDettaglio(s)) b.push([{ content: '', styles: { fillColor: [255, 255, 255] } },
+          { content: testoPdf(testoDettaglio(s)), colSpan: 11, styles: { fontSize: 6.2, textColor: [45, 45, 45], fillColor: [255, 255, 255], cellPadding: { top: 0.6, bottom: 0.8, left: 2, right: 1 } } }]);
       });
     });
     if (i) b.push([{ content: 'Totale ore (con e senza corso)', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
@@ -1699,6 +1786,18 @@ async function creaPdf() {
       doc.setTextColor(0);
       tabella(corpo(E), y0 + 2);
     });
+  }
+  // Legenda delle manovre previste (codici usati nel dettaglio)
+  if (c.previste.length) {
+    let y0 = doc.lastAutoTable.finalY + 7;
+    if (y0 > H - 30) { doc.addPage(); y0 = M + 5; }
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+    doc.text(testoPdf(`Manovre previste - ${c.tipologia} (${c.previste.length})`), M, y0);
+    const righe = [];
+    for (let i = 0; i < c.previste.length; i += 2) righe.push([c.previste[i], c.previste[i + 1]].flatMap(m => m ? [codiceMan(m), testoPdf(m.manovra)] : ['', '']));
+    doc.autoTable({ startY: y0 + 2, margin: { left: M, right: M, top: M, bottom: 8 }, body: righe, theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 6.5, cellPadding: 0.8, lineColor: [150, 150, 150], lineWidth: 0.1, textColor: [0, 0, 0] },
+      columnStyles: { 0: { cellWidth: 14, fontStyle: 'bold' }, 2: { cellWidth: 14, fontStyle: 'bold' } } });
   }
   const pagine = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pagine; i++) {
