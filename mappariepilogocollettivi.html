@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>P.U.M.A. - Addestramenti collettivi di gennaio</title>
+  <title>P.U.M.A. - Storico Inserimenti</title>
   <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -280,7 +280,7 @@
 <header id="page-header">
   <div>
     <h1><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</h1>
-    <h2>Riepilogo addestramenti collettivi per Comando organizzatore: <b id="periodo-label">—</b></h2>
+    <h2>Storico inserimenti addestramenti collettivi per Comando organizzatore: <b id="periodo-label">—</b></h2>
     <div id="meta-info">Dati caricati: <span id="last-update">—</span></div>
   </div>
   <div id="nav-buttons">
@@ -783,7 +783,7 @@ function aggiornaTitolo() {
   const anni = anniScelti();
   const testo = (state.mese >= 0 ? MESI[state.mese] + ' ' : 'anno ') + anni.join(' e ');
   document.getElementById('periodo-label').textContent = testo;
-  document.title = `P.U.M.A. - Addestramenti collettivi ${testo}`;
+  document.title = `P.U.M.A. - Storico Inserimenti – ${testo}`;
 }
 
 function filtriCambiati() {
