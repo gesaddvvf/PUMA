@@ -6,12 +6,15 @@
   <title>P.U.M.A. - Libretti SAF</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
-  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
+    /* Caratteri P.U.M.A.: Montserrat per titoli e pulsanti, Inter per testo e tabelle */
+    h1, h2, h3, h4, .nav-btn { font-family: 'Montserrat', sans-serif; letter-spacing: -0.01em; }
+
     :root { color-scheme: dark; --gold: #ffd700; --ok: #66bb6a; --ko: #ef5350; --warn: #ffb74d; --rosso: #c62828; }
     * { scrollbar-width: thin; scrollbar-color: #555 #1e1e1e; }
     html, body { height: 100%; margin: 0; padding: 0; }
-    body { font-family: 'Comfortaa', cursive; background-color: #1e1e1e; color: #f0f0f0; display: flex; flex-direction: column; }
+    body { font-family: 'Inter', sans-serif; background-color: #1e1e1e; color: #f0f0f0; display: flex; flex-direction: column; }
 
     /* ---------- HEADER (come le altre pagine PUMA) ---------- */
     #page-header {
@@ -27,7 +30,7 @@
     #nav-buttons { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
     .nav-btn {
       display: inline-block; background-color: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px; padding: 8px 14px;
-      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 13px; text-decoration: none; transition: background-color 0.15s, color 0.15s;
+      font-family: 'Inter', sans-serif; font-weight: bold; font-size: 13px; text-decoration: none; transition: background-color 0.15s, color 0.15s;
     }
     .nav-btn:hover { background-color: var(--gold); color: #1e1e1e; }
     button.nav-btn { cursor: pointer; }
@@ -44,7 +47,7 @@
     }
     .filters label.lbl { color: #aaa; }
     .filters input, .filters select {
-      background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px; padding: 6px 8px; font-family: 'Comfortaa', cursive; font-size: 12.5px;
+      background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px; padding: 6px 8px; font-family: 'Inter', sans-serif; font-size: 12.5px;
     }
     .filters input:focus, .filters select:focus { outline: none; border-color: var(--gold); }
     .filters select { font-weight: bold; }
@@ -55,7 +58,7 @@
     .azioni { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
     .btn {
       background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px;
-      padding: 6px 12px; font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+      padding: 6px 12px; font-family: 'Inter', sans-serif; font-weight: bold; font-size: 12.5px; cursor: pointer;
     }
     .btn:hover { background: var(--gold); color: #1e1e1e; }
     .btn:disabled { opacity: .4; cursor: default; background: #2a2a2a; color: var(--gold); }

@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>P.U.M.A. - Report individuale</title>
   <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
-  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
+    /* Caratteri P.U.M.A.: Montserrat per titoli e pulsanti, Inter per testo e tabelle */
+    h1, h2, h3, h4, .nav-btn { font-family: 'Montserrat', sans-serif; letter-spacing: -0.01em; }
+
     :root {
       color-scheme: dark;
       --gold: #ffd700;
@@ -24,7 +27,7 @@
 
     html, body { height: 100%; margin: 0; padding: 0; }
     body {
-      font-family: 'Comfortaa', cursive; background-color: #1e1e1e; color: #f0f0f0;
+      font-family: 'Inter', sans-serif; background-color: #1e1e1e; color: #f0f0f0;
       display: flex; flex-direction: column;
     }
 
@@ -47,7 +50,7 @@
     .nav-btn {
       display: inline-block; background-color: #2a2a2a; color: var(--gold);
       border: 1px solid var(--gold); border-radius: 4px; padding: 8px 14px;
-      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 13px;
+      font-family: 'Inter', sans-serif; font-weight: bold; font-size: 13px;
       text-decoration: none; transition: background-color 0.15s, color 0.15s;
     }
     .nav-btn:hover { background-color: var(--gold); color: #1e1e1e; }
@@ -65,25 +68,25 @@
     #filters label.lbl { color: #aaa; }
     #filters input, #filters select {
       background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px;
-      padding: 6px 8px; font-family: 'Comfortaa', cursive; font-size: 12.5px;
+      padding: 6px 8px; font-family: 'Inter', sans-serif; font-size: 12.5px;
     }
     #filters input:focus, #filters select:focus { outline: none; border-color: var(--gold); }
     #nome-input { width: 320px; max-width: 100%; }
     #anno-select { font-weight: bold; }
     #clear-btn {
       background: none; border: 1px solid #555; color: #aaa; border-radius: 4px; padding: 6px 9px;
-      font-family: 'Comfortaa', cursive; cursor: pointer; font-size: 12px;
+      font-family: 'Inter', sans-serif; cursor: pointer; font-size: 12px;
     }
     #clear-btn:hover { color: var(--gold); border-color: var(--gold); }
     #print-btn {
       margin-left: auto; background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px;
-      padding: 6px 12px; font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+      padding: 6px 12px; font-family: 'Inter', sans-serif; font-weight: bold; font-size: 12.5px; cursor: pointer;
     }
     #print-btn:hover { background: var(--gold); color: #1e1e1e; }
     #print-btn:disabled { opacity: .4; cursor: default; background: #2a2a2a; color: var(--gold); }
     #mail-btn {
       background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px;
-      padding: 6px 12px; font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+      padding: 6px 12px; font-family: 'Inter', sans-serif; font-weight: bold; font-size: 12.5px; cursor: pointer;
     }
     #mail-btn:hover { background: var(--gold); color: #1e1e1e; }
     #mail-btn:disabled { opacity: .4; cursor: default; background: #2a2a2a; color: var(--gold); }
@@ -100,7 +103,7 @@
     .dlg label.campo small { color: #999; }
     .dlg input[type=email] {
       display: block; width: 100%; box-sizing: border-box; margin-top: 4px; background: #1e1e1e; color: #f0f0f0;
-      border: 1px solid #555; border-radius: 4px; padding: 7px 9px; font-family: 'Comfortaa', cursive; font-size: 13px;
+      border: 1px solid #555; border-radius: 4px; padding: 7px 9px; font-family: 'Inter', sans-serif; font-size: 13px;
     }
     .dlg input[type=email]:focus { outline: none; border-color: var(--gold); }
     .inv-stato { min-height: 20px; font-size: 12.5px; margin-bottom: 10px; }
@@ -110,7 +113,7 @@
     .dlg-btn { display: flex; justify-content: flex-end; gap: 8px; }
     .dlg-btn button {
       background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px; padding: 7px 14px;
-      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12.5px; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-weight: bold; font-size: 12.5px; cursor: pointer;
     }
     .dlg-btn button.primario { background: var(--gold); color: #1e1e1e; }
     .dlg-btn button:disabled { opacity: .45; cursor: default; }
@@ -158,7 +161,7 @@
     .tile .p .down { color: var(--ko); font-weight: bold; }
 
     /* Tabelle */
-    table { font-family: 'Comfortaa', cursive; border-collapse: collapse; width: 100%; font-size: 12.5px; }
+    table { font-family: 'Inter', sans-serif; border-collapse: collapse; width: 100%; font-size: 12.5px; }
     td, th { padding: 6px 8px; border: 1px solid #444; vertical-align: middle; }
     th { background: #2a2a2a; color: #ccc; font-weight: bold; text-align: center; }
     tbody tr:nth-child(even) td { background-color: #242424; }
@@ -316,7 +319,7 @@
     }
     .lett {
       width: 27px; height: 27px; border-radius: 50%; padding: 0; border: 1px solid var(--gold); background: #1e1e1e;
-      color: var(--gold); font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 12px; cursor: pointer;
+      color: var(--gold); font-family: 'Inter', sans-serif; font-weight: bold; font-size: 12px; cursor: pointer;
     }
     .lett:hover:not(:disabled) { background: #3a3520; }
     .lett.on, .lett.on:hover:not(:disabled) { background: var(--gold); color: #1e1e1e; }
