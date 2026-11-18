@@ -975,7 +975,7 @@ function riepilogoCorsi(p, y) {
       fatte.set(m, f);
     }));
     // addestramenti del corso senza nessuna manovra prevista riconosciuta (anche quelli con sole voci (N)):
-    // "addestramenti vari senza documentazione correlata" (in tutte le tipologie con manovre previste)
+    // "addestramenti senza documentazione correlata" (in tutte le tipologie con manovre previste)
     const vari = c.previste.length ? add.filter(a => ![...a.manovre].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
     const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
     let stato = 'nd';
@@ -1478,7 +1478,7 @@ function statoHtml(s) {
 }
 const fmtOre = h => h ? fmtHM(h) : '—';
 // addestramenti del corso senza manovre previste riconosciute (anche con sole voci (N), attività generiche)
-const variTxt = n => `${n} ${n === 1 ? 'addestramento vario' : 'addestramenti vari'} senza documentazione correlata`;
+const variTxt = n => `${n} ${n === 1 ? 'addestramento' : 'addestramenti'} senza documentazione correlata`;
 const linkIndividuale = (p, y) => `reportindividuale.html?nome=${encodeURIComponent(p.etichetta || p.nome)}&anno=${y}`;
 const periodoDi = (c, y) => c.anniPrima ? `${y - c.anniPrima}–${y}` : String(y);
 
@@ -1610,7 +1610,7 @@ function tessere(conta, nCon, nSenza, coll, collPrec, y, vari) {
     <div class="tile" style="--tc:#ef6c00"><div class="k">Personale con corso</div><div class="v">${nCon}</div><div class="p">${nSenza ? `+ ${nSenza} senza corso con attività` : 'nessuno senza corso con attività'}</div></div>
     ${ORDINE_STATI.slice(0, 4).map(k => `<div class="tile" style="--tc:${STATI[k].c}"><div class="k">${pallino(k)}${STATI[k].t}</div><div class="v">${conta[k]}${pc(conta[k])}</div></div>`).join('')}
     <div class="tile" style="--tc:#4fc3f7"><div class="k">Collettivi organizzati</div><div class="v">${coll.n} <small>· ${fmtH(coll.ore)}</small></div><div class="p">${y - 1}: ${collPrec.n} · ${fmtH(collPrec.ore)}</div></div>
-    ${vari ? `<div class="tile" style="--tc:#9e9e9e"><div class="k">Addestramenti vari</div><div class="v">${vari}</div><div class="p">senza documentazione correlata</div></div>` : ''}
+    ${vari ? `<div class="tile" style="--tc:#9e9e9e"><div class="k">Addestramenti</div><div class="v">${vari}</div><div class="p">senza documentazione correlata</div></div>` : ''}
   </div>`;
 }
 function testaStampa(titoloEnte, c, y, firme) {
@@ -1632,7 +1632,7 @@ function noteHtml(c, y) {
     <li>Requisito di ${esc(c.tipologia)}: ${requisitoTxt(c, y)}.</li>
     <li>Ore svolte = addestramenti collettivi e individuali di questa tipologia${INTERVENTI_NEL_TOTALE ? ` + interventi del settore ${esc(c.categoria)}` : ''}, nel periodo ${periodoDi(c, y)}. Gli interventi non hanno una tipologia: si contano per settore, come nel Libretto.</li>
     <li>Colori e stato come nel Report Collettivo del foglio: <b style="color:${STATI.ko.c}">Non idoneo</b> sotto il 75% delle ore previste · <b style="color:${STATI.quasi.c}">75% delle ore previste</b> tra il 75% e il 100% · <b style="color:${STATI.man.c}">Verificare</b> ore raggiunte ma individuali (con interventi) o collettive sotto la loro quota, oppure mancano manovre previste · <b style="color:${STATI.ok.c}">Idoneo</b> tutto raggiunto. OK% = ore svolte / ore previste.</li>
-    <li>Manovre previste: quelle con (N) non sono manovre previste ma attività generiche (le ore contano); quelle con (C) (es. «Addestramento provinciale di gruppo») risultano fatte con ogni addestramento collettivo della tipologia, o se scritte in un altro addestramento collettivo o individuale. Le registrazioni individuali «Addestramento provinciale di gruppo» contano come collettive. In ogni tipologia con manovre previste, gli addestramenti senza nessuna manovra prevista riconosciuta sono segnalati come «addestramenti vari senza documentazione correlata».</li>
+    <li>Manovre previste: quelle con (N) non sono manovre previste ma attività generiche (le ore contano); quelle con (C) (es. «Addestramento provinciale di gruppo») risultano fatte con ogni addestramento collettivo della tipologia, o se scritte in un altro addestramento collettivo o individuale. Le registrazioni individuali «Addestramento provinciale di gruppo» contano come collettive. In ogni tipologia con manovre previste, gli addestramenti senza nessuna manovra prevista riconosciuta sono segnalati come «addestramenti senza documentazione correlata».</li>
     <li>Con corso = il corso è tra quelli in possesso in Elenco_Filtrato${DI_TUTTI.includes(c) ? ' (questa tipologia la hanno tutti)' : ''}. Il Comando di ognuno è quello di appartenenza. Clic su un nominativo per il suo report individuale.</li>
   </ul></div>`;
 }
@@ -1807,7 +1807,7 @@ async function creaPdf() {
           o(s.coll), o(s.ind), o(s.int) + (s.nInt ? ` (${s.nInt})` : ''),
           o(s.tot) + (s.minTot ? ' / ' + fmtHM(s.minTot) : ''),
           s.collMin ? `${o(s.oreColl)} / ${fmtHM(s.collMin)}` : '-',
-          testoPdf((s.prev ? `${s.fatte} / ${s.prev}` : '-') + (s.vari.length ? `\n${s.vari.length} add. vari senza doc. correlata` : '')),
+          testoPdf((s.prev ? `${s.fatte} / ${s.prev}` : '-') + (s.vari.length ? `\n${s.vari.length} add. senza doc. correlata` : '')),
           s.con && s.pct != null ? Math.round(s.pct * 100) + '%' : '-',
           { content: testoPdf(STATI[s.stato].t + (s.motivi && s.motivi.length ? '\n' + s.motivi.join(', ') : '')), stato: s.stato }]);
         if (haDettaglio(s) && dettaglioAperto(s)) {

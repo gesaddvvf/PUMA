@@ -1277,7 +1277,7 @@ function riepilogoCorsi(p, y) {
       fatte.set(m, f);
     }));
     // addestramenti del corso senza nessuna manovra prevista riconosciuta (anche quelli con sole voci (N)):
-    // "addestramenti vari senza documentazione correlata" (in tutte le tipologie con manovre previste)
+    // "addestramenti senza documentazione correlata" (in tutte le tipologie con manovre previste)
     const vari = c.previste.length ? add.filter(a => ![...a.manovre].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
     const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
     let stato = 'nd';
@@ -1580,7 +1580,7 @@ function dettaglioManovre(c, r) {
   }
   return h;
 }
-const variTxt = n => `${n} ${n === 1 ? 'addestramento vario' : 'addestramenti vari'} senza documentazione correlata`;
+const variTxt = n => `${n} ${n === 1 ? 'addestramento' : 'addestramenti'} senza documentazione correlata`;
 
 function graficoMesi(a, p, y) {
   const max = Math.max(1, ...a, ...p);
