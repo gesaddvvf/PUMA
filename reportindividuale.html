@@ -1721,7 +1721,7 @@ function datiRiga(a, catSezione) {
     // manovre come scritte nel modulo (già complete), una riga ciascuna, senza ripetizioni
     const giaScritto = normKey(righe.join(' '));
     righeManovre(a.manovreTxt).forEach(t => { if (!giaScritto.includes(normKey(t))) righe.push(t); });
-    if (a.tipo === 'collettivo' && !a.piano && !a.diGruppo) righe.push('⚠ Piano di Sicurezza non trovato');
+    if (a.tipo === 'collettivo' && !a.piano && !a.diGruppo) righe.push('⚠ Piano di Sicurezza Mancante (nessun Piano con lo stesso Comando, giorno e squadra)');
   }
   return {
     prima, comando: comando || '', tipo: TIPO_LIBRETTO[a.tipo] || a.cosa || 'Altro', righe: righe.filter(Boolean),

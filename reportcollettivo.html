@@ -1656,9 +1656,15 @@ function datiDettaglio(s) {
   const att = [...s.attivita, ...s.interventi].sort((a, b) => a.data - b.data).map(a => {
     const tipo = a.tipo === 'collettivo' || a.tipo === 'individuale' || a.tipo === 'intervento' ? a.tipo : 'altro';
     let info = '';
-    if (tipo === 'collettivo' && a.diGruppo) info = 'di gruppo (registrato come individuale)' + (a.organizzatore || a.appartenenzaRaw ? ' · ' + enteBreve(a.organizzatoreRaw || a.appartenenzaRaw) : '');
-    else if (tipo === 'collettivo') info = enteBreve(a.organizzatoreRaw || a.organizzatore) + (a.team ? ' · sq. ' + a.team : '');
-    else if (tipo === 'intervento') info = [a.numInt ? 'n. ' + a.numInt : '', (a.descrInt || '').slice(0, 70)].filter(Boolean).join(' · ');
+    if (tipo === 'collettivo') {
+      info = a.diGruppo
+        ? 'di gruppo (registrato come individuale)' + (a.organizzatore || a.appartenenzaRaw ? ' · ' + enteBreve(a.organizzatoreRaw || a.appartenenzaRaw) : '')
+        : enteBreve(a.organizzatoreRaw || a.organizzatore) + (a.team ? ' · sq. ' + a.team : '');
+      // descrizione attività del Piano di Sicurezza (se manca il Piano, quella della registrazione)
+      const dp = String((a.piano && a.piano.descr) || a.descr || '').replace(/\s+/g, ' ').trim();
+      if (dp) info += ' · ' + (dp.length > 90 ? dp.slice(0, 89) + '…' : dp);
+      if (!a.piano && !a.diGruppo) info += ' · Piano di Sicurezza Mancante';
+    } else if (tipo === 'intervento') info = [a.numInt ? 'n. ' + a.numInt : '', (a.descrInt || '').slice(0, 70)].filter(Boolean).join(' · ');
     else info = (a.descr || a.tipologia || '').replace(/\s+/g, ' ').slice(0, 70);
     // attività generica: nessuna manovra prevista; le voci (N) riconosciute come descrizione
     const vario = s.vari.includes(a);   // collettivo senza documentazione correlata
