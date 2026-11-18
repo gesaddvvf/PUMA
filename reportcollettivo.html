@@ -442,6 +442,8 @@ const NOME_NON_REALE = /\b(test\d*|prova\d*|demo|esempio|fake)\b|^x+$|^-+$|^\.+$
 const ORE_MAX = 168;
 // Duplicati in Piano_Di_Sicurezza: stesso giorno + Comando + squadra + tipologia → resta l'ultimo inserito
 const FILTRA_DUPLICATI = true;
+// Tipologia (in Formazione) delle conferme di collettivi senza Piano di Sicurezza con lo stesso Comando, giorno e squadra
+const TIPOLOGIA_PSM = 'Piano di Sicurezza Mancante';
 
 /* ===================================================================== */
 const URLP = new URLSearchParams(location.search);
@@ -892,25 +894,20 @@ function elaboraReg(reg, pianoIdx) {
       const k2 = a.giorno + '|' + comandoKey(g(r, 'organizzatore'));
       const delGiorno = pianoIdx.idx2.get(k2) || [];
       const conSquadra = a.team ? (pianoIdx.idx3.get(k2 + '|' + squadraKey(a.team)) || []) : [];
-      // ora della conferma (timestamp del modulo): nessun vincolo sull'orario del Piano, vale tutto il giorno fino a mezzanotte;
-      // serve solo a scegliere tra più Piani dello stesso giorno quando la squadra indicata non ha un Piano
+      // ora della conferma (timestamp del modulo): nessun vincolo d'orario, la conferma vale tutto il giorno fino a mezzanotte
       const ts = parseDataOra(g(r, 'cronologiche'));
       a.oraConferma = ts && ts.ora && giornoKey(ts.d) === a.giorno ? ts.d : null;
-      const inOrario = p => {
-        const i = parseDataOra(p.inizio), f = parseDataOra(p.fine);
-        return !a.oraConferma || !i || !f || (a.oraConferma >= i.d && a.oraConferma <= f.d);
-      };
-      let cand = conSquadra.length ? conSquadra : delGiorno;
+      // come nel foglio (Riorganizzazione_Attività_Collettive): serve il Piano con lo stesso Comando, giorno e squadra;
+      // se manca, l'attività è "Piano di Sicurezza Mancante" (0 ore), senza attribuirla al Piano di un'altra squadra
+      let cand = conSquadra;
       if (cand.length > 1 && a.attivita) {
         const ka = normKey(a.attivita);
         const f = cand.filter(p => normKey(p.tipologia).includes(ka) || ka.includes(normKey(p.tipologia)));
         if (f.length) cand = f;
       }
-      if (cand.length > 1) { const f = cand.filter(inOrario); if (f.length) cand = f; }
       if (cand.length) {
         const p = cand[cand.length - 1];
         a.piano = p; a.pianiMultipli = cand.length > 1;
-        a.controllo = !conSquadra.length ? 'squadra' : '';
         a.tipologia = p.tipologia;
         if (a.ore == null && p.ore != null) { a.ore = p.ore; a.oreDa = 'piano'; a.inizio = p.inizio; a.fine = p.fine; }
         if (p.manovre) a.manovreTxt = [a.manovreTxt, p.manovre].filter(Boolean).join('\n');
@@ -918,7 +915,8 @@ function elaboraReg(reg, pianoIdx) {
       } else {
         collSenzaPiano++;
         a.controllo = 'piano';
-        a.tipologia = a.attivita;
+        a.altriPiani = delGiorno.map(p => p.squadra).filter(Boolean);   // squadre con un Piano quel giorno (per il controllo)
+        a.tipologia = TIPOLOGIA_PSM;
       }
     } else if (tipo === 'individuale') {
       a.tipologia = g(r, 'tipInd') || a.attivita;
@@ -1332,15 +1330,14 @@ function controlloConferme(keys, c, y) {
   const nome = p => p.nome;
   conf.forEach(({ p, a }) => {
     const pk = a.piano ? 'P' + PIANI.indexOf(a.piano) : '';
-    if (a.controllo === 'squadra') { const g = add('s|' + pk + '|' + squadraKey(a.team || ''), { tipo: 'squadra', a }); g.nomi.push(nome(p)); }
-    else if (a.controllo === 'piano') { const g = add('n|' + a.giorno + '|' + comandoKey(a.organizzatoreRaw) + '|' + squadraKey(a.team || ''), { tipo: 'piano', a }); g.nomi.push(nome(p)); }
+    if (a.controllo === 'piano') { const g = add('n|' + a.giorno + '|' + comandoKey(a.organizzatoreRaw) + '|' + squadraKey(a.team || ''), { tipo: 'piano', a }); g.nomi.push(nome(p)); }
     if (a.duplicati > 1) { const g = add('d|' + pk + '|' + a.giorno, { tipo: 'doppia', a }); g.nomi.push(nome(p) + ' (' + a.duplicati + ' volte)'); }
   });
   // Piani senza nessuna conferma
   partecipantiPiano();
   PIANI.filter(p => p.data.getFullYear() === y && ks.has(p.comandoKey) && corsiPiano(p).has(c) && !(PART_PIANO.get(p) || []).length)
     .forEach(p => add('v|' + PIANI.indexOf(p), { tipo: 'vuoto', piano: p }));
-  const ord = { squadra: 1, piano: 2, doppia: 3, vuoto: 4 };
+  const ord = { piano: 2, doppia: 3, vuoto: 4 };
   return [...gruppi.values()].sort((x, z) => ((x.a || x.piano).data - (z.a || z.piano).data) || ord[x.tipo] - ord[z.tipo]);
 }
 function testoGruppoControllo(G, conEnte) {
@@ -1348,17 +1345,16 @@ function testoGruppoControllo(G, conEnte) {
   const ente = conEnte ? enteBreve(a ? a.organizzatoreRaw : p.comando) + ' ' : '';
   const quando = dataBreve((a || p).data);
   const nomi = G.nomi && G.nomi.length ? `: ${G.nomi.length} ${G.nomi.length === 1 ? 'persona' : 'persone'} (${[...new Set(G.nomi)].sort((x, z) => x.localeCompare(z, 'it')).join(', ')})` : '';
-  if (G.tipo === 'squadra') return `${ente}${quando} · ${a.team ? 'sq. ' + a.team + ' senza Piano' : 'squadra non indicata'} · contate nel Piano sq. ${p.squadra || '?'} (${orarioPiano(p)})${nomi}`;
-  if (G.tipo === 'piano') return `${ente}${quando}${a.team ? ' sq. ' + a.team : ''} · nessun Piano di Sicurezza del Comando nel giorno: ore non conteggiate${nomi}`;
+  if (G.tipo === 'piano') return `${ente}${quando} ${a.team ? 'sq. ' + a.team : 'squadra non indicata'} · nessun Piano di Sicurezza con questo Comando, giorno e squadra${a.altriPiani && a.altriPiani.length ? ' (Piani quel giorno: sq. ' + a.altriPiani.join(', ') + ')' : ''} · 0 ore${nomi}`;
   if (G.tipo === 'doppia') return `${ente}${quando}${p ? ' sq. ' + (p.squadra || '?') : ''} · conferme registrate più volte (contate una)${nomi}`;
   return `${ente}${quando} sq. ${p.squadra || '?'} · Piano ${orarioPiano(p)} senza nessuna conferma di presenza`;
 }
-const TITOLI_CONTROLLO = { squadra: 'Squadra senza Piano', piano: 'Senza Piano di Sicurezza', doppia: 'Conferma doppia', vuoto: 'Piano senza conferme' };
+const TITOLI_CONTROLLO = { piano: 'Piano di Sicurezza Mancante', doppia: 'Conferma doppia', vuoto: 'Piano senza conferme' };
 function controlloHtml(G, conEnte) {
   if (!G.length) return `<div class="ctrl-box ok">✔ Controllo conferme ↔ Piani di Sicurezza (Comando, giorno, squadra): nessuna anomalia.</div>`;
   return `<details class="ctrl-box"${G.length <= 12 ? ' open' : ''}><summary>⚠ Controllo conferme ↔ Piani di Sicurezza (Comando, giorno, squadra): ${G.length} ${G.length === 1 ? 'anomalia' : 'anomalie'}</summary>
     <ul>${G.map(g => `<li><b>${TITOLI_CONTROLLO[g.tipo]}</b> · ${esc(testoGruppoControllo(g, conEnte))}</li>`).join('')}</ul>
-    <div class="sub-n">La conferma vale per tutto il giorno del Piano, fino a mezzanotte. Le conferme senza Piano non hanno tipologia: compaiono in tutte le tipologie del Comando.</div></details>`;
+    <div class="sub-n">La conferma vale per tutto il giorno del Piano, fino a mezzanotte. Le conferme senza Piano hanno tipologia «Piano di Sicurezza Mancante» (0 ore): compaiono in tutte le tipologie del Comando.</div></details>`;
 }
 const voceCollSenzaDoc = p => `${dataBreve(p.data)}${p.squadra ? ' sq. ' + p.squadra : ''} (${p.ore == null ? '—' : fmtHM(p.ore)})${p.descr ? ' «' + (p.descr.length > 70 ? p.descr.slice(0, 69) + '…' : p.descr).replace(/\s+/g, ' ') + '»' : ''}`;
 function collSenzaDocHtml(l, conEnte) {
@@ -1594,8 +1590,7 @@ const fmtOraBreve = d => d ? String(d.getHours()).padStart(2, '0') + ':' + Strin
 const orarioPiano = p => { const i = parseDataOra(p.inizio), f = parseDataOra(p.fine); return i && f ? fmtOraBreve(i.d) + '–' + fmtOraBreve(f.d) : 'orario non indicato'; };
 function testoControllo(a) {
   if (!a.controllo) return '';
-  if (a.controllo === 'piano') return `nessun Piano di Sicurezza del ${enteNome(a.organizzatoreRaw)} il ${a.data.toLocaleDateString('it-IT')}${a.team ? ' (sq. ' + a.team + ')' : ''}: ore non conteggiate`;
-  if (a.controllo === 'squadra') return `${a.team ? 'nessun Piano con la sq. ' + a.team : 'squadra non indicata'}: conteggiato nel Piano sq. ${a.piano.squadra || '?'} (${orarioPiano(a.piano)})`;
+  if (a.controllo === 'piano') return `Piano di Sicurezza mancante: nessun Piano del ${enteNome(a.organizzatoreRaw)} il ${a.data.toLocaleDateString('it-IT')} ${a.team ? 'per la sq. ' + a.team : '(squadra non indicata)'}${a.altriPiani && a.altriPiani.length ? ' (Piani quel giorno: sq. ' + a.altriPiani.join(', ') + ')' : ''}: 0 ore`;
   return '';
 }
 const enteNome = t => nomeComando(t) || 'Comando';

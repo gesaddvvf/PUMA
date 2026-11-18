@@ -552,6 +552,8 @@ const NOME_NON_REALE = /\b(test\d*|prova\d*|demo|esempio|fake)\b|^x+$|^-+$|^\.+$
 const ORE_MAX = 168;
 // Duplicati in Piano_Di_Sicurezza: stesso giorno + Comando + squadra + tipologia → resta l'ultimo inserito
 const FILTRA_DUPLICATI = true;
+// Tipologia (in Formazione) delle conferme di collettivi senza Piano di Sicurezza con lo stesso Comando, giorno e squadra
+const TIPOLOGIA_PSM = 'Piano di Sicurezza Mancante';
 
 /* ===================================================================== */
 const URLP = new URLSearchParams(location.search);
@@ -1001,25 +1003,20 @@ function elaboraReg(reg, pianoIdx) {
       const k2 = a.giorno + '|' + comandoKey(g(r, 'organizzatore'));
       const delGiorno = pianoIdx.idx2.get(k2) || [];
       const conSquadra = a.team ? (pianoIdx.idx3.get(k2 + '|' + squadraKey(a.team)) || []) : [];
-      // ora della conferma (timestamp del modulo): nessun vincolo sull'orario del Piano, vale tutto il giorno fino a mezzanotte;
-      // serve solo a scegliere tra più Piani dello stesso giorno quando la squadra indicata non ha un Piano
+      // ora della conferma (timestamp del modulo): nessun vincolo d'orario, la conferma vale tutto il giorno fino a mezzanotte
       const ts = parseDataOra(g(r, 'cronologiche'));
       a.oraConferma = ts && ts.ora && giornoKey(ts.d) === a.giorno ? ts.d : null;
-      const inOrario = p => {
-        const i = parseDataOra(p.inizio), f = parseDataOra(p.fine);
-        return !a.oraConferma || !i || !f || (a.oraConferma >= i.d && a.oraConferma <= f.d);
-      };
-      let cand = conSquadra.length ? conSquadra : delGiorno;
+      // come nel foglio (Riorganizzazione_Attività_Collettive): serve il Piano con lo stesso Comando, giorno e squadra;
+      // se manca, l'attività è "Piano di Sicurezza Mancante" (0 ore), senza attribuirla al Piano di un'altra squadra
+      let cand = conSquadra;
       if (cand.length > 1 && a.attivita) {
         const ka = normKey(a.attivita);
         const f = cand.filter(p => normKey(p.tipologia).includes(ka) || ka.includes(normKey(p.tipologia)));
         if (f.length) cand = f;
       }
-      if (cand.length > 1) { const f = cand.filter(inOrario); if (f.length) cand = f; }
       if (cand.length) {
         const p = cand[cand.length - 1];
         a.piano = p; a.pianiMultipli = cand.length > 1;
-        a.controllo = !conSquadra.length ? 'squadra' : '';
         a.tipologia = p.tipologia;
         if (a.ore == null && p.ore != null) { a.ore = p.ore; a.oreDa = 'piano'; a.inizio = p.inizio; a.fine = p.fine; }
         if (p.manovre) a.manovreTxt = [a.manovreTxt, p.manovre].filter(Boolean).join('\n');
@@ -1027,7 +1024,8 @@ function elaboraReg(reg, pianoIdx) {
       } else {
         collSenzaPiano++;
         a.controllo = 'piano';
-        a.tipologia = a.attivita;
+        a.altriPiani = delGiorno.map(p => p.squadra).filter(Boolean);   // squadre con un Piano quel giorno (per il controllo)
+        a.tipologia = TIPOLOGIA_PSM;
       }
     } else if (tipo === 'individuale') {
       a.tipologia = g(r, 'tipInd') || a.attivita;
@@ -1536,7 +1534,7 @@ function disegna() {
           <td class="n">${fmtH(r.ore)}${c.oreMin != null ? ` <span class="sub-n">· minimo ${fmtH(c.oreMin)}</span>` : ''}</td>
           <td class="n">${fmtH(r.oreColl)}${r.collMin != null ? ` <span class="sub-n">· ${Math.round(c.collPct * 100)}% = ${fmtH(r.collMin)}</span>` : ''}${r.vari.length ? `<span class="sub-n" style="display:block;color:#ffb74d">⚠ ${r.vari.length} senza documentazione correlata: ${r.vari.map(a => a.data.toLocaleDateString('it-IT')).join(', ')}</span>` : ''}</td>
           <td class="c">${nPrev ? `<b style="color:${nFatte >= nPrev ? 'var(--ok)' : 'inherit'}">${nFatte}</b> / ${nPrev}` : '—'}</td>
-          <td class="c">${!r.possesso || c.oreMin || nPrev ? statoTipHtml(vt) : ''}${vt.motivi.length ? `<span class="sub-n" style="display:block">${esc(vt.motivi.join(' · '))}</span>` : ''}${vt.minTot ? `<span class="sub-n" style="display:block">${fmtHM(vt.tot)} / ${fmtHM(vt.minTot)}${vt.int ? ` con interventi (${fmtHM(vt.int)})` : ''} · ${Math.round(vt.pct * 100)}%</span>` : ''}${ruolo ? `<span style="display:block">${ruolo}</span>` : ''}</td>
+          <td class="c">${c.tipologia === TIPOLOGIA_PSM ? '<span class="stato ko">⚠ Verificare addestramento</span>' : !r.possesso || c.oreMin || nPrev ? statoTipHtml(vt) : ''}${vt.motivi.length ? `<span class="sub-n" style="display:block">${esc(vt.motivi.join(' · '))}</span>` : ''}${vt.minTot ? `<span class="sub-n" style="display:block">${fmtHM(vt.tot)} / ${fmtHM(vt.minTot)}${vt.int ? ` con interventi (${fmtHM(vt.int)})` : ''} · ${Math.round(vt.pct * 100)}%</span>` : ''}${ruolo ? `<span style="display:block">${ruolo}</span>` : ''}</td>
         </tr>
         <tr class="det-row" data-for="${id}" style="--cc:${cc};${aperto ? '' : 'display:none'}"><td colspan="6">${dettaglioManovre(c, r)}</td></tr>`;
       });
@@ -1568,11 +1566,9 @@ function disegna() {
   const senzaOre = anno.filter(a => a.ore == null && a.tipo !== 'intervento').length;
   if (senzaOre) note.push(`${senzaOre} attività senza orario di inizio/fine valido: contano come attività ma con 0 ore.`);
   const senzaPiano = anno.filter(a => a.tipo === 'collettivo' && !a.piano && !a.diGruppo).length;
-  const ctrl = anno.filter(a => a.tipo === 'collettivo' && !a.diGruppo && a.controllo && a.controllo !== 'piano');
-  if (ctrl.length) note.push(`Controllo con il Piano di Sicurezza (Comando, giorno, squadra): ${ctrl.map(a => `${a.data.toLocaleDateString('it-IT')} sq. ${a.team || '—'}: ${testoControllo(a)}`).map(esc).join(' · ')}.`);
   const dupAnno = anno.filter(a => a.duplicati > 1);
   if (dupAnno.length) note.push(`Inserimenti duplicati non conteggiati: ${dupAnno.map(a => `${a.data.toLocaleDateString('it-IT')} ${a.tipo === 'collettivo' ? 'collettivo' : a.tipo === 'intervento' ? 'intervento' : 'individuale'} registrato ${a.duplicati} volte`).join(' · ')}. Vale l'ultima registrazione inviata.`);
-  if (senzaPiano) note.push(`${senzaPiano} addestramenti collettivi senza Piano di Sicurezza corrispondente (stesso giorno, Comando organizzatore e squadra).`);
+  if (senzaPiano) note.push(`${senzaPiano} conferme di addestramenti collettivi con Piano di Sicurezza Mancante (nessun Piano con lo stesso Comando, giorno e squadra; 0 ore): ${anno.filter(a => a.controllo === 'piano').map(a => esc(a.data.toLocaleDateString('it-IT') + ' ' + enteNome(a.organizzatoreRaw).replace(/^Comando\s+/, '') + (a.team ? ' sq. ' + a.team : '') + (a.altriPiani && a.altriPiani.length ? ' (Piani quel giorno: sq. ' + a.altriPiani.join(', ') + ')' : ''))).join(' · ')}.`);
   const senzaCorso = [...new Set(anno.filter(a => a.tipo !== 'intervento' && !a.corsi.size && !a.categoria && a.tipologia).map(a => a.tipologia))];
   if (senzaCorso.length) note.push(`Tipologie non collegate a un corso di Formazione: ${senzaCorso.map(esc).join(' · ')}`);
   if (p.corsiTxt.length) note.push(`Corsi in possesso non trovati in Formazione (colonna Sigla): ${p.corsiTxt.map(esc).join(' · ')}`);
@@ -1669,8 +1665,7 @@ const fmtOraBreve = d => d ? String(d.getHours()).padStart(2, '0') + ':' + Strin
 const orarioPiano = p => { const i = parseDataOra(p.inizio), f = parseDataOra(p.fine); return i && f ? fmtOraBreve(i.d) + '–' + fmtOraBreve(f.d) : 'orario non indicato'; };
 function testoControllo(a) {
   if (!a.controllo) return '';
-  if (a.controllo === 'piano') return `nessun Piano di Sicurezza del ${enteNome(a.organizzatoreRaw)} il ${a.data.toLocaleDateString('it-IT')}${a.team ? ' (sq. ' + a.team + ')' : ''}: ore non conteggiate`;
-  if (a.controllo === 'squadra') return `${a.team ? 'nessun Piano con la sq. ' + a.team : 'squadra non indicata'}: conteggiato nel Piano sq. ${a.piano.squadra || '?'} (${orarioPiano(a.piano)})`;
+  if (a.controllo === 'piano') return `Piano di Sicurezza mancante: nessun Piano del ${enteNome(a.organizzatoreRaw)} il ${a.data.toLocaleDateString('it-IT')} ${a.team ? 'per la sq. ' + a.team : '(squadra non indicata)'}${a.altriPiani && a.altriPiani.length ? ' (Piani quel giorno: sq. ' + a.altriPiani.join(', ') + ')' : ''}: 0 ore`;
   return '';
 }
 const enteNome = t => nomeComando(t) || 'Comando';
