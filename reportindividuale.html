@@ -1297,7 +1297,8 @@ function riepilogoCorsi(p, y) {
     }));
     // addestramenti collettivi del corso senza documentazione correlata: nella registrazione e nel Piano di Sicurezza
     // non è scritta nessuna manovra prevista (la (C) data in automatico ai collettivi non conta come documentazione)
-    const vari = c.previste.length ? add.filter(a => a.tipo === 'collettivo' && ![...a.manovreDoc].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
+    // gli inserimenti duplicati (registrati più volte, contati una) non si segnalano come senza documentazione
+    const vari = c.previste.length ? add.filter(a => a.tipo === 'collettivo' && !(a.duplicati > 1) && ![...a.manovreDoc].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
     const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
     let stato = 'nd';
     if (c.oreMin != null) stato = ore >= c.oreMin - 1e-6 && (collMin == null || oreColl >= collMin - 1e-6) ? 'ok' : 'ko';
