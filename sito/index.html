@@ -40,12 +40,15 @@
       background-color: var(--bg); border-bottom: 1px solid #444; padding: 10px 16px; box-sizing: border-box; flex-shrink: 0;
     }
     #titolo { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    #page-header h1 { font-size: 16px; color: var(--gold); margin: 0 0 2px 0; font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    #page-header h1 { font-size: 16px; color: var(--gold); margin: 0 0 2px 0; font-weight: bold; display: flex; align-items: center; gap: 6px; min-width: 0; }
+    #logo { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; }
+    #sezione { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #sezione b { color: var(--acl, var(--gold)); }
     #page-header .puma-icon { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
     #page-header .subtitle-divider { color: #666; }
-    #page-header h2 { font-size: 13px; color: #ccc; font-weight: normal; margin: 0; display: flex; align-items: center; gap: 8px; }
-    #page-header h2 b { color: var(--acl, var(--gold)); }
-    #apri-fuori { color: #999; text-decoration: none; font-size: 12px; border: 1px solid #555; border-radius: 4px; padding: 1px 6px; }
+    /* seconda riga: nome per esteso, più piccolo */
+    #page-header h2 { font-size: 11.5px; color: #bbb; font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0; }
+    #apri-fuori { color: #999; text-decoration: none; font-size: 11px; font-weight: normal; border: 1px solid #555; border-radius: 4px; padding: 0 5px; flex-shrink: 0; }
     #apri-fuori:hover { color: var(--gold); border-color: var(--gold); }
 
     #hamburger {
@@ -78,16 +81,12 @@
     #apri-fuori { white-space: nowrap; }
     @media (min-width: 1080px) {
       #page-header { flex-wrap: nowrap; }
-      #apri-fuori .testo { display: none; }
       #titolo { flex: 1 1 auto; }
       #titolo > div { min-width: 0; }
-      #page-header h2 { flex-wrap: nowrap; }
-      #sezione { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       #page-header h1 { white-space: nowrap; }
       #nav-buttons { order: 2; flex-wrap: nowrap; }
       #turno-box { order: 3; margin-left: 0; }
     }
-    @media (max-width: 1700px) { #page-header h1 .lungo { display: none; } }
     @media (min-width: 761px) and (max-width: 1079px) {
       #nav-buttons { order: 3; width: 100%; flex-shrink: 1; justify-content: flex-start; }
       .nav-btn { padding: 6px 9px; font-size: 12px; }
@@ -233,15 +232,13 @@
       #nav-buttons { width: 100%; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; gap: 6px; padding: 3px 2px 4px; scrollbar-width: none; }
       #nav-buttons::-webkit-scrollbar { display: none; }
       .nav-btn { flex: 0 0 auto; text-align: center; padding: 7px 11px; font-size: 12px; white-space: nowrap; }
-      #page-header h1 .lungo { display: none; }
-      #turno-box { position: absolute; top: 10px; right: 10px; padding: 3px 8px; gap: 4px; }
-      #turno-box .t-lbl { font-size: 9.5px; }
-      #titolo { padding-right: 148px; } #titolo > div { min-width: 0; }
-      #page-header h2 { flex-wrap: wrap; row-gap: 2px; }
-      #turno-box b { font-size: 15px; margin-right: 3px; }
+      /* turno compatto: etichette piccole sopra le lettere */
+      #turno-box { position: absolute; top: 8px; right: 10px; padding: 3px 8px; display: grid; grid-template-rows: auto auto; grid-auto-flow: column; column-gap: 10px; row-gap: 0; justify-items: center; }
+      #turno-box .t-lbl { font-size: 8.5px; line-height: 1; }
+      #titolo { padding-right: 96px; width: 100%; box-sizing: border-box; } #titolo > div { flex: 1 1 0; min-width: 0; }
+      #turno-box b { font-size: 16px; margin: 0; line-height: 1.1; }
       #page-header { position: relative; }
-      #page-header h2 { font-size: 12px; }
-      #apri-fuori .testo { display: none; }
+      #page-header h2 { font-size: 10.5px; }
       #schede { flex-wrap: nowrap; padding: 6px 10px; overflow-x: auto; scrollbar-width: none; }
       #schede::-webkit-scrollbar { display: none; }
       #schede .lbl { display: none; }
@@ -261,8 +258,8 @@
   <div id="titolo">
     <button id="hamburger" type="button" aria-label="Menu" aria-controls="menu" aria-expanded="false">☰</button>
     <div>
-      <h1 id="logo" title="Torna all'inizio"><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="lungo"><span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</span></h1>
-      <h2><span id="sezione"><b>Home Page</b></span> <a id="apri-fuori" href="#" target="_blank" rel="noopener" title="Apri questa pagina in una nuova scheda" hidden>↗<span class="testo"> nuova scheda</span></a></h2>
+      <h1><span id="logo" title="Torna alla Home Page"><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA</span><span class="subtitle-divider">–</span><span id="sezione"><b>Home Page</b></span><a id="apri-fuori" href="#" target="_blank" rel="noopener" title="Apri questa pagina in una nuova scheda" hidden>↗</a></h1>
+      <h2>Piattaforma Unificata Monitoraggio Addestramenti</h2>
     </div>
   </div>
   <div id="turno-box" title="">
