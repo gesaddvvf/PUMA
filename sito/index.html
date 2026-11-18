@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>P.U.M.A. - Sito</title>
+  <title>P.U.M.A. - Piattaforma Unificata Monitoraggio Addestramenti</title>
+  <meta name="description" content="PUMA è una piattaforma unificata per la gestione completa degli addestramenti del personale.">
   <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -85,10 +86,19 @@
 
     #home { height: 100%; overflow-y: auto; box-sizing: border-box; padding: 28px 16px 40px; }
     .home-wrap { max-width: 980px; margin: 0 auto; }
-    .benv { display: flex; align-items: center; gap: 18px; margin-bottom: 26px; }
-    .benv img { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; border: 1px solid #444; }
-    .benv h3 { margin: 0 0 6px; color: var(--gold); font-size: 20px; }
-    .benv p { margin: 0; color: #bbb; font-size: 13.5px; line-height: 1.5; }
+    /* ---------- HOME: presentazione ---------- */
+    .hero { display: flex; align-items: center; justify-content: space-between; gap: 36px; padding: 18px 0 30px; flex-wrap: wrap-reverse; }
+    .hero-testo { flex: 1 1 420px; min-width: 0; }
+    .hero h2 { margin: 0; font-size: clamp(32px, 5.4vw, 60px); line-height: 1.05; font-weight: 700; color: #f0f0f0; letter-spacing: -.01em; }
+    .hero h2 span { display: block; }
+    .hero h2 b { color: var(--gold); }
+    .motto { margin: 18px 0 0; font-size: clamp(17px, 2.2vw, 22px); font-weight: 700; color: var(--gold); }
+    .strisce { display: flex; gap: 6px; margin: 16px 0 18px; }
+    .strisce i { width: 44px; height: 5px; border-radius: 3px; background: var(--ac); }
+    .hero p.intro { margin: 0 0 10px; color: #cfcfcf; font-size: 14.5px; line-height: 1.65; max-width: 640px; }
+    .hero-logo { flex: 0 0 auto; }
+    .hero-logo img { width: clamp(150px, 22vw, 260px); height: auto; border-radius: 22px; border: 1px solid #444; box-shadow: 0 12px 40px rgba(0,0,0,.55); display: block; }
+    .sez-tit { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #999; margin: 6px 0 12px; }
     .tessere { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
     .tessera {
       background: #262626; border: 1px solid #3a3a3a; border-top: 3px solid var(--ac, var(--gold)); border-radius: 6px;
@@ -182,7 +192,8 @@
       #nav-buttons { width: 100%; }
       .nav-btn { flex: 1 1 40%; text-align: center; padding: 8px 6px; }
       #page-header h1 .lungo { display: none; }
-      .benv { flex-direction: column; align-items: flex-start; }
+      .hero { gap: 18px; padding-top: 4px; }
+      .hero-logo img { width: 120px; }
     }
   </style>
 </head>
@@ -192,11 +203,11 @@
     <button id="hamburger" type="button" aria-label="Menu" aria-controls="menu" aria-expanded="false">☰</button>
     <div>
       <h1 id="logo" title="Torna all'inizio"><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="lungo"><span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</span></h1>
-      <h2><span id="sezione"><b>Benvenuto</b></span> <a id="apri-fuori" href="#" target="_blank" rel="noopener" title="Apri questa pagina in una nuova scheda" hidden>↗ nuova scheda</a></h2>
+      <h2><span id="sezione"><b>Home Page</b></span> <a id="apri-fuori" href="#" target="_blank" rel="noopener" title="Apri questa pagina in una nuova scheda" hidden>↗ nuova scheda</a></h2>
     </div>
   </div>
   <nav id="nav-buttons">
-    <a class="nav-btn area-neu" id="btn-home" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener">Homepage P.U.M.A.</a>
+    <a class="nav-btn area-neu" id="btn-home" href="#home" data-route="home">Home Page</a>
     <a class="nav-btn area-rt" id="btn-realtime" href="#mappa" data-route="mappa" data-gruppo="realtime">Real Time</a>
     <a class="nav-btn area-att" id="btn-attivita" href="#moduli" data-route="moduli" data-gruppo="attivita">Attività</a>
     <a class="nav-btn area-doc" id="btn-doc" href="#doc-puma" data-route="doc-puma" data-gruppo="documentazione">Documentazione</a>
@@ -213,13 +224,17 @@
 <main>
   <section id="home">
     <div class="home-wrap">
-      <div class="benv">
-        <img src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="">
-        <div>
-          <h3>Piattaforma Unificata Monitoraggio Addestramenti</h3>
-          <p>Accesso rapido agli strumenti di P.U.M.A.: la situazione in tempo reale degli addestramenti, i moduli delle attività e l'archivio, la documentazione, il report individuale del personale e, per chi ha accesso all'Area Comando, la reportistica per ROP, ROR e Funzionario di settore.</p>
+      <div class="hero">
+        <div class="hero-testo">
+          <h2><span><b>P</b>iattaforma</span><span><b>U</b>nificata</span><span><b>M</b>onitoraggio</span><span><b>A</b>ddestramenti</span></h2>
+          <p class="motto">Forma. Qualifica. Avanza.</p>
+          <div class="strisce" aria-hidden="true"><i class="area-rt"></i><i class="area-att"></i><i class="area-doc"></i><i class="area-rep"></i><i class="area-com"></i></div>
+          <p class="intro">PUMA è una piattaforma unificata per la gestione completa degli addestramenti del personale.</p>
+          <p class="intro">Centralizza il monitoraggio delle competenze, il tracciamento delle attività formative e la pianificazione degli aggiornamenti, garantendo visibilità, qualità e continuità al percorso di crescita professionale.</p>
         </div>
+        <div class="hero-logo"><img src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="Logo P.U.M.A."></div>
       </div>
+      <div class="sez-tit">Aree</div>
       <div class="tessere">
         <button class="tessera area-rt" type="button" data-route="mappa">
           <div class="ic">🗺️</div><h4>Real Time</h4>
@@ -241,10 +256,6 @@
           <div class="ic">🔒</div><h4>Area Comando</h4>
           <p>Reportistica individuale e collettiva per ROP, ROR e Funzionario di settore. Accesso con password.</p>
         </button>
-        <a class="tessera area-neu" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="text-decoration:none">
-          <div class="ic">🏠</div><h4>Homepage P.U.M.A.</h4>
-          <p>Il sito Google di P.U.M.A. (si apre in una nuova scheda).</p>
-        </a>
       </div>
     </div>
   </section>
@@ -521,8 +532,7 @@ function disegnaMenu() {
   const gr = (g, ic) => `<div class="sotto-titolo area-${GRUPPI[g].area}">${ic} ${GRUPPI[g].nome}</div>`
     + GRUPPI[g].schede.map(([r, t]) => v(r, t, '', true, GRUPPI[g].area)).join('');
   let h = `<div class="sez-titolo">Navigazione</div>`
-    + v('home', '🏠 Pagina iniziale', '', false, 'neu')
-    + `<a class="voce area-neu" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="text-decoration:none">🌐 Homepage P.U.M.A. <small style="display:inline;margin-left:4px">↗</small></a>`
+    + v('home', '🏠 Home Page', '', false, 'neu')
     + gr('realtime', '⏱️') + gr('attivita', '📝') + gr('documentazione', '📚')
     + `<div class="sotto-titolo area-rep">📊 Reportistica</div>`
     + v('individuale', 'Report Individuale', '', true, 'rep');
@@ -537,6 +547,8 @@ function disegnaMenu() {
       + v('ror', '🗺️ ROR', 'Responsabile Operativo Regionale · per Direzione', true, 'rep')
       + v('fds', '🧑‍🚒 Funzionario di settore', 'Per Comando (Direzione dal selettore)', true, 'rep');
   }
+  h += `<div class="sez-titolo">Link</div>`
+    + `<a class="voce area-neu" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="text-decoration:none"><span>🌐 Sito Google P.U.M.A. ↗<small>Versione precedente</small></span></a>`;
   $('menu-corpo').innerHTML = h;
   $('menu-piede').hidden = !sbloccato;
   document.body.classList.toggle('sbloccato', sbloccato);
@@ -619,7 +631,7 @@ function mostra(rotta) {
   }
   if (pag && pag.interna) disegnaDocs(rotta);
   $('btn-comando').classList.toggle('attivo', !!(pag && pag.riservata));
-  $('sezione').innerHTML = pag ? `<b>${pag.titolo}</b>` : '<b>Benvenuto</b>';
+  $('sezione').innerHTML = pag ? `<b>${pag.titolo}</b>` : '<b>Home Page</b>';
   $('sezione').className = !pag ? '' : 'area-' + (GRUPPI[gruppo] ? GRUPPI[gruppo].area : pag.riservata ? 'rep' : (pag.area || 'neu'));
   $('apri-fuori').hidden = !pag;
   if (pag) {
@@ -631,7 +643,7 @@ function mostra(rotta) {
       frame.src = pag.url;
     }
   } else {
-    document.title = 'P.U.M.A. - Sito';
+    document.title = 'P.U.M.A. - Piattaforma Unificata Monitoraggio Addestramenti';
   }
   disegnaMenu();
   apriMenu(false);
