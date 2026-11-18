@@ -212,6 +212,7 @@
     <a class="nav-btn area-att" id="btn-attivita" href="#moduli" data-route="moduli" data-gruppo="attivita">Attività</a>
     <a class="nav-btn area-doc" id="btn-doc" href="#doc-puma" data-route="doc-puma" data-gruppo="documentazione">Documentazione</a>
     <a class="nav-btn area-rep" id="btn-report" href="#individuale" data-route="individuale">Report Individuale</a>
+    <a class="nav-btn area-rep" id="btn-collettivo" href="#collettivo" data-route="collettivo">🔒 Report Collettivo</a>
     <button class="nav-btn area-com" id="btn-comando" type="button">🔒 Area Comando</button>
   </nav>
 </header>
@@ -251,6 +252,10 @@
         <button class="tessera area-rep" type="button" data-route="individuale">
           <div class="ic">👤</div><h4>Report Individuale</h4>
           <p>Libretto di formazione del singolo: attività, ore e manovre per anno.</p>
+        </button>
+        <button class="tessera area-rep" type="button" data-route="collettivo">
+          <div class="ic">👥</div><h4>Report Collettivo</h4>
+          <p>Situazione per tipologia, Comando per Comando o per Direzione, da trasmettere a ROP e ROR. Accesso con password.</p>
         </button>
         <button class="tessera area-com" type="button" data-comando>
           <div class="ic">🔒</div><h4>Area Comando</h4>
@@ -310,6 +315,7 @@ const PAGINE = {
   archivio:    { titolo: 'Attività · Archivio Direzioni e Comandi', url: BASE + 'archive.html', gruppo: 'attivita', css: 'archivio' },
   individuale: { titolo: 'Report Individuale', url: BASE + 'reportindividuale.html', area: 'rep', css: 'report' },
   'comando-individuale': { titolo: 'Area Comando · Report Individuale', url: BASE + 'reportindividuale.html', riservata: true, css: 'report' },
+  collettivo: { titolo: 'Area Comando · Report Collettivo', url: BASE + 'reportcollettivo.html', riservata: true, css: 'report' },
   rop: { titolo: 'Area Comando · Report Collettivo ROP',  url: BASE + 'reportcollettivo.html', riservata: true, css: 'report' },
   ror: { titolo: 'Area Comando · Report Collettivo ROR',  url: BASE + 'reportcollettivo.html?tipo=direzione', riservata: true, css: 'report' },
   fds: { titolo: 'Area Comando · Report Collettivo Funzionario di settore', url: BASE + 'reportcollettivo.html', riservata: true, css: 'report' }
@@ -535,7 +541,8 @@ function disegnaMenu() {
     + v('home', '🏠 Home Page', '', false, 'neu')
     + gr('realtime', '⏱️') + gr('attivita', '📝') + gr('documentazione', '📚')
     + `<div class="sotto-titolo area-rep">📊 Reportistica</div>`
-    + v('individuale', 'Report Individuale', '', true, 'rep');
+    + v('individuale', 'Report Individuale', '', true, 'rep')
+    + v('collettivo', (sbloccato ? '' : '🔒 ') + 'Report Collettivo', 'Comando e Direzione · con password', true, 'rep');
   h += `<div class="sez-titolo area-com">Area Comando</div>`;
   if (!sbloccato) {
     h += `<button class="voce area-com" type="button" data-comando>🔒 Accedi con password</button>`;
@@ -553,6 +560,7 @@ function disegnaMenu() {
   $('menu-piede').hidden = !sbloccato;
   document.body.classList.toggle('sbloccato', sbloccato);
   $('btn-comando').textContent = sbloccato ? '🔓 Area Comando' : '🔒 Area Comando';
+  $('btn-collettivo').textContent = (sbloccato ? '' : '🔒 ') + 'Report Collettivo';
 }
 function apriMenu(si) {
   document.body.classList.toggle('menu-aperto', si);
@@ -630,7 +638,7 @@ function mostra(rotta) {
     $('schede-seg').innerHTML = GRUPPI[gruppo].schede.map(([r, t]) => `<a href="#${r}" data-route="${r}" role="tab"${r === on ? ' class="on"' : ''}>${t}</a>`).join('');
   }
   if (pag && pag.interna) disegnaDocs(rotta);
-  $('btn-comando').classList.toggle('attivo', !!(pag && pag.riservata));
+  $('btn-comando').classList.toggle('attivo', !!(pag && pag.riservata) && rotta !== 'collettivo');
   $('sezione').innerHTML = pag ? `<b>${pag.titolo}</b>` : '<b>Home Page</b>';
   $('sezione').className = !pag ? '' : 'area-' + (GRUPPI[gruppo] ? GRUPPI[gruppo].area : pag.riservata ? 'rep' : (pag.area || 'neu'));
   $('apri-fuori').hidden = !pag;
