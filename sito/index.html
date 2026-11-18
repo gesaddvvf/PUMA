@@ -267,8 +267,8 @@
   </div>
   <nav id="nav-buttons">
     <a class="nav-btn area-neu" id="btn-home" href="#home" data-route="home">Home Page</a>
-    <a class="nav-btn area-rt" id="btn-realtime" href="#presenze" data-route="presenze" data-gruppo="realtime">Real Time</a>
     <a class="nav-btn area-att" id="btn-attivita" href="#profilazione" data-route="profilazione" data-gruppo="attivita">Attività</a>
+    <a class="nav-btn area-rt" id="btn-realtime" href="#presenze" data-route="presenze" data-gruppo="realtime">Real Time</a>
     <a class="nav-btn area-doc" id="btn-doc" href="#doc-puma" data-route="doc-puma" data-gruppo="documentazione">Documentazione</a>
     <a class="nav-btn area-rep" id="btn-report" href="#individuale" data-route="individuale">Report Individuale</a>
     <a class="nav-btn area-rep" id="btn-collettivo" href="#collettivo" data-route="collettivo">Report Collettivo</a>
@@ -288,7 +288,7 @@
         <div class="hero-testo">
           <h2><span><b>P</b>iattaforma</span><span><b>U</b>nificata</span><span><b>M</b>onitoraggio</span><span><b>A</b>ddestramenti</span></h2>
           <p class="motto">Forma. Qualifica. Avanza.</p>
-          <div class="strisce" aria-hidden="true"><i class="area-rt"></i><i class="area-att"></i><i class="area-doc"></i><i class="area-rep"></i><i class="area-com"></i></div>
+          <div class="strisce" aria-hidden="true"><i class="area-att"></i><i class="area-rt"></i><i class="area-doc"></i><i class="area-rep"></i><i class="area-com"></i></div>
           <p class="intro">PUMA è una piattaforma unificata per la gestione completa degli addestramenti del personale.</p>
           <p class="intro">Centralizza il monitoraggio delle competenze, il tracciamento delle attività formative e la pianificazione degli aggiornamenti, garantendo visibilità, qualità e continuità al percorso di crescita professionale.</p>
         </div>
@@ -296,13 +296,13 @@
       </div>
       <div class="sez-tit">Aree</div>
       <div class="tessere">
-        <button class="tessera area-rt" type="button" data-route="presenze">
-          <div class="ic">🗺️</div><h4>Real Time</h4>
-          <p>Presenze odierne, mappa degli addestramenti in corso e riepilogo globale degli addestramenti collettivi.</p>
-        </button>
         <button class="tessera area-att" type="button" data-route="profilazione">
           <div class="ic">📝</div><h4>Attività</h4>
           <p>Profilazione individuale, registrazione attività e pianificazione degli addestramenti collettivi.</p>
+        </button>
+        <button class="tessera area-rt" type="button" data-route="presenze">
+          <div class="ic">🗺️</div><h4>Real Time</h4>
+          <p>Presenze odierne, mappa degli addestramenti in corso e riepilogo globale degli addestramenti collettivi.</p>
         </button>
         <button class="tessera area-doc" type="button" data-route="doc-puma">
           <div class="ic">📚</div><h4>Documentazione</h4>
@@ -595,7 +595,7 @@ function disegnaMenu() {
     + GRUPPI[g].schede.map(([r, t]) => v(r, t, '', true, GRUPPI[g].area)).join('');
   let h = `<div class="sez-titolo">Navigazione</div>`
     + v('home', '🏠 Home Page', '', false, 'neu')
-    + gr('realtime', '⏱️') + gr('attivita', '📝') + gr('documentazione', '📚')
+    + gr('attivita', '📝') + gr('realtime', '⏱️') + gr('documentazione', '📚')
     + `<div class="sotto-titolo area-rep">📊 Reportistica</div>`
     + v('individuale', 'Report Individuale', '', true, 'rep');
   h += `<div class="sez-titolo area-com" id="sez-comando">Area Comando</div>`;
