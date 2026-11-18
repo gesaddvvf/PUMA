@@ -13,6 +13,13 @@
       --arancio: #ef6c00;
             --bg: #1e1e1e;
     }
+    /* Colori delle aree: --ac bordo/pieno, --acl testo su scuro, --acf testo su pieno */
+    .area-rt   { --ac: #43a047; --acl: #81c784; --acf: #fff; }      /* Real Time: verde */
+    .area-att  { --ac: #e53935; --acl: #ef9a9a; --acf: #fff; }      /* Attività: rosso */
+    .area-doc  { --ac: #1e88e5; --acl: #90caf9; --acf: #fff; }      /* Documentazione: blu */
+    .area-rep  { --ac: #fdd835; --acl: #fff176; --acf: #1e1e1e; }   /* Reportistica: giallo */
+    .area-com  { --ac: #f5f5f5; --acl: #f5f5f5; --acf: #1e1e1e; }   /* Area Comando: bianco */
+    .area-neu  { --ac: #9e9e9e; --acl: #d0d0d0; --acf: #1e1e1e; }   /* Homepage / navigazione generica */
     * { scrollbar-width: thin; scrollbar-color: #555 #1e1e1e; }
     ::-webkit-scrollbar { width: 10px; height: 10px; }
     ::-webkit-scrollbar-track { background: #1e1e1e; }
@@ -32,43 +39,41 @@
     #page-header .puma-icon { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
     #page-header .subtitle-divider { color: #666; }
     #page-header h2 { font-size: 13px; color: #ccc; font-weight: normal; margin: 0; display: flex; align-items: center; gap: 8px; }
-    #page-header h2 b { color: var(--gold); }
+    #page-header h2 b { color: var(--acl, var(--gold)); }
     #apri-fuori { color: #999; text-decoration: none; font-size: 12px; border: 1px solid #555; border-radius: 4px; padding: 1px 6px; }
     #apri-fuori:hover { color: var(--gold); border-color: var(--gold); }
 
     #hamburger {
-      background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px;
+      background: #2a2a2a; color: #f0f0f0; border: 1px solid #9e9e9e; border-radius: 4px;
       width: 40px; height: 36px; font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0;
     }
-    #hamburger:hover { background: var(--gold); color: var(--bg); }
+    #hamburger:hover { background: #f0f0f0; color: var(--bg); }
 
     #nav-buttons { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
     .nav-btn {
-      display: inline-block; background-color: #2a2a2a; color: var(--gold);
-      border: 1px solid var(--gold); border-radius: 4px; padding: 8px 14px;
+      display: inline-block; background-color: #2a2a2a; color: var(--acl, var(--gold));
+      border: 1px solid var(--ac, var(--gold)); border-radius: 4px; padding: 8px 14px;
       font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 13px;
-      text-decoration: none; transition: background-color 0.15s, color 0.15s; cursor: pointer;
+      text-decoration: none; transition: background-color 0.15s, color 0.15s, filter .15s; cursor: pointer;
     }
-    .nav-btn:hover, .nav-btn.attivo { background-color: var(--gold); color: var(--bg); }
-    #btn-report.nav-btn { background-color: var(--arancio); color: #fff; border-color: var(--arancio); }
-    #btn-report.nav-btn:hover, #btn-report.nav-btn.attivo { background-color: #fb8c00; border-color: #fff; color: #fff; }
-    /* Area Comando = reportistica: arancione (contorno; pieno quando è aperta) */
-    #btn-comando.nav-btn { background-color: #2a2a2a; color: #ffb74d; border-color: var(--arancio); }
-    #btn-comando.nav-btn:hover, #btn-comando.nav-btn.attivo, body.sbloccato #btn-comando.nav-btn { background-color: var(--arancio); color: #fff; border-color: var(--arancio); }
-    body.sbloccato #btn-comando.nav-btn:hover { background-color: #fb8c00; border-color: #fb8c00; }
+    .nav-btn:hover, .nav-btn.attivo { background-color: var(--ac, var(--gold)); color: var(--acf, var(--bg)); }
+    .nav-btn.attivo { box-shadow: 0 0 0 2px #1e1e1e, 0 0 0 3px var(--ac); }
+    /* Area Comando aperta: bianco pieno */
+    body.sbloccato #btn-comando.nav-btn { background-color: var(--ac); color: var(--acf); }
 
     /* ---------- SOTTO-SCHEDE (Real Time) ---------- */
     #schede { display: none; gap: 8px; align-items: center; padding: 8px 16px; border-bottom: 1px solid #444; background: var(--bg); flex-shrink: 0; flex-wrap: wrap; }
     body.con-schede #schede { display: flex; }
     #schede .lbl { font-size: 12px; color: #999; margin-right: 4px; }
-    .seg { display: inline-flex; border: 1px solid var(--gold); border-radius: 4px; overflow: hidden; flex-wrap: wrap; }
+    #schede .lbl { color: var(--acl); }
+    .seg { display: inline-flex; border: 1px solid var(--ac); border-radius: 4px; overflow: hidden; flex-wrap: wrap; }
     .seg a {
-      background: #2a2a2a; color: var(--gold); padding: 7px 14px; font-family: 'Comfortaa', cursive; font-weight: bold;
+      background: #2a2a2a; color: var(--acl); padding: 7px 14px; font-family: 'Comfortaa', cursive; font-weight: bold;
       font-size: 12.5px; text-decoration: none; transition: background-color .15s, color .15s;
     }
-    .seg a + a { border-left: 1px solid var(--gold); }
-    .seg a:hover { background: #3a3420; }
-    .seg a.on { background: var(--gold); color: var(--bg); }
+    .seg a + a { border-left: 1px solid var(--ac); }
+    .seg a:hover { background: #333; }
+    .seg a.on { background: var(--ac); color: var(--acf); }
 
     /* ---------- CONTENUTO ---------- */
     main { flex: 1; position: relative; min-height: 0; }
@@ -86,47 +91,64 @@
     .benv p { margin: 0; color: #bbb; font-size: 13.5px; line-height: 1.5; }
     .tessere { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
     .tessera {
-      background: #262626; border: 1px solid #3a3a3a; border-top: 3px solid var(--tc, var(--gold)); border-radius: 6px;
+      background: #262626; border: 1px solid #3a3a3a; border-top: 3px solid var(--ac, var(--gold)); border-radius: 6px;
       padding: 16px; cursor: pointer; text-align: left; color: inherit; font-family: inherit; transition: background .15s, transform .15s;
     }
     .tessera:hover { background: #2e2e2e; transform: translateY(-2px); }
     .tessera .ic { font-size: 26px; }
-    .tessera h4 { margin: 8px 0 6px; font-size: 15px; color: var(--tc, var(--gold)); }
+    .tessera h4 { margin: 8px 0 6px; font-size: 15px; color: var(--acl, var(--gold)); }
     .tessera p { margin: 0; font-size: 12.5px; color: #bbb; line-height: 1.5; }
 
-    .sez-home { margin-top: 30px; }
-    .sez-home h4 { color: var(--gold); font-size: 14px; margin: 0 0 10px; border-bottom: 1px solid #3a3a3a; padding-bottom: 6px; }
-    .doc-lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; }
-    .doc-lista a {
-      display: flex; gap: 10px; align-items: flex-start; background: #262626; border: 1px solid #3a3a3a; border-left: 3px solid var(--gold);
-      border-radius: 4px; padding: 10px 12px; color: #eee; text-decoration: none; font-size: 13px;
+    /* ---------- DOCUMENTAZIONE (vista interna) ---------- */
+    #docs { display: none; height: 100%; overflow-y: auto; box-sizing: border-box; padding: 22px 16px 40px; }
+    body.vista-docs #docs { display: block; }
+    body.vista-docs #home { display: none; }
+    .docs-testa { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .docs-testa h3 { margin: 0 0 4px; color: #90caf9; font-size: 18px; }
+    .docs-testa p { margin: 0; color: #999; font-size: 12.5px; }
+    #docs-cerca {
+      background: #262626; color: #f0f0f0; border: 1px solid #555; border-radius: 4px; padding: 8px 10px; width: 280px; max-width: 100%;
+      font-family: inherit; font-size: 13px;
     }
-    .doc-lista a:hover { background: #2e2e2e; color: var(--gold); }
-    .doc-lista small { display: block; color: #999; font-size: 11.5px; margin-top: 2px; }
+    #docs-cerca:focus { outline: none; border-color: #1e88e5; }
+    .docs-griglia { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-items: start; }
+    .doc-sez { background: #262626; border: 1px solid #3a3a3a; border-top: 3px solid #1e88e5; border-radius: 6px; padding: 10px 0 6px; }
+    .doc-sez h4 { margin: 0 12px 6px; font-size: 13.5px; color: #90caf9; }
+    .doc-v { display: flex; align-items: center; }
+    .doc-v button {
+      flex: 1; display: flex; gap: 8px; align-items: flex-start; background: none; border: none; border-left: 3px solid transparent; color: #e6e6e6;
+      font-family: inherit; font-size: 12.5px; line-height: 1.45; text-align: left; padding: 6px 8px 6px 12px; cursor: pointer;
+    }
+    .doc-v.sub button { padding-left: 30px; color: #bbb; }
+    .doc-v button:hover { background: #2e2e2e; border-left-color: #1e88e5; color: #90caf9; }
+    .doc-v a { color: #777; text-decoration: none; font-size: 12px; padding: 6px 12px; }
+    .doc-v a:hover { color: #90caf9; }
+    .docs-vuoto { color: #999; font-size: 13px; padding: 20px 0; }
 
     /* ---------- MENU LATERALE (hamburger) ---------- */
     #velo { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300; opacity: 0; pointer-events: none; transition: opacity .2s; }
     body.menu-aperto #velo { opacity: 1; pointer-events: auto; }
     #menu {
-      position: fixed; top: 0; left: 0; bottom: 0; width: 310px; max-width: 88vw; background: #232323; border-right: 1px solid var(--gold);
+      position: fixed; top: 0; left: 0; bottom: 0; width: 310px; max-width: 88vw; background: #232323; border-right: 1px solid #555;
       z-index: 301; transform: translateX(-102%); transition: transform .22s ease; display: flex; flex-direction: column; box-shadow: 6px 0 24px rgba(0,0,0,.5);
     }
     body.menu-aperto #menu { transform: none; }
     .menu-testa { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #444; }
-    .menu-testa b { color: var(--gold); font-size: 15px; }
+    .menu-testa b { color: #f0f0f0; font-size: 15px; }
     #menu-chiudi { background: none; border: none; color: #bbb; font-size: 20px; cursor: pointer; }
     #menu-chiudi:hover { color: var(--gold); }
     .menu-corpo { flex: 1; overflow-y: auto; padding: 10px 0; }
     .sez-titolo { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #999; padding: 12px 16px 6px; }
-    .sotto-titolo { font-size: 12.5px; color: #ffb74d; padding: 10px 16px 4px 26px; font-weight: bold; }
+    .sotto-titolo { font-size: 12.5px; color: var(--acl, #ccc); padding: 10px 16px 4px 26px; font-weight: bold; }
+    .sez-titolo.area-com { color: var(--ac); }
     .voce {
       display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; background: none; border: none; border-left: 3px solid transparent;
       color: #eee; font-family: inherit; font-size: 13.5px; text-align: left; padding: 10px 16px; cursor: pointer;
     }
     .voce.liv2 { padding-left: 38px; font-size: 13px; }
     .voce small { display: block; color: #999; font-size: 11px; margin-top: 2px; }
-    .voce:hover { background: #2e2e2e; border-left-color: var(--arancio); }
-    .voce.attivo { background: #2e2e2e; border-left-color: var(--gold); color: var(--gold); }
+    .voce:hover { background: #2e2e2e; border-left-color: var(--ac, #9e9e9e); }
+    .voce.attivo { background: #2e2e2e; border-left-color: var(--ac, #9e9e9e); color: var(--acl, #fff); }
     .menu-piede { border-top: 1px solid #444; padding: 12px 16px; }
     .menu-piede button {
       width: 100%; background: #2a2a2a; color: #ef9a9a; border: 1px solid #c62828; border-radius: 4px; padding: 8px;
@@ -137,23 +159,23 @@
     /* ---------- LOGIN AREA COMANDO ---------- */
     .dlg-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 16px; }
     .dlg-bg[hidden] { display: none; }
-    .dlg { background: #232323; border: 1px solid var(--arancio); border-radius: 8px; padding: 20px 22px; width: 360px; max-width: 100%; box-sizing: border-box; font-size: 13px; }
-    .dlg h3 { margin: 0 0 6px; color: #ffb74d; font-size: 16px; }
+    .dlg { background: #232323; border: 1px solid #f5f5f5; border-radius: 8px; padding: 20px 22px; width: 360px; max-width: 100%; box-sizing: border-box; font-size: 13px; }
+    .dlg h3 { margin: 0 0 6px; color: #f5f5f5; font-size: 16px; }
     .dlg p { margin: 0 0 14px; color: #bbb; line-height: 1.5; }
     .dlg input {
       width: 100%; box-sizing: border-box; background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px;
       padding: 9px 10px; font-family: inherit; font-size: 14px;
     }
-    .dlg input:focus { outline: none; border-color: var(--arancio); }
+    .dlg input:focus { outline: none; border-color: #f5f5f5; }
     .dlg .errore { color: #ef5350; min-height: 18px; margin: 8px 0 0; font-size: 12.5px; }
     .dlg.scuoti { animation: scuoti .35s; }
     @keyframes scuoti { 20%,60% { transform: translateX(-7px); } 40%,80% { transform: translateX(7px); } }
     .dlg-btn { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
     .dlg-btn button {
-      background: #2a2a2a; color: #ffb74d; border: 1px solid var(--arancio); border-radius: 4px; padding: 7px 14px;
+      background: #2a2a2a; color: #f5f5f5; border: 1px solid #9e9e9e; border-radius: 4px; padding: 7px 14px;
       font-family: inherit; font-weight: bold; font-size: 12.5px; cursor: pointer;
     }
-    .dlg-btn button.primario { background: var(--arancio); color: #fff; }
+    .dlg-btn button.primario { background: #f5f5f5; border-color: #f5f5f5; color: #1e1e1e; }
 
     @media (max-width: 760px) {
       #page-header { flex-direction: column; align-items: stretch; }
@@ -174,19 +196,18 @@
     </div>
   </div>
   <nav id="nav-buttons">
-    <a class="nav-btn" id="btn-home" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener">Homepage P.U.M.A.</a>
-    <a class="nav-btn" id="btn-realtime" href="#mappa" data-route="mappa" data-gruppo="realtime">Real Time</a>
-    <a class="nav-btn" id="btn-archivio" href="#archivio" data-route="archivio">Archivio</a>
-    <a class="nav-btn" id="btn-report" href="#individuale" data-route="individuale">Report Individuale</a>
-    <button class="nav-btn" id="btn-comando" type="button">🔒 Area Comando</button>
+    <a class="nav-btn area-neu" id="btn-home" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener">Homepage P.U.M.A.</a>
+    <a class="nav-btn area-rt" id="btn-realtime" href="#mappa" data-route="mappa" data-gruppo="realtime">Real Time</a>
+    <a class="nav-btn area-att" id="btn-attivita" href="#moduli" data-route="moduli" data-gruppo="attivita">Attività</a>
+    <a class="nav-btn area-doc" id="btn-doc" href="#doc-puma" data-route="doc-puma" data-gruppo="documentazione">Documentazione</a>
+    <a class="nav-btn area-rep" id="btn-report" href="#individuale" data-route="individuale">Report Individuale</a>
+    <button class="nav-btn area-com" id="btn-comando" type="button">🔒 Area Comando</button>
   </nav>
 </header>
 
 <div id="schede">
-  <span class="lbl">Real Time</span>
-  <span class="seg" role="tablist" aria-label="Real Time">
-    <a href="#presenze" data-route="presenze" role="tab">Presenze Odierne</a><a href="#mappa" data-route="mappa" role="tab">Mappa Real Time</a><a href="#riepilogo" data-route="riepilogo" role="tab">Riepilogo Globale</a>
-  </span>
+  <span class="lbl" id="schede-lbl"></span>
+  <span class="seg" id="schede-seg" role="tablist"></span>
 </div>
 
 <main>
@@ -196,35 +217,44 @@
         <img src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="">
         <div>
           <h3>Piattaforma Unificata Monitoraggio Addestramenti</h3>
-          <p>Accesso rapido agli strumenti di P.U.M.A.: la situazione in tempo reale degli addestramenti, l'archivio dei Comandi e delle Direzioni, il report individuale del personale e, per chi ha accesso all'Area Comando, la reportistica per ROP, ROR e Funzionario di settore.</p>
+          <p>Accesso rapido agli strumenti di P.U.M.A.: la situazione in tempo reale degli addestramenti, i moduli delle attività e l'archivio, la documentazione, il report individuale del personale e, per chi ha accesso all'Area Comando, la reportistica per ROP, ROR e Funzionario di settore.</p>
         </div>
       </div>
       <div class="tessere">
-        <button class="tessera" type="button" data-route="mappa" style="--tc:var(--gold)">
+        <button class="tessera area-rt" type="button" data-route="mappa">
           <div class="ic">🗺️</div><h4>Real Time</h4>
           <p>Presenze odierne, mappa degli addestramenti in corso e riepilogo globale degli addestramenti collettivi.</p>
         </button>
-        <button class="tessera" type="button" data-route="archivio" style="--tc:var(--gold)">
-          <div class="ic">🗂️</div><h4>Archivio</h4>
-          <p>Cartelle di archivio delle Direzioni regionali e dei Comandi.</p>
+        <button class="tessera area-att" type="button" data-route="moduli">
+          <div class="ic">📝</div><h4>Attività</h4>
+          <p>Moduli di profilazione, registrazione attività e pianificazione dei collettivi; archivio di Direzioni e Comandi.</p>
         </button>
-        <button class="tessera" type="button" data-route="individuale" style="--tc:#ffb74d">
+        <button class="tessera area-doc" type="button" data-route="doc-puma">
+          <div class="ic">📚</div><h4>Documentazione</h4>
+          <p>Manuali P.U.M.A., manuali e circolari di settore (SAF, CRA, USAR, TPSS, TAS, NBCR…).</p>
+        </button>
+        <button class="tessera area-rep" type="button" data-route="individuale">
           <div class="ic">👤</div><h4>Report Individuale</h4>
           <p>Libretto di formazione del singolo: attività, ore e manovre per anno.</p>
         </button>
-        <button class="tessera" type="button" data-comando style="--tc:#ffb74d">
+        <button class="tessera area-com" type="button" data-comando>
           <div class="ic">🔒</div><h4>Area Comando</h4>
           <p>Reportistica individuale e collettiva per ROP, ROR e Funzionario di settore. Accesso con password.</p>
         </button>
-        <a class="tessera" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="--tc:var(--gold); text-decoration:none">
+        <a class="tessera area-neu" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="text-decoration:none">
           <div class="ic">🏠</div><h4>Homepage P.U.M.A.</h4>
-          <p>Il sito principale con i moduli di registrazione (si apre in una nuova scheda).</p>
+          <p>Il sito Google di P.U.M.A. (si apre in una nuova scheda).</p>
         </a>
       </div>
-      <div class="sez-home" id="sez-doc" hidden>
-        <h4>📚 Documentazione</h4>
-        <div class="doc-lista" id="doc-lista"></div>
+    </div>
+  </section>
+  <section id="docs">
+    <div class="home-wrap" style="max-width:1200px">
+      <div class="docs-testa">
+        <div><h3 id="docs-titolo"></h3><p id="docs-sotto"></p></div>
+        <input type="search" id="docs-cerca" placeholder="Cerca documento o settore…" aria-label="Cerca documento">
       </div>
+      <div class="docs-griglia" id="docs-griglia"></div>
     </div>
   </section>
   <iframe id="frame" title="Pagina P.U.M.A."></iframe>
@@ -265,12 +295,13 @@ const PAGINE = {
   presenze:    { titolo: 'Real Time · Presenze Odierne', url: BASE + 'personaleodierno.html', gruppo: 'realtime' },
   mappa:       { titolo: 'Real Time · Mappa Real Time', url: BASE + 'trainingmaprealtime.html', gruppo: 'realtime' },
   riepilogo:   { titolo: 'Real Time · Riepilogo Globale addestramenti collettivi', url: BASE + 'mappariepilogocollettivi.html', gruppo: 'realtime' },
-  archivio:    { titolo: 'Archivio Direzioni e Comandi', url: BASE + 'archive.html', css: 'archivio' },
-  individuale: { titolo: 'Report Individuale', url: BASE + 'reportindividuale.html' },
-  'comando-individuale': { titolo: 'Area Comando · Report Individuale', url: BASE + 'reportindividuale.html', riservata: true },
-  rop: { titolo: 'Area Comando · Report Collettivo ROP',  url: BASE + 'reportcollettivo.html', riservata: true },
-  ror: { titolo: 'Area Comando · Report Collettivo ROR',  url: BASE + 'reportcollettivo.html?tipo=direzione', riservata: true },
-  fds: { titolo: 'Area Comando · Report Collettivo Funzionario di settore', url: BASE + 'reportcollettivo.html', riservata: true }
+  moduli:      { titolo: 'Attività · Moduli P.U.M.A.', url: BASE + 'activities.html', gruppo: 'attivita', css: 'attivita' },
+  archivio:    { titolo: 'Attività · Archivio Direzioni e Comandi', url: BASE + 'archive.html', gruppo: 'attivita', css: 'archivio' },
+  individuale: { titolo: 'Report Individuale', url: BASE + 'reportindividuale.html', area: 'rep', css: 'report' },
+  'comando-individuale': { titolo: 'Area Comando · Report Individuale', url: BASE + 'reportindividuale.html', riservata: true, css: 'report' },
+  rop: { titolo: 'Area Comando · Report Collettivo ROP',  url: BASE + 'reportcollettivo.html', riservata: true, css: 'report' },
+  ror: { titolo: 'Area Comando · Report Collettivo ROR',  url: BASE + 'reportcollettivo.html?tipo=direzione', riservata: true, css: 'report' },
+  fds: { titolo: 'Area Comando · Report Collettivo Funzionario di settore', url: BASE + 'reportcollettivo.html', riservata: true, css: 'report' }
 };
 
 // Nelle pagine incorporate si nascondono il titolo e i pulsanti di navigazione (resta ⟳ Aggiorna):
@@ -283,30 +314,196 @@ const CSS_INCORPORATA = `
 const CSS_PAGINA = {
   archivio: `
     @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap');
-    :root { --primary-color: #ffd700; --primary-hover: #ffe44d; --card-bg: #262626; --card-hover: #2e2e2e;
-            --text-main: #f0f0f0; --text-muted: #999; --border-color: #3a3a3a; --highlight-bg: rgba(255, 215, 0, .15); }
+    :root { --card-bg: #262626; --card-hover: #2e2e2e; --text-main: #f0f0f0; --text-muted: #999; --border-color: #3a3a3a; }
     body { font-family: 'Comfortaa', cursive !important; background: #1e1e1e !important; }
     .search-container { background: #1e1e1e !important; }
     .search-box { font-family: 'Comfortaa', cursive; }
-    .search-box:focus { box-shadow: 0 0 10px rgba(255, 215, 0, .2) !important; }
     .accordion-item { border-top: 3px solid var(--primary-color) !important; border-radius: 6px !important; }
-    .command-row:hover { background-color: rgba(255, 215, 0, .08) !important; }
-    .external-link-btn:hover { color: #1e1e1e !important; }
+  `,
+  // Report: accenti arancioni → giallo dell'area Reportistica (i colori di stato e gli avvisi restano)
+  report: `
+    :root { --arancio: #f9a825; }
+    #ente-x:hover, .drop .head, .seg button, .azioni button, .azioni button:disabled, .msg, .ente-head h3, h4.sec,
+    td.nome a:hover, tr.persona.apribile td.nome::before, .dh, tr.det .riga b, details.legman summary, .dlg h3, .dlg-btn button { color: #fff176 !important; }
+    .seg button.on, .azioni button:hover:not(:disabled), .dlg-btn button.primario { color: #1e1e1e !important; }
+  `,
+  // Moduli: da giallo a rosso (area Attività)
+  attivita: `
+    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap');
+    body { background: #1e1e1e !important; font-family: 'Comfortaa', cursive !important; }
+    .container { background: #232323 !important; border-color: #e53935 !important; }
+    .container h1 { color: #ef9a9a !important; }
+    .btn { background: linear-gradient(135deg, #e53935, #c62828); color: #fff; font-family: 'Comfortaa', cursive; }
+    .btn:hover { background: linear-gradient(135deg, #ef5350, #d32f2f); }
+    .secondary { background: #333; color: #ef9a9a; }
+    .secondary:hover { background: #3d3d3d; }
+    .admin-btn { background: #ffffff; color: #000; }
+    .login-btn { background: #333; color: #ff5252; border: 2px solid #ff5252; }
+    .cancel-btn { background: #e53935; color: #fff; }
+    .area-box { border-color: #e53935 !important; background: #1a1a1a !important; }
   `
 };
 
-// Documentazione: { chiave, titolo, nota, id } con id = file Google Drive condiviso con link.
-// Si vede dentro il sito (anteprima Drive); "↗ nuova scheda" apre il file in Drive.
-const DOCUMENTI = [
-  { chiave: 'manuale', titolo: 'Manuale Operatore P.U.M.A.', nota: 'Guida all\'uso della piattaforma (PDF)', id: '1JKY5QWb0ugFYydngwKk32W540ipnz2wG' }
-];
-DOCUMENTI.forEach(d => {
-  PAGINE['doc-' + d.chiave] = {
-    titolo: 'Documentazione · ' + d.titolo,
-    url: `https://drive.google.com/file/d/${d.id}/preview`,
-    fuori: `https://drive.google.com/file/d/${d.id}/view`
-  };
+// Schede delle sezioni con più pagine (barra sotto l'intestazione)
+const GRUPPI = {
+  realtime: { nome: 'Real Time', area: 'rt', schede: [['presenze', 'Presenze Odierne'], ['mappa', 'Mappa Real Time'], ['riepilogo', 'Riepilogo Globale']] },
+  attivita: { nome: 'Attività', area: 'att', schede: [['moduli', 'Moduli'], ['archivio', 'Archivio']] },
+  documentazione: { nome: 'Documentazione', area: 'doc', schede: [['doc-puma', 'Manuali P.U.M.A.'], ['doc-manuali', 'Manuali di settore'], ['doc-circolari', 'Circolari di settore']] }
+};
+
+// Documentazione: stessi elenchi delle pagine "Documentazione" del sito Google P.U.M.A.
+// Ogni voce: [titolo, id del file Google Drive (condiviso con link), sotto-voce?]
+// I file si vedono dentro il sito (anteprima Drive); "↗" li apre in Drive.
+const SITO_DOC = 'https://sites.google.com/view/pumavvf/documentazione/';
+const DOC = {
+  'doc-puma': {
+    titolo: 'Manuali P.U.M.A.', pagina: SITO_DOC + 'manuali-p-u-m-a',
+    sezioni: [
+      ['P.U.M.A.', [
+        ['PUMA Manuale Operatore', '1JKY5QWb0ugFYydngwKk32W540ipnz2wG'],
+        ['PUMA Manuale Gestione Comando ⚠️ in costruzione', '18PpQQOg8Wb_8JcfyeT-9sB5PSycnT3Xx']
+      ]]
+    ]
+  },
+  'doc-manuali': {
+    titolo: 'Manuali di settore', pagina: SITO_DOC + 'manuali-di-settore',
+    sezioni: [
+      ['SAF - Speleo Alpino Fluviale', [
+        ['Manuale SAF Basico', '1Ok9WVz9ufGGHB6zlW4GXNasaPGyQQbr8'],
+        ['Appendice SAF 1A', '1TNU25TisjPqxKTObdXYeYFSuqD180qPl'],
+        ['Capitolato SAF Basico', '1sU5NselR9HcYgm2LKusqIMJ61hOJ-t4s'],
+        ['Manuale SAF Avanzato', '1SVcTQ0bgZFJxALEHwULCAdgomapg15tS'],
+        ['Manuale SAF 2A', '1uIJkoTbtIX8_edSWPcLdPNfl7YPEcB8U'],
+        ['Manovre SAF 2A', '1bPKa5R523a-jKSTI0FvDpg6ziseYjwzW'],
+        ['Manuale NeGh Base', '1rtp0S3hYwFC1dnGigPzVx5sa-OsJRyzI'],
+        ['Manuale NeGh Avanzato', '1BSO5jK3oiV3KUcQyftqH67NrihLOjqEl'],
+        ['Manuale IMMOOS', '1FDqDeJTSqN1j54z7i-ARWT0gciEGLiFT']
+      ]],
+      ['CRA - Contrasto Rischio Acquatico', [
+        ['Manuale ATP', '1YviK3TD7Yk5QRLlUHULDCzpEGIRnLGs5'],
+        ['Manuale SFA', '1-LiAXkefpcZhyW5vFfLX2yimsAPUooaZ'],
+        ['Manuale SA1', '1CL9Njbdt9aGB8dqbR4JJ8q8Anl46aE3n']
+      ]],
+      ['USAR - Urban Search And Rescue', [
+        ['Manuale USAR-L', '15lCss7r7eBMz7JSGjAmAOUlXz2xsDoSq'],
+        ['Manuale USAR-M', '1AvARUtEthu7E-y3FIB9584XONW16Kpe5']
+      ]],
+      ['TPSS - Tecniche di Primo Soccorso', [
+        ['Manuale TPSS', '1B3Awdyv3ZFf6LtRhoI0bM9TaddmFVoqQ']
+      ]],
+      ['TAS - Topografia Applicata al Soccorso', [
+        ['Manuale TAS1', '1uxfHoc1qzpiAlH6tLkLn5p7ySE4rn3Pe']
+      ]],
+      ['NBCR - Nucleare Biologico Chimico Radiologico', [
+        ['Manuale IMMOOS', '1FDqDeJTSqN1j54z7i-ARWT0gciEGLiFT']
+      ]],
+      ['AER - Aeromobili del CNVVF', [
+        ['Direttiva OPV-01 - Procedura per la richiesta e l\'impiego degli aeromobili del DIPVVF', '1GMD2NyH8be9UlDSIJiDMUY_K_hzaFVE6'],
+        ['Direttiva OPV-02 - Impiego degli aeromobili del CNVVF nelle emergenze', '15nUMrjrUcApm-N45RRCOGIBEkwtQrNKm'],
+        ['Circolare EM 17/2017 - Impiego Sistemi Aeromobili a Pilotaggio Remoto SAPR', '1Qn1ooTK2IumsIwnfu-dMWjdcPlZbaOHd']
+      ]],
+      ['SOVVF - Sala Operativa', [
+        ['Manuale SO115 v.6.4.3.16', '1zawERnfWqa8KAYYcmf2bhIjtrBI6QJiQ']
+      ]],
+      ['Incidenti', [
+        ['Manuale Incidenti stradali 2.0', '1fuSwsUb_XrrGO_e3iVAo8Lhk56ajJTxq']
+      ]],
+      ['CFBT - Incendi al Chiuso', [
+        ['Manuale CFBT', '1ENuTy5OBw2upDjqaszHdO4TMOkjap97t']
+      ]],
+      ['Colonne Mobili Regionali', [
+        ['Circolare 01/2020 - Riorganizzazione delle Colonne Mobili Regionali', '1lk0tea1EojYp9MVNXgBUAkYIkUcgRCA3'],
+        ['Allegato alla Circolare 01/2020', '1XlK4rc0ynRJVdlfXxU13YsjPYCNATRC4']
+      ]],
+      ['Sicurezza sui luoghi di lavoro', [
+        ['D.Lgs. 81/2008 - Testo Unico sulla Sicurezza nei luoghi di lavoro', '1ClbhJxyZ-YtH2haJNbGh0i30g6pAXjBh'],
+        ['D. 127/2019 - Regolamento recante l\'applicazione del D.Lgs. 81/2008', '1K5KnKzNK3rNibWpw9wpPYAMvHRbBjwpN']
+      ]]
+    ]
+  },
+  'doc-circolari': {
+    titolo: 'Circolari di settore', pagina: SITO_DOC + 'circolari-di-settore',
+    sezioni: [
+      ['SAF - Circolari di riferimento', [
+        ['Organizzazione settore SAF - marzo 2001', '1SzV-qPPTIn0m1sqAmK43_L0HX6_sDfdY'],
+        ['MISA n° 3 del 2001', '1YNI-ZdzaHBkkikZWJZ24PrhpfYBkI7aV'],
+        ['EM 4298 del 21-04-2015 - Sperimentazione tecniche SAF in forra', '1MehJ4B_7A3V3bTYt4bOPz482Bf4d1PWL'],
+        ['DCF 37654 del 04-11-2015 - Regolamento attività di mantenimento', '1oJf7V3LPzdzBSRNuXoWsFY_vESEqgv55'],
+        ['EM 10-2015 - Riordino settore SAF', '1i33sfz7k4dxDQzqze2OuQwtFiS10xlhT'],
+        ['EM 11-2015 - Servizio elisoccorso', '1tjPLKXh_L7PtAX_kcd7h2zJDvAKmM5hA'],
+        ['DCF SAF 01-2020 - Circolare SAF Basico', '1tAqo98Uz1QgdvZXdqe7c9gFriR6gwt2Q'],
+        ['DCF SAF 01-2020 - Avvio attività', '1HLi8AC_JHmzqPpxhP3bzSATePhqSFnLE'],
+        ['STAFF 24511 del 20-11-2023 - Competenze CNVVF - CNSAS, parere Avvocatura dello Stato', '1e24JuluTN_Zv_6SOPGeePLzjXjp1Hg1R'],
+        ['EM 46258 del 22-11-2023 - Chiarimenti SAF Basico - SAF 1B', '1XYQGZKZr72UYE57X3gmtpazhgFvHGq6j'],
+        ['DCF SAF 1-2025 - Circolare SAF Avanzato', '1pMM9s8zOhbnQjpCdV7-54ZE6juB0ERsG'],
+        ['Programma didattico SAF Avanzato', '1FlBoq2zR64TkWzVesutcZXIYN9JUIUL2', true],
+        ['Programma sessione di aggiornamento SAF Avanzato', '18bg6w-oMtSckVmMHgRJnDyXLeTKJYDSY', true],
+        ['Programma didattico Formatore SAF Avanzato', '1QuVc-1y8iZ6qpFJmURn1HoTnvw1duhi4', true],
+        ['Mantenimenti settore SAF Avanzato', '1OOuTN2-ZF9SC58VJB2efxPUN1uotXEDR', true]
+      ]],
+      ['SAF - Sicurezza nelle operazioni', [
+        ['EM 3058-3706 del 15-05-2013 - Sicurezza operazioni SAF', '1EYokdrqHfuNWre11DKwd1QhrjM0Vl1uJ'],
+        ['EM 28-05-2014 - Chiarimenti sicurezza operazioni SAF', '1OHYFdKSFBc6GR2ZhD51eggoPTEbt7-62'],
+        ['EM 16938 del 22-11-2016 - Sicurezza operazioni SAF', '1wK9fJumSRA3B7nsvoI-DkMMDaoFV3QeA'],
+        ['EM 1336 del 12-01-2018 - Sicurezza operazioni SAF', '1gheX8Mb7xsUOYabBWodZRLnI0dYnV-Y9']
+      ]],
+      ['SAF - Altre circolari utili', [
+        ['Concetto di eccezionalità (D.Lgs. 81/08)', '1lhigiS5EWpShJCX57CKtgbqiZuSZAA7X']
+      ]],
+      ['CRA - Contrasto Rischio Acquatico', [
+        ['Soccorso Acquatico di superficie - 30/5/2007', '1CU_XJn0cBw1h9BF21cgC7xuNrJE-ZMga'],
+        ['Circolare EM 12-2016 - Contrasto Rischio Acquatico', '18RGb8y3BDV6l0NwSXPXJeYu6gsnmdxFQ'],
+        ['Chiarimento circolare EM 12/2016', '1OXhdQ2Wfg6jBv1B4wKrdScRDcUMfyMSh']
+      ]],
+      ['USAR - Urban Search And Rescue', [
+        ['Manuale USAR-L', '15lCss7r7eBMz7JSGjAmAOUlXz2xsDoSq'],
+        ['Manuale USAR-M', '1AvARUtEthu7E-y3FIB9584XONW16Kpe5']
+      ]],
+      ['TPSS - Tecniche di Primo Soccorso', [
+        ['Manuale TPSS', '1B3Awdyv3ZFf6LtRhoI0bM9TaddmFVoqQ']
+      ]],
+      ['TAS - Topografia Applicata al Soccorso', [
+        ['Manuale TAS1', '1uxfHoc1qzpiAlH6tLkLn5p7ySE4rn3Pe']
+      ]],
+      ['AER - Aeromobili del CNVVF', [
+        ['Direttiva OPV-01 - Procedura per la richiesta e l\'impiego degli aeromobili del DIPVVF', '1GMD2NyH8be9UlDSIJiDMUY_K_hzaFVE6'],
+        ['Direttiva OPV-02 - Impiego degli aeromobili del CNVVF nelle emergenze', '15nUMrjrUcApm-N45RRCOGIBEkwtQrNKm'],
+        ['Circolare EM 17/2017 - Impiego Sistemi Aeromobili a Pilotaggio Remoto SAPR', '1Qn1ooTK2IumsIwnfu-dMWjdcPlZbaOHd']
+      ]],
+      ['SOVVF - Sala Operativa', [
+        ['Manuale SO115 v.6.4.3.16', '1zawERnfWqa8KAYYcmf2bhIjtrBI6QJiQ']
+      ]],
+      ['Incidenti', [
+        ['Manuale Incidenti stradali 2.0', '1fuSwsUb_XrrGO_e3iVAo8Lhk56ajJTxq']
+      ]],
+      ['CFBT - Incendi al Chiuso', [
+        ['Manuale CFBT', '1ENuTy5OBw2upDjqaszHdO4TMOkjap97t']
+      ]],
+      ['Colonne Mobili Regionali', [
+        ['Circolare 01/2020 - Riorganizzazione delle Colonne Mobili Regionali', '1lk0tea1EojYp9MVNXgBUAkYIkUcgRCA3'],
+        ['Allegato alla Circolare 01/2020', '1XlK4rc0ynRJVdlfXxU13YsjPYCNATRC4']
+      ]],
+      ['Sicurezza sui luoghi di lavoro', [
+        ['D.Lgs. 81/2008 - Testo Unico sulla Sicurezza nei luoghi di lavoro', '1ClbhJxyZ-YtH2haJNbGh0i30g6pAXjBh'],
+        ['D. 127/2019 - Regolamento recante l\'applicazione del D.Lgs. 81/2008', '1K5KnKzNK3rNibWpw9wpPYAMvHRbBjwpN']
+      ]]
+    ]
+  }
+};
+// Elenchi → pagine interne; file → anteprima Drive dentro il sito (indirizzo #f-<id>)
+const FILE = {};
+Object.entries(DOC).forEach(([k, d]) => {
+  PAGINE[k] = { titolo: 'Documentazione · ' + d.titolo, gruppo: 'documentazione', interna: true, fuori: d.pagina };
+  d.sezioni.forEach(([, voci]) => voci.forEach(([t, id]) => { if (!FILE[id]) FILE[id] = { titolo: t, lista: k }; }));
 });
+function paginaFile(id) {
+  const f = FILE[id];
+  if (!f) return null;
+  return {
+    titolo: 'Documentazione · ' + f.titolo, gruppo: 'documentazione', lista: f.lista,
+    url: `https://drive.google.com/file/d/${id}/preview`, fuori: `https://drive.google.com/file/d/${id}/view`
+  };
+}
 
 /* ===================================================================== */
 const $ = id => document.getElementById(id);
@@ -319,31 +516,26 @@ try { sbloccato = sessionStorage.getItem(CHIAVE_SESSIONE) === '1'; } catch (e) {
 
 /* ---------- menu laterale ---------- */
 function disegnaMenu() {
-  const v = (rotta, testo, nota, liv2) =>
-    `<button class="voce${liv2 ? ' liv2' : ''}${rotta === rottaCorrente ? ' attivo' : ''}" type="button" data-route="${rotta}"><span>${testo}${nota ? `<small>${nota}</small>` : ''}</span></button>`;
+  const v = (rotta, testo, nota, liv2, area) =>
+    `<button class="voce${liv2 ? ' liv2' : ''}${area ? ' area-' + area : ''}${rotta === rottaCorrente || (PAGINE[rottaCorrente] || {}).lista === rotta ? ' attivo' : ''}" type="button" data-route="${rotta}"><span>${testo}${nota ? `<small>${nota}</small>` : ''}</span></button>`;
+  const gr = (g, ic) => `<div class="sotto-titolo area-${GRUPPI[g].area}">${ic} ${GRUPPI[g].nome}</div>`
+    + GRUPPI[g].schede.map(([r, t]) => v(r, t, '', true, GRUPPI[g].area)).join('');
   let h = `<div class="sez-titolo">Navigazione</div>`
-    + `<button class="voce${rottaCorrente === 'home' ? ' attivo' : ''}" type="button" data-route="home">🏠 Pagina iniziale</button>`
-    + `<a class="voce" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="text-decoration:none">🌐 Homepage P.U.M.A. <small style="display:inline;margin-left:4px">↗</small></a>`
-    + `<div class="sotto-titolo">⏱️ Real Time</div>`
-    + v('presenze', 'Presenze Odierne', '', true)
-    + v('mappa', 'Mappa Real Time', '', true)
-    + v('riepilogo', 'Riepilogo Globale', 'Addestramenti collettivi', true)
-    + v('archivio', '🗂️ Archivio', 'Direzioni e Comandi')
-    + v('individuale', '👤 Report Individuale');
-  if (DOCUMENTI.length) {
-    h += `<div class="sez-titolo">Documentazione</div>`
-      + DOCUMENTI.map(d => v('doc-' + d.chiave, '📄 ' + d.titolo, d.nota)).join('');
-  }
-  h += `<div class="sez-titolo">Area Comando</div>`;
+    + v('home', '🏠 Pagina iniziale', '', false, 'neu')
+    + `<a class="voce area-neu" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="text-decoration:none">🌐 Homepage P.U.M.A. <small style="display:inline;margin-left:4px">↗</small></a>`
+    + gr('realtime', '⏱️') + gr('attivita', '📝') + gr('documentazione', '📚')
+    + `<div class="sotto-titolo area-rep">📊 Reportistica</div>`
+    + v('individuale', 'Report Individuale', '', true, 'rep');
+  h += `<div class="sez-titolo area-com">Area Comando</div>`;
   if (!sbloccato) {
-    h += `<button class="voce" type="button" data-comando>🔒 Accedi con password</button>`;
+    h += `<button class="voce area-com" type="button" data-comando>🔒 Accedi con password</button>`;
   } else {
-    h += `<div class="sotto-titolo">📊 Reportistica</div>`
-      + v('comando-individuale', '👤 Report individuale', 'Libretto del singolo', true)
-      + `<div class="sotto-titolo" style="padding-left:38px;color:#ccc;font-weight:normal">Report collettivo</div>`
-      + v('rop', '🏢 ROP', 'Responsabile Operativo Provinciale · per Comando', true)
-      + v('ror', '🗺️ ROR', 'Responsabile Operativo Regionale · per Direzione', true)
-      + v('fds', '🧑‍🚒 Funzionario di settore', 'Per Comando (Direzione dal selettore)', true);
+    h += `<div class="sotto-titolo area-rep">📊 Reportistica</div>`
+      + v('comando-individuale', '👤 Report individuale', 'Libretto del singolo', true, 'rep')
+      + `<div class="sotto-titolo area-rep" style="padding-left:38px;font-weight:normal">Report collettivo</div>`
+      + v('rop', '🏢 ROP', 'Responsabile Operativo Provinciale · per Comando', true, 'rep')
+      + v('ror', '🗺️ ROR', 'Responsabile Operativo Regionale · per Direzione', true, 'rep')
+      + v('fds', '🧑‍🚒 Funzionario di settore', 'Per Comando (Direzione dal selettore)', true, 'rep');
   }
   $('menu-corpo').innerHTML = h;
   $('menu-piede').hidden = !sbloccato;
@@ -407,23 +599,33 @@ function vai(rotta) {
 }
 function mostra(rotta) {
   if (rotta === 'realtime') { rotta = 'mappa'; history.replaceState(null, '', '#mappa'); }   // vecchio indirizzo
+  if (rotta.startsWith('f-') && !PAGINE[rotta]) { const f = paginaFile(rotta.slice(2)); if (f) PAGINE[rotta] = f; }
   const p = PAGINE[rotta];
   if (!p) rotta = 'home';
   if (p && p.riservata && !sbloccato) { apriLogin(rotta); rotta = 'home'; history.replaceState(null, '', '#home'); }
   rottaCorrente = rotta;
   const pag = PAGINE[rotta];
-  document.body.classList.toggle('vista-pagina', !!pag);
+  document.body.classList.toggle('vista-pagina', !!(pag && pag.url));
+  document.body.classList.toggle('vista-docs', !!(pag && pag.interna));
   const gruppo = pag && pag.gruppo;
   document.querySelectorAll('#nav-buttons [data-route]').forEach(b => b.classList.toggle('attivo', b.dataset.route === rotta || (!!gruppo && b.dataset.gruppo === gruppo)));
-  document.body.classList.toggle('con-schede', gruppo === 'realtime');
-  document.querySelectorAll('#schede [data-route]').forEach(b => b.classList.toggle('on', b.dataset.route === rotta));
+  document.body.classList.toggle('con-schede', !!GRUPPI[gruppo]);
+  if (GRUPPI[gruppo]) {
+    const on = pag.lista || rotta;
+    $('schede').className = 'area-' + GRUPPI[gruppo].area;
+    $('schede-lbl').textContent = GRUPPI[gruppo].nome;
+    $('schede-seg').setAttribute('aria-label', GRUPPI[gruppo].nome);
+    $('schede-seg').innerHTML = GRUPPI[gruppo].schede.map(([r, t]) => `<a href="#${r}" data-route="${r}" role="tab"${r === on ? ' class="on"' : ''}>${t}</a>`).join('');
+  }
+  if (pag && pag.interna) disegnaDocs(rotta);
   $('btn-comando').classList.toggle('attivo', !!(pag && pag.riservata));
   $('sezione').innerHTML = pag ? `<b>${pag.titolo}</b>` : '<b>Benvenuto</b>';
+  $('sezione').className = !pag ? '' : 'area-' + (GRUPPI[gruppo] ? GRUPPI[gruppo].area : pag.riservata ? 'rep' : (pag.area || 'neu'));
   $('apri-fuori').hidden = !pag;
   if (pag) {
     $('apri-fuori').href = pag.fuori || pag.url;
     document.title = 'P.U.M.A. - ' + pag.titolo.replace('Area Comando · ', '');
-    if (frame.dataset.rotta !== rotta) {
+    if (pag.url && frame.dataset.rotta !== rotta) {
       frame.dataset.rotta = rotta;
       document.body.classList.add('carica');
       frame.src = pag.url;
@@ -459,10 +661,28 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-comando]')) { e.preventDefault(); sbloccato ? apriMenu(true) : apriLogin(); }
 });
 $('logo').addEventListener('click', () => vai('home'));
-if (DOCUMENTI.length) {
-  $('doc-lista').innerHTML = DOCUMENTI.map(d => `<a href="#doc-${d.chiave}" data-route="doc-${d.chiave}"><span>📄</span><span>${d.titolo}${d.nota ? `<small>${d.nota}</small>` : ''}</span></a>`).join('');
-  $('sez-doc').hidden = false;
+
+/* ---------- documentazione ---------- */
+const escH = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = t => String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+let docsCorrente = null;
+function disegnaDocs(chiave) {
+  const d = DOC[chiave];
+  if (docsCorrente !== chiave) { docsCorrente = chiave; $('docs-cerca').value = ''; $('docs').scrollTop = 0; }
+  $('docs-titolo').textContent = '📚 ' + d.titolo;
+  const n = d.sezioni.reduce((t, [, v]) => t + v.length, 0);
+  $('docs-sotto').textContent = `${n} documenti · si aprono dentro il sito, ↗ li apre in Google Drive`;
+  const q = norm($('docs-cerca').value.trim());
+  const h = d.sezioni.map(([sez, voci]) => {
+    const vis = !q || norm(sez).includes(q) ? voci : voci.filter(([t]) => norm(t).includes(q));
+    if (!vis.length) return '';
+    return `<div class="doc-sez"><h4>${escH(sez)}</h4>` + vis.map(([t, id, sub]) =>
+      `<div class="doc-v${sub ? ' sub' : ''}"><button type="button" data-route="f-${id}"><span>📄</span><span>${escH(t)}</span></button>` +
+      `<a href="https://drive.google.com/file/d/${id}/view" target="_blank" rel="noopener" title="Apri in Google Drive">↗</a></div>`).join('') + `</div>`;
+  }).join('');
+  $('docs-griglia').innerHTML = h || `<div class="docs-vuoto">Nessun documento trovato.</div>`;
 }
+$('docs-cerca').addEventListener('input', () => { if (docsCorrente) disegnaDocs(docsCorrente); });
 window.addEventListener('hashchange', () => mostra(location.hash.slice(1) || 'home'));
 
 mostra(location.hash.slice(1) || 'home');
