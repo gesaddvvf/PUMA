@@ -189,10 +189,24 @@
     .dlg-btn button.primario { background: #f5f5f5; border-color: #f5f5f5; color: #1e1e1e; }
 
     @media (max-width: 760px) {
-      #page-header { flex-direction: column; align-items: stretch; }
-      #nav-buttons { width: 100%; }
-      .nav-btn { flex: 1 1 40%; text-align: center; padding: 8px 6px; }
+      /* telefono: intestazione compatta, aree e schede su una riga che scorre di lato */
+      #page-header { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 10px 6px; }
+      #hamburger { width: 38px; height: 34px; }
+      #nav-buttons { width: 100%; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; gap: 6px; padding: 3px 2px 4px; scrollbar-width: none; }
+      #nav-buttons::-webkit-scrollbar { display: none; }
+      .nav-btn { flex: 0 0 auto; text-align: center; padding: 7px 11px; font-size: 12px; white-space: nowrap; }
       #page-header h1 .lungo { display: none; }
+      #page-header h2 { font-size: 12px; }
+      #apri-fuori .testo { display: none; }
+      #schede { flex-wrap: nowrap; padding: 6px 10px; overflow-x: auto; scrollbar-width: none; }
+      #schede::-webkit-scrollbar { display: none; }
+      #schede .lbl { display: none; }
+      .seg { flex-wrap: nowrap; flex-shrink: 0; }
+      .seg a { white-space: nowrap; padding: 7px 11px; font-size: 12px; }
+      #docs { padding: 14px 10px 30px; }
+      .docs-griglia { grid-template-columns: 1fr; }
+      #docs-cerca { width: 100%; }
+      #home { padding: 16px 12px 30px; }
       .hero { gap: 18px; padding-top: 4px; }
       .hero-logo img { width: 120px; }
     }
@@ -204,7 +218,7 @@
     <button id="hamburger" type="button" aria-label="Menu" aria-controls="menu" aria-expanded="false">☰</button>
     <div>
       <h1 id="logo" title="Torna all'inizio"><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="lungo"><span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</span></h1>
-      <h2><span id="sezione"><b>Home Page</b></span> <a id="apri-fuori" href="#" target="_blank" rel="noopener" title="Apri questa pagina in una nuova scheda" hidden>↗ nuova scheda</a></h2>
+      <h2><span id="sezione"><b>Home Page</b></span> <a id="apri-fuori" href="#" target="_blank" rel="noopener" title="Apri questa pagina in una nuova scheda" hidden>↗<span class="testo"> nuova scheda</span></a></h2>
     </div>
   </div>
   <nav id="nav-buttons">
@@ -330,6 +344,13 @@ const PAGINE = {
 const CSS_INCORPORATA = `
   header h1 { display: none !important; }
   #nav-buttons a.nav-btn { display: none !important; }
+  @media (max-width: 760px) {
+    header { flex-direction: row !important; align-items: center !important; flex-wrap: nowrap !important; gap: 8px !important; padding: 6px 10px !important; }
+    header #nav-buttons { width: auto !important; flex: 0 0 auto !important; }
+    header #nav-buttons .nav-btn { flex: 0 0 auto !important; padding: 6px 10px !important; font-size: 12px !important; }
+    header h2 { font-size: 12px !important; }
+    header #meta-info { display: none !important; }
+  }
 `;
 // Archivio: stessi colori del resto di P.U.M.A. (oro su grigio scuro, carattere Comfortaa)
 const CSS_PAGINA = {
@@ -625,6 +646,7 @@ function mostra(rotta) {
   const gruppo = pag && pag.gruppo;
   document.querySelectorAll('#nav-buttons [data-route]').forEach(b => b.classList.toggle('attivo', b.dataset.route === rotta || (!!gruppo && b.dataset.gruppo === gruppo)));
   document.body.classList.toggle('con-schede', !!GRUPPI[gruppo]);
+  requestAnimationFrame(() => { const a = document.querySelector('#nav-buttons .attivo, #schede a.on'); if (a && a.scrollIntoView) document.querySelectorAll('#nav-buttons .attivo, #schede a.on').forEach(x => x.scrollIntoView({ block: 'nearest', inline: 'nearest' })); });
   if (GRUPPI[gruppo]) {
     const on = pag.lista || rotta;
     $('schede').className = 'area-' + GRUPPI[gruppo].area;
