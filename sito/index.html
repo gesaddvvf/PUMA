@@ -13,7 +13,10 @@
       --gold: #ffd700;
       --arancio: #ef6c00;
             --bg: #1e1e1e;
+      --ff: 'Comfortaa', cursive;   /* carattere del testo */
+      --ft: var(--ff);              /* carattere di titoli e pulsanti */
     }
+    #page-header h1, .hero h2, .motto, .tessera h4, .docs-testa h3, .doc-sez h4, #turno-box b, .sotto-titolo { font-family: var(--ft); }
     /* Colori delle aree: --ac bordo/pieno, --acl testo su scuro, --acf testo su pieno */
     .area-rt   { --ac: #43a047; --acl: #81c784; --acf: #fff; }      /* Real Time: verde */
     .area-att  { --ac: #e53935; --acl: #ef9a9a; --acf: #fff; }      /* Attività: rosso */
@@ -28,7 +31,7 @@
     ::-webkit-scrollbar-thumb:hover { background-color: var(--gold); }
 
     html, body { height: 100%; margin: 0; padding: 0; }
-    body { font-family: 'Comfortaa', cursive; background-color: var(--bg); color: #f0f0f0; display: flex; flex-direction: column; overflow: hidden; }
+    body { font-family: var(--ff); background-color: var(--bg); color: #f0f0f0; display: flex; flex-direction: column; overflow: hidden; }
 
     /* ---------- HEADER ---------- */
     #page-header {
@@ -62,7 +65,7 @@
     .nav-btn {
       display: inline-block; background-color: #2a2a2a; color: var(--acl, var(--gold));
       border: 1px solid var(--ac, var(--gold)); border-radius: 4px; padding: 8px 14px;
-      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 13px;
+      font-family: var(--ft); font-weight: bold; font-size: 13px;
       text-decoration: none; transition: background-color 0.15s, color 0.15s, filter .15s; cursor: pointer;
     }
     .nav-btn:hover, .nav-btn.attivo { background-color: var(--ac, var(--gold)); color: var(--acf, var(--bg)); }
@@ -77,7 +80,7 @@
     #schede .lbl { color: var(--acl); }
     .seg { display: inline-flex; border: 1px solid var(--ac); border-radius: 4px; overflow: hidden; flex-wrap: wrap; }
     .seg a {
-      background: #2a2a2a; color: var(--acl); padding: 7px 14px; font-family: 'Comfortaa', cursive; font-weight: bold;
+      background: #2a2a2a; color: var(--acl); padding: 7px 14px; font-family: var(--ft); font-weight: bold;
       font-size: 12.5px; text-decoration: none; transition: background-color .15s, color .15s;
     }
     .seg a + a { border-left: 1px solid var(--ac); }
@@ -169,6 +172,17 @@
     .voce:hover { background: #2e2e2e; border-left-color: var(--ac, #9e9e9e); }
     .voce.attivo { background: #2e2e2e; border-left-color: var(--ac, #9e9e9e); color: var(--acl, #fff); }
     .menu-piede { border-top: 1px solid #444; padding: 12px 16px; }
+    /* prova-font (solo con ?provafont nell'indirizzo) */
+    #prova-font {
+      position: fixed; left: 12px; bottom: 12px; z-index: 500; background: #232323; border: 2px solid var(--gold); border-radius: 8px;
+      padding: 10px 12px; box-shadow: 0 8px 30px rgba(0,0,0,.6); font-family: sans-serif; font-size: 12px; color: #ddd; width: 300px; max-width: calc(100vw - 24px); box-sizing: border-box;
+    }
+    #prova-font b { color: var(--gold); font-size: 13px; }
+    #prova-font .riga { display: flex; gap: 6px; margin-top: 8px; }
+    #prova-font select { flex: 1; min-width: 0; background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px; padding: 6px; font-size: 13px; }
+    #prova-font button { background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px; padding: 4px 12px; font-size: 16px; cursor: pointer; }
+    #prova-font button:hover { background: var(--gold); color: #1e1e1e; }
+    #prova-font small { display: block; margin-top: 6px; color: #999; }
     .menu-piede button {
       width: 100%; background: #2a2a2a; color: #ef9a9a; border: 1px solid #c62828; border-radius: 4px; padding: 8px;
       font-family: inherit; font-weight: bold; font-size: 12.5px; cursor: pointer;
@@ -697,6 +711,7 @@ frame.addEventListener('load', () => {
       const s = d.createElement('style'); s.id = 'puma-sito-css';
       s.textContent = (p.css ? CSS_PAGINA[p.css] : '') + CSS_INCORPORATA;
       d.head.appendChild(s);
+      if (fontProva != null) { const f = d.createElement('style'); f.id = 'puma-prova-font'; f.textContent = cssFontIframe(); d.head.appendChild(f); }
     }
     if (d) {   // i link verso pagine esterne si aprono in una nuova scheda
       d.addEventListener('click', ev => {
@@ -737,6 +752,75 @@ function aggiornaTurno() {
 }
 aggiornaTurno();
 setInterval(aggiornaTurno, 30000);
+
+/* ---------- prova-font: ?provafont nell'indirizzo (o ?font=N per aprire su un carattere) ---------- */
+// [nome, famiglie Google Fonts, carattere del testo, carattere dei titoli (se diverso)]
+const FONT_PROVA = [
+  ['Comfortaa (attuale)', 'Comfortaa:wght@400;700', "'Comfortaa'"],
+  ['Poppins', 'Poppins:wght@400;600;700', "'Poppins'"],
+  ['Rubik', 'Rubik:wght@400;600;700', "'Rubik'"],
+  ['Lexend', 'Lexend:wght@400;600;700', "'Lexend'"],
+  ['Outfit', 'Outfit:wght@400;600;700', "'Outfit'"],
+  ['Nunito', 'Nunito:wght@400;700;800', "'Nunito'"],
+  ['Quicksand', 'Quicksand:wght@400;600;700', "'Quicksand'"],
+  ['Kanit', 'Kanit:wght@400;500;600', "'Kanit'"],
+  ['Sora', 'Sora:wght@400;600;700', "'Sora'"],
+  ['Space Grotesk', 'Space+Grotesk:wght@400;600;700', "'Space Grotesk'"],
+  ['Josefin Sans', 'Josefin+Sans:wght@400;600;700', "'Josefin Sans'"],
+  ['Ubuntu', 'Ubuntu:wght@400;500;700', "'Ubuntu'"],
+  ['Raleway', 'Raleway:wght@400;600;800', "'Raleway'"],
+  ['Fira Sans', 'Fira+Sans:wght@400;600;700', "'Fira Sans'"],
+  ['Play', 'Play:wght@400;700', "'Play'"],
+  ['Rajdhani', 'Rajdhani:wght@500;600;700', "'Rajdhani'"],
+  ['Exo 2', 'Exo+2:wght@400;600;800', "'Exo 2'"],
+  ['Titillium Web', 'Titillium+Web:wght@400;600;700', "'Titillium Web'"],
+  ['Montserrat', 'Montserrat:wght@400;600;700', "'Montserrat'"],
+  ['Russo One (titoli) + Roboto', 'Russo+One&family=Roboto:wght@400;500;700', "'Roboto'", "'Russo One'"],
+  ['Teko (titoli) + Barlow', 'Teko:wght@500;600&family=Barlow:wght@400;600', "'Barlow'", "'Teko'"],
+  ['Archivo Black (titoli) + Archivo', 'Archivo+Black&family=Archivo:wght@400;600;700', "'Archivo'", "'Archivo Black'"],
+  ['Oswald (titoli) + Nunito Sans', 'Oswald:wght@500;600&family=Nunito+Sans:wght@400;700', "'Nunito Sans'", "'Oswald'"]
+];
+let fontProva = null;   // indice scelto (null = carattere del sito)
+const urlFont = f => `https://fonts.googleapis.com/css2?family=${f[1]}&display=swap`;
+function cssFontIframe() {
+  if (fontProva == null) return '';
+  const f = FONT_PROVA[fontProva], ff = f[2] + ', sans-serif', ft = (f[3] || f[2]) + ', sans-serif';
+  return `@import url('${urlFont(f)}');
+    body, body *:not(i):not(.leaflet-container *) { font-family: ${ff} !important; }
+    h1, h2, h3, h4, th, .nav-btn, button, summary { font-family: ${ft} !important; }`;
+}
+function applicaFont(i) {
+  fontProva = i;
+  const f = FONT_PROVA[i];
+  if (!document.getElementById('gf-' + i)) {
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.id = 'gf-' + i; l.href = urlFont(f); document.head.appendChild(l);
+  }
+  document.documentElement.style.setProperty('--ff', f[2] + ', sans-serif');
+  document.documentElement.style.setProperty('--ft', (f[3] || f[2]) + ', sans-serif');
+  $('pf-sel').value = i;
+  $('pf-num').textContent = `${i + 1} / ${FONT_PROVA.length}`;
+  try { sessionStorage.setItem('puma-prova-font', i); } catch (e) {}
+  try {   // anche la pagina aperta nel riquadro
+    const d = frame.contentDocument;
+    if (d && d.head) { let st = d.getElementById('puma-prova-font'); if (!st) { st = d.createElement('style'); st.id = 'puma-prova-font'; d.head.appendChild(st); } st.textContent = cssFontIframe(); }
+  } catch (e) {}
+}
+(function () {
+  const q = new URLSearchParams(location.search);
+  if (!q.has('provafont') && !q.has('font')) return;
+  const box = document.createElement('div');
+  box.id = 'prova-font';
+  box.innerHTML = `<b>🔤 Prova carattere</b> <span id="pf-num"></span>
+    <div class="riga"><button type="button" id="pf-prec" title="Precedente">◀</button><select id="pf-sel">${FONT_PROVA.map((f, i) => `<option value="${i}">${i + 1}. ${f[0]}</option>`).join('')}</select><button type="button" id="pf-succ" title="Successivo">▶</button></div>
+    <small>Si vede su tutto il sito, anche nelle pagine aperte nel riquadro. Scegli e dimmi il numero.</small>`;
+  document.body.appendChild(box);
+  $('pf-sel').addEventListener('change', e => applicaFont(+e.target.value));
+  $('pf-prec').addEventListener('click', () => applicaFont((fontProva + FONT_PROVA.length - 1) % FONT_PROVA.length));
+  $('pf-succ').addEventListener('click', () => applicaFont((fontProva + 1) % FONT_PROVA.length));
+  let iniz = parseInt(q.get('font'), 10) - 1;
+  if (!(iniz >= 0 && iniz < FONT_PROVA.length)) { try { iniz = parseInt(sessionStorage.getItem('puma-prova-font'), 10); } catch (e) {} }
+  applicaFont(iniz >= 0 && iniz < FONT_PROVA.length ? iniz : 0);
+})();
 
 /* ---------- documentazione ---------- */
 const escH = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
