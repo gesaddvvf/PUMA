@@ -1038,6 +1038,8 @@ function elaboraReg(reg, pianoIdx) {
     // (N): attività generiche riconosciute (non sono manovre previste)
     a.generiche = tipo === 'intervento' ? new Set() : trovaManovre(a.manovreTxt, a.corsi, '', MANOVRE_N);
     // (C) (es. "Addestramento provinciale di gruppo"): fatta da ogni addestramento collettivo del corso
+    // documentazione correlata = manovre previste scritte nella registrazione o nel Piano di Sicurezza
+    a.manovreDoc = new Set(a.manovre);
     if (a.tipo === 'collettivo') a.corsi.forEach(c => c.previste.forEach(m => { if (m.lettera === 'C') a.manovre.add(m); }));
 
     const p = persona(chiavePersona(nome, cf), nome);
@@ -1293,9 +1295,9 @@ function riepilogoCorsi(p, y) {
       f.n++; if (!f.ultima || a.data > f.ultima) f.ultima = a.data;
       fatte.set(m, f);
     }));
-    // addestramenti del corso senza nessuna manovra prevista riconosciuta (anche quelli con sole voci (N)):
-    // "addestramenti senza documentazione correlata" (in tutte le tipologie con manovre previste)
-    const vari = c.previste.length ? add.filter(a => ![...a.manovre].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
+    // addestramenti collettivi del corso senza documentazione correlata: nella registrazione e nel Piano di Sicurezza
+    // non è scritta nessuna manovra prevista (la (C) data in automatico ai collettivi non conta come documentazione)
+    const vari = c.previste.length ? add.filter(a => a.tipo === 'collettivo' && ![...a.manovreDoc].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
     const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
     let stato = 'nd';
     if (c.oreMin != null) stato = ore >= c.oreMin - 1e-6 && (collMin == null || oreColl >= collMin - 1e-6) ? 'ok' : 'ko';
@@ -1517,8 +1519,8 @@ function disegna() {
           <td class="corso-nome">${logoHtml(c.nome)}${esc(c.nome)}<span class="t">${[c.sigla ? 'Sigla ' + esc(c.sigla) : '', c.anniPrima ? 'conta anche ' + (c.anniPrima === 1 ? "l'anno precedente" : c.anniPrima + ' anni precedenti') : ''].filter(Boolean).join(' · ')}</span></td>
           <td class="c">${c.anniPrima ? `${r.dal}–${y}` : y}</td>
           <td class="n">${fmtH(r.ore)}${c.oreMin != null ? ` <span class="sub-n">· minimo ${fmtH(c.oreMin)}</span>` : ''}</td>
-          <td class="n">${fmtH(r.oreColl)}${r.collMin != null ? ` <span class="sub-n">· ${Math.round(c.collPct * 100)}% = ${fmtH(r.collMin)}</span>` : ''}</td>
-          <td class="c">${nPrev ? `<b style="color:${nFatte >= nPrev ? 'var(--ok)' : 'inherit'}">${nFatte}</b> / ${nPrev}` : '—'}${r.vari.length ? `<span class="sub-n" style="display:block">${variTxt(r.vari.length)}</span>` : ''}</td>
+          <td class="n">${fmtH(r.oreColl)}${r.collMin != null ? ` <span class="sub-n">· ${Math.round(c.collPct * 100)}% = ${fmtH(r.collMin)}</span>` : ''}${r.vari.length ? `<span class="sub-n" style="display:block;color:#ffb74d">⚠ ${r.vari.length} senza documentazione correlata: ${r.vari.map(a => a.data.toLocaleDateString('it-IT')).join(', ')}</span>` : ''}</td>
+          <td class="c">${nPrev ? `<b style="color:${nFatte >= nPrev ? 'var(--ok)' : 'inherit'}">${nFatte}</b> / ${nPrev}` : '—'}</td>
           <td class="c">${!r.possesso || c.oreMin || nPrev ? statoTipHtml(vt) : ''}${vt.motivi.length ? `<span class="sub-n" style="display:block">${esc(vt.motivi.join(' · '))}</span>` : ''}${vt.minTot ? `<span class="sub-n" style="display:block">${fmtHM(vt.tot)} / ${fmtHM(vt.minTot)}${vt.int ? ` con interventi (${fmtHM(vt.int)})` : ''} · ${Math.round(vt.pct * 100)}%</span>` : ''}${ruolo ? `<span style="display:block">${ruolo}</span>` : ''}</td>
         </tr>
         <tr class="det-row" data-for="${id}" style="--cc:${cc};${aperto ? '' : 'display:none'}"><td colspan="6">${dettaglioManovre(c, r)}</td></tr>`;
@@ -1591,12 +1593,12 @@ function dettaglioManovre(c, r) {
       return `<div class="man ${f ? 'si' : 'no'}">${m.codice ? `<b>${esc(m.codice)}</b> ` : ''}${esc(m.manovra)}${f ? ` <span class="q">· ${f.n}× · ultima ${f.ultima.toLocaleDateString('it-IT')}</span>` : ''}</div>`;
     }).join('') + '</div>';
   });
-  // attività generiche: addestramenti del corso senza manovre previste (anche con sole voci (N)); le ore contano
+  // addestramenti collettivi senza documentazione correlata (nessuna manovra prevista scritta nella registrazione o nel Piano)
   if (r.vari.length) {
-    h += `<div class="ciclo-title">Attività generiche · ${variTxt(r.vari.length)}</div><div class="man-grid">` + r.vari.map(a => {
-      const gen = [...(a.generiche || [])].map(m => m.manovra.replace(RE_LETTERA_MANOVRA, ''));
-      const testo = gen.length ? gen.join(', ') : String(a.descr || a.tipologia || '').replace(/\s+/g, ' ').slice(0, 80);
-      return `<div class="man gen">${esc(testo || 'senza descrizione')} <span class="q">· ${a.data.toLocaleDateString('it-IT')} · ${a.tipo === 'collettivo' ? 'collettivo' : 'individuale'} · ${a.ore == null ? '—' : fmtHM(a.ore)}</span></div>`;
+    h += `<div class="ciclo-title" style="color:#ffb74d">⚠ ${variTxt(r.vari.length)}</div><div class="man-grid">` + r.vari.map(a => {
+      const testo = String(a.descr || (a.piano && a.piano.descr) || a.tipologia || '').replace(/\s+/g, ' ').slice(0, 80);
+      const dove = a.diGruppo ? 'di gruppo' : [String(a.organizzatoreRaw || a.organizzatore || '').replace(/^\s*comando\s+(vv\.?\s*f\.?\s*)?(di\s+)?/i, ''), a.team ? 'sq. ' + a.team : ''].filter(Boolean).join(' ');
+      return `<div class="man no">${a.data.toLocaleDateString('it-IT')} · ${esc(dove || 'collettivo')}${testo ? ` <span class="q">· ${esc(testo)}</span>` : ''} <span class="q">· ${a.ore == null ? '—' : fmtHM(a.ore)}</span></div>`;
     }).join('') + '</div>';
   }
   return h;
@@ -1644,7 +1646,7 @@ const STATI = {
 };
 const pallino = st => `<span class="pallino" style="--sc:${STATI[st].c}"></span>`;
 const statoTipHtml = v => `<span class="stato tip" style="--sc:${STATI[v.stato].c}">${pallino(v.stato)}${STATI[v.stato].t}</span>`;
-const variTxt = n => `${n} ${n === 1 ? 'addestramento' : 'addestramenti'} senza documentazione correlata`;
+const variTxt = n => `${n} ${n === 1 ? 'addestramento collettivo' : 'addestramenti collettivi'} senza documentazione correlata`;
 
 function graficoMesi(a, p, y) {
   const max = Math.max(1, ...a, ...p);

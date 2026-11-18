@@ -206,6 +206,8 @@
     tr.nodoc > td { background: #2a2418 !important; padding: 3px 10px 4px 30px; font-size: 11.5px; color: #e0d2b0; border-top: none; }
     tr.nodoc > td:first-child { border-left: 5px solid var(--sc, #444); padding: 0; }
     tr.nodoc b { color: #ffb74d; }
+    .nodoc-box { margin: 8px 0 0; padding: 6px 10px; background: #2a2418; border-left: 4px solid #ffb74d; font-size: 12px; color: #e0d2b0; border-radius: 4px; }
+    .nodoc-box b { color: #ffb74d; }
     tr.det .mc.gen { background: #3a3a3a; color: #bbb; font-style: italic; }
     ul.ml li.gen::before { content: '•'; color: #9e9e9e; }
     .sub-n.vari { color: #bdbdbd; font-style: italic; }
@@ -809,7 +811,7 @@ function elaboraPiano(piano) {
     push(idx2, p.giorno + '|' + p.comandoKey, p);
     if (p.squadra) push(idx3, p.giorno + '|' + p.comandoKey + '|' + squadraKey(p.squadra), p);
   });
-  PIANI = lista;
+  PIANI = lista; PART_PIANO = null;
   diag.piano = { righe: piano.length, validi: lista.length, duplicati };
   return { idx3, idx2 };
 }
@@ -923,6 +925,8 @@ function elaboraReg(reg, pianoIdx) {
     // (N): attività generiche riconosciute (non sono manovre previste)
     a.generiche = tipo === 'intervento' ? new Set() : trovaManovre(a.manovreTxt, a.corsi, '', MANOVRE_N);
     // (C) (es. "Addestramento provinciale di gruppo"): fatta da ogni addestramento collettivo del corso
+    // documentazione correlata = manovre previste scritte nella registrazione o nel Piano di Sicurezza
+    a.manovreDoc = new Set(a.manovre);
     if (a.tipo === 'collettivo') a.corsi.forEach(c => c.previste.forEach(m => { if (m.lettera === 'C') a.manovre.add(m); }));
 
     const p = persona(chiavePersona(nome, cf), nome);
@@ -994,9 +998,9 @@ function riepilogoCorsi(p, y) {
       f.n++; if (!f.ultima || a.data > f.ultima) f.ultima = a.data;
       fatte.set(m, f);
     }));
-    // addestramenti del corso senza nessuna manovra prevista riconosciuta (anche quelli con sole voci (N)):
-    // "addestramenti senza documentazione correlata" (in tutte le tipologie con manovre previste)
-    const vari = c.previste.length ? add.filter(a => ![...a.manovre].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
+    // addestramenti collettivi del corso senza documentazione correlata: nella registrazione e nel Piano di Sicurezza
+    // non è scritta nessuna manovra prevista (la (C) data in automatico ai collettivi non conta come documentazione)
+    const vari = c.previste.length ? add.filter(a => a.tipo === 'collettivo' && ![...a.manovreDoc].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
     const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
     let stato = 'nd';
     if (c.oreMin != null) stato = ore >= c.oreMin - 1e-6 && (collMin == null || oreColl >= collMin - 1e-6) ? 'ok' : 'ko';
@@ -1281,8 +1285,21 @@ function personaleEnte(k, c, y, tutti) {
 }
 // Addestramenti collettivi della tipologia organizzati dall'ente (Piani di Sicurezza)
 function collettiviOrganizzati(k, c, y) {
-  const l = PIANI.filter(p => p.data.getFullYear() === y && p.comandoKey === k && corsiPiano(p).has(c));
-  return { n: l.length, ore: l.reduce((t, p) => t + (p.ore || 0), 0) };
+  const l = PIANI.filter(p => p.data.getFullYear() === y && p.comandoKey === k && corsiPiano(p).has(c)).sort((a, b) => a.data - b.data);
+  const senzaDoc = c.previste.length ? l.filter(p => !pianoDocumentato(p, c)) : [];
+  return { n: l.length, ore: l.reduce((t, p) => t + (p.ore || 0), 0), senzaDoc };
+}
+// Piano documentato: manovre previste della tipologia scritte nel Piano o nelle registrazioni dei partecipanti
+let PART_PIANO = null;
+function pianoDocumentato(p, c) {
+  if (!PART_PIANO) { PART_PIANO = new Map(); PERSONE.forEach(x => x.att.forEach(a => { if (a.piano) push(PART_PIANO, a.piano, a); })); }
+  if ([...trovaManovre(p.manovre, corsiPiano(p), p.descr)].some(m => m.corsi.includes(c))) return true;
+  return (PART_PIANO.get(p) || []).some(a => [...a.manovreDoc].some(m => m.corsi.includes(c)));
+}
+const voceCollSenzaDoc = p => `${dataBreve(p.data)}${p.squadra ? ' sq. ' + p.squadra : ''} (${p.ore == null ? '—' : fmtHM(p.ore)})${p.descr ? ' «' + (p.descr.length > 70 ? p.descr.slice(0, 69) + '…' : p.descr).replace(/\s+/g, ' ') + '»' : ''}`;
+function collSenzaDocHtml(l, conEnte) {
+  if (!l.length) return '';
+  return `<div class="nodoc-box"><b>⚠ ${esc(titoloSenzaDoc(l.length))} tra i collettivi organizzati:</b> ${l.map(p => esc((conEnte ? enteBreve(p.comando) + ' ' : '') + voceCollSenzaDoc(p))).join(' · ')}</div>`;
 }
 function corsiPiano(p) {
   if (!p.corsi) p.corsi = trovaCorsi(p.tipologia);
@@ -1507,7 +1524,7 @@ function statoHtml(s) {
 }
 const fmtOre = h => h ? fmtHM(h) : '—';
 // addestramenti del corso senza manovre previste riconosciute (anche con sole voci (N), attività generiche)
-const variTxt = n => `${n} ${n === 1 ? 'addestramento' : 'addestramenti'} senza documentazione correlata`;
+const variTxt = n => `${n} ${n === 1 ? 'addestramento collettivo' : 'addestramenti collettivi'} senza documentazione correlata`;
 // Addestramento senza documentazione correlata: quando, quale (tipo, Comando/squadra o descrizione, voci (N)) e ore
 function voceSenzaDoc(a) {
   const gen = [...(a.generiche || [])].map(m => m.manovra.replace(RE_LETTERA_MANOVRA, ''));
@@ -1518,7 +1535,7 @@ function voceSenzaDoc(a) {
   const cosa = gen.length ? gen.join(', ') : descr;
   return `${dataBreve(a.data)} ${quale} (${a.ore == null ? '—' : fmtHM(a.ore)})${cosa ? ' «' + (cosa.length > 70 ? cosa.slice(0, 69) + '…' : cosa) + '»' : ''}`;
 }
-const titoloSenzaDoc = n => n === 1 ? 'Addestramento senza documentazione correlata' : `${n} addestramenti senza documentazione correlata`;
+const titoloSenzaDoc = n => n === 1 ? 'Addestramento collettivo senza documentazione correlata' : `${n} addestramenti collettivi senza documentazione correlata`;
 const linkIndividuale = (p, y) => `reportindividuale.html?nome=${encodeURIComponent(p.etichetta || p.nome)}&anno=${y}`;
 const periodoDi = (c, y) => c.anniPrima ? `${y - c.anniPrima}–${y}` : String(y);
 
@@ -1531,12 +1548,12 @@ function rigaPersona(s, i, y) {
     <td class="nome"><a href="${linkIndividuale(p, y)}" target="_blank" rel="noopener" title="Apri il report individuale">${esc(p.nome)}</a>${p.key.startsWith('cf:') ? `<span class="cf">${esc(p.key.slice(3))}</span>` : ''}</td>
     <td class="c">${esc(p.qualifica || '')}</td>
     <td>${s.altri.length ? esc(s.altri.map(SIGLA_BREVE).join(', ')) : '<span class="sub-n">—</span>'}</td>
-    <td class="n">${fmtOre(s.coll)}</td>
+    <td class="n">${fmtOre(s.coll)}${s.vari.length ? `<span class="sub-n vari">⚠ ${s.vari.length} senza doc.</span>` : ''}</td>
     <td class="n">${fmtOre(s.ind)}</td>
     <td class="n">${fmtOre(s.int)}${s.nInt ? `<span class="sub-n">${s.nInt} interv.</span>` : ''}</td>
     <td class="n"><b>${fmtOre(s.tot)}</b>${s.minTot ? ` / ${fmtHM(s.minTot)}<div class="bar"><i style="width:${pct}%"></i></div>` : ''}</td>
     <td class="n">${s.collMin ? `${fmtOre(s.oreColl)} / ${fmtHM(s.collMin)}` : '—'}</td>
-    <td class="c">${s.prev ? `<b>${s.fatte}</b> / ${s.prev}` : '—'}${s.vari.length ? `<span class="sub-n vari">⚠ ${s.vari.length} senza doc.</span>` : ''}</td>
+    <td class="c">${s.prev ? `<b>${s.fatte}</b> / ${s.prev}` : '—'}</td>
     <td class="n">${s.con && s.pct != null ? Math.round(s.pct * 100) + '%' : '—'}</td>
     <td>${statoHtml(s)}${s.motivi && s.motivi.length ? `<span class="sub-n">${esc(s.motivi.join(' · '))}</span>` : ''}</td>
   </tr>${s.vari.length ? `<tr class="nodoc" style="--sc:${col}"><td></td><td colspan="11"><b>⚠ ${titoloSenzaDoc(s.vari.length)}:</b> ${s.vari.map(a => esc(voceSenzaDoc(a))).join(' · ')}</td></tr>` : ''}${det ? `<tr class="det" data-for="${esc(p.key)}" style="--sc:${col}${chiusa ? ';display:none' : ''}"><td></td><td colspan="11">${dettaglioHtml(s)}</td></tr>` : ''}`;
@@ -1568,10 +1585,11 @@ function datiDettaglio(s) {
     else if (tipo === 'intervento') info = [a.numInt ? 'n. ' + a.numInt : '', (a.descrInt || '').slice(0, 70)].filter(Boolean).join(' · ');
     else info = (a.descr || a.tipologia || '').replace(/\s+/g, ' ').slice(0, 70);
     // attività generica: nessuna manovra prevista; le voci (N) riconosciute come descrizione
-    const vario = s.vari.includes(a);
-    const generiche = vario ? [...(a.generiche || [])].map(m => m.manovra.replace(RE_LETTERA_MANOVRA, '')) : [];
+    const vario = s.vari.includes(a);   // collettivo senza documentazione correlata
+    const generica = !vario && a.tipo !== 'intervento' && !manovreAtt(a, s.c).length && !!s.c.previste.length;
+    const generiche = [...(a.generiche || [])].map(m => m.manovra.replace(RE_LETTERA_MANOVRA, ''));
     if (a.duplicati > 1) info += ` · registrato ${a.duplicati} volte (contato una)`;
-    return { data: dataBreve(a.data), prima: a.anno !== state.anno, tipo, ore: a.ore == null ? '—' : fmtHM(a.ore), info, vario, generiche,
+    return { data: dataBreve(a.data), prima: a.anno !== state.anno, tipo, ore: a.ore == null ? '—' : fmtHM(a.ore), info, vario, generica, generiche,
       descr: String(a.descr || (a.piano && a.piano.descr) || a.tipologia || '').replace(/\s+/g, ' ').slice(0, 80), manovre: tipo === 'intervento' ? [] : manovreAtt(a, s.c).sort(ordManovre) };
   });
   const fatte = (s.r ? [...s.r.fatte.entries()] : []).map(([m, f]) => ({ m, n: f.n, ultima: f.ultima })).sort((a, b) => ordManovre(a.m, b.m));
@@ -1586,7 +1604,7 @@ function dettaglioHtml(s) {
   h += `<div class="dh">Attività svolte <span>· ${D.att.length}${s.c.anniPrima ? ' · periodo ' + periodoDi(s.c, state.anno) : ''}</span></div>`;
   h += D.att.length ? `<table class="dtab"><tbody>${D.att.map(a => `<tr${a.prima ? ' class="prima"' : ''}>
       <td class="dd">${esc(a.data)}</td><td><span class="ty ty-${a.tipo}">${TIPO_ATT[a.tipo]}</span></td><td class="n">${esc(a.ore)}</td>
-      <td class="inf">${esc(a.info)}</td><td class="mm">${a.manovre.map(mc).join('')}${a.vario ? `<span class="mc gen" title="${esc(a.generiche.length ? 'Attività generica (N): ' + a.generiche.join(', ') : 'Nessuna manovra prevista riconosciuta')}">generica</span>` : ''}</td></tr>`).join('')}</tbody></table>`
+      <td class="inf">${esc(a.info)}</td><td class="mm">${a.manovre.map(mc).join('')}${a.vario ? `<span class="mc manca" title="Nessuna manovra prevista scritta nella registrazione o nel Piano di Sicurezza">senza doc.</span>` : ''}${a.generica ? `<span class="mc gen" title="${esc(a.generiche.length ? 'Attività generica (N): ' + a.generiche.join(', ') : 'Nessuna manovra prevista riconosciuta')}">generica</span>` : ''}</td></tr>`).join('')}</tbody></table>`
     : '<div class="vuoto">Nessuna attività di questa tipologia nel periodo.</div>';
   h += `</div><div class="det-col man">`;
   if (s.prev) {
@@ -1598,8 +1616,8 @@ function dettaglioHtml(s) {
     }
   } else h += `<div class="dh">Manovre previste <span>· nessuna per questa tipologia</span></div>`;
   if (D.vari.length) {
-    h += `<div class="dh gen">Attività generiche <span>· ${esc(variTxt(D.vari.length))}</span></div>`;
-    h += `<ul class="ml">${D.vari.map(a => `<li class="gen"><b>${esc(a.data)}</b> ${esc(a.generiche.length ? a.generiche.join(', ') : a.descr || a.info || TIPO_ATT[a.tipo])} <i>${esc(TIPO_ATT[a.tipo])} · ${esc(a.ore)}</i></li>`).join('')}</ul>`;
+    h += `<div class="dh no">⚠ Senza documentazione correlata <span>· ${esc(variTxt(D.vari.length))}</span></div>`;
+    h += `<ul class="ml">${D.vari.map(a => `<li class="no"><b>${esc(a.data)}</b> ${esc(a.descr || a.info)} <i>${esc(a.info)} · ${esc(a.ore)}</i></li>`).join('')}</ul>`;
   }
   return h + `</div></div>`;
 }
@@ -1607,7 +1625,7 @@ function dettaglioHtml(s) {
 function testoDettaglio(s) {
   const D = datiDettaglio(s);
   const att = D.att.length
-    ? `ATTIVITA' SVOLTE (${D.att.length})\n` + D.att.map(a => `${a.data}  ${TIPO_ATT[a.tipo]}  ${a.ore}${a.info ? '  ' + a.info : ''}${a.manovre.length ? '  [' + a.manovre.map(codiceMan).join(', ') + ']' : ''}${a.vario ? '  [generica' + (a.generiche.length ? ': ' + a.generiche.join(', ') : '') + ']' : ''}`).join('\n')
+    ? `ATTIVITA' SVOLTE (${D.att.length})\n` + D.att.map(a => `${a.data}  ${TIPO_ATT[a.tipo]}  ${a.ore}${a.info ? '  ' + a.info : ''}${a.manovre.length ? '  [' + a.manovre.map(codiceMan).join(', ') + ']' : ''}${a.vario ? '  [SENZA DOCUMENTAZIONE CORRELATA]' : ''}${a.generica ? '  [generica' + (a.generiche.length ? ': ' + a.generiche.join(', ') : '') + ']' : ''}`).join('\n')
     : "ATTIVITA' SVOLTE: nessuna nel periodo";
   let man = '';
   if (s.prev) {
@@ -1645,13 +1663,12 @@ function tabellaPersonale(E, y, c) {
 function legendaHtml() {
   return `<div class="legenda">${[...ORDINE_STATI, 'na'].map(k => `<span>${pallino(k)}${STATI[k].t}</span>`).join('')}</div>`;
 }
-function tessere(conta, nCon, nSenza, coll, collPrec, y, vari) {
+function tessere(conta, nCon, nSenza, coll, collPrec, y) {
   const pc = n => nCon ? ` <small>· ${Math.round(n / nCon * 100)}%</small>` : '';
   return `<div class="tiles">
     <div class="tile" style="--tc:#ef6c00"><div class="k">Personale con corso</div><div class="v">${nCon}</div><div class="p">${nSenza ? `+ ${nSenza} senza corso con attività` : 'nessuno senza corso con attività'}</div></div>
     ${ORDINE_STATI.slice(0, 4).map(k => `<div class="tile" style="--tc:${STATI[k].c}"><div class="k">${pallino(k)}${STATI[k].t}</div><div class="v">${conta[k]}${pc(conta[k])}</div></div>`).join('')}
-    <div class="tile" style="--tc:#4fc3f7"><div class="k">Collettivi organizzati</div><div class="v">${coll.n} <small>· ${fmtH(coll.ore)}</small></div><div class="p">${y - 1}: ${collPrec.n} · ${fmtH(collPrec.ore)}</div></div>
-    ${vari ? `<div class="tile" style="--tc:#9e9e9e"><div class="k">Addestramenti</div><div class="v">${vari}</div><div class="p">senza documentazione correlata</div></div>` : ''}
+    <div class="tile" style="--tc:#4fc3f7"><div class="k">Collettivi organizzati</div><div class="v">${coll.n} <small>· ${fmtH(coll.ore)}</small></div><div class="p">${coll.senzaDoc.length ? `<span style="color:#ffb74d">⚠ ${coll.senzaDoc.length} senza documentazione correlata</span><br>` : ''}${y - 1}: ${collPrec.n} · ${fmtH(collPrec.ore)}</div></div>
   </div>`;
 }
 function testaStampa(titoloEnte, c, y, firme) {
@@ -1673,7 +1690,7 @@ function noteHtml(c, y) {
     <li>Requisito di ${esc(c.tipologia)}: ${requisitoTxt(c, y)}.</li>
     <li>Ore svolte = addestramenti collettivi e individuali di questa tipologia${INTERVENTI_NEL_TOTALE ? ` + interventi del settore ${esc(c.categoria)}` : ''}, nel periodo ${periodoDi(c, y)}. Gli interventi non hanno una tipologia: si contano per settore, come nel Libretto.</li>
     <li>Colori e stato come nel Report Collettivo del foglio: <b style="color:${STATI.ko.c}">Non idoneo</b> sotto il 75% delle ore previste · <b style="color:${STATI.quasi.c}">75% delle ore previste</b> tra il 75% e il 100% · <b style="color:${STATI.man.c}">Verificare</b> ore raggiunte ma individuali (con interventi) o collettive sotto la loro quota, oppure mancano manovre previste · <b style="color:${STATI.ok.c}">Idoneo</b> tutto raggiunto. OK% = ore svolte / ore previste.</li>
-    <li>Manovre previste: quelle con (N) non sono manovre previste ma attività generiche (le ore contano); quelle con (C) (es. «Addestramento provinciale di gruppo») risultano fatte con ogni addestramento collettivo della tipologia, o se scritte in un altro addestramento collettivo o individuale. Le registrazioni individuali «Addestramento provinciale di gruppo» contano come collettive. In ogni tipologia con manovre previste, gli addestramenti senza nessuna manovra prevista riconosciuta sono segnalati come «addestramenti senza documentazione correlata».</li>
+    <li>Manovre previste: quelle con (N) non sono manovre previste ma attività generiche (le ore contano); quelle con (C) (es. «Addestramento provinciale di gruppo») risultano fatte con ogni addestramento collettivo della tipologia, o se scritte in un altro addestramento collettivo o individuale. Le registrazioni individuali «Addestramento provinciale di gruppo» contano come collettive. In ogni tipologia con manovre previste, gli addestramenti collettivi senza nessuna manovra prevista scritta nella registrazione o nel Piano di Sicurezza sono segnalati come «senza documentazione correlata», con la data; le altre attività senza manovre previste sono «generiche».</li>
     <li>Con corso = il corso è tra quelli in possesso in Elenco_Filtrato${DI_TUTTI.includes(c) ? ' (questa tipologia la hanno tutti)' : ''}. Il Comando di ognuno è quello di appartenenza. Clic su un nominativo per il suo report individuale.</li>
   </ul></div>`;
 }
@@ -1726,7 +1743,7 @@ function disegnaComando(k, c, y) {
   let h = testaStampa(E.nome, c, y, firme);
   h += testaEnte(E.nome, c, y, `${dir && !k.startsWith('direzione') ? esc(dir) + ' · ' : ''}Settore ${esc(c.categoria)} · ${E.totale} persone in PUMA<br>
         ROP: <b>${elencoNomi(R.rop)}</b> · ROR: <b>${elencoNomi(R.ror)}</b> · Funzionario di settore: <b>${elencoNomi(R.fds)}</b>`);
-  h += `<div class="solo-schermo">${tessere(E.conta, E.con.length, E.senza.length, E.collettivi, E.collPrec, y, E.vari)}</div>`;
+  h += `<div class="solo-schermo">${tessere(E.conta, E.con.length, E.senza.length, E.collettivi, E.collPrec, y)}${collSenzaDocHtml(E.collettivi.senzaDoc)}</div>`;
   h += `<h4 class="sec">Personale ${y} <span>· clic su un nominativo per il report individuale</span></h4>`;
   h += legendaHtml() + tabellaPersonale(E, y, c);
   return h + legendaManovre(c) + noteHtml(c, y);
@@ -1738,9 +1755,9 @@ function disegnaDirezione(k, c, y) {
   const enti = keys.map(x => personaleEnte(x, c, y, state.tutti));
   const R = responsabiliDi('direzione', k, c.categoria);
   ULTIMO = { tipo: 'direzione', k, nome: nomeDir, c, y, enti, R };
-  const tot = { con: 0, senza: 0, totale: 0, conta: Object.fromEntries(Object.keys(STATI).map(x => [x, 0])), coll: { n: 0, ore: 0 }, collPrec: { n: 0, ore: 0 }, ore: 0, vari: 0 };
+  const tot = { con: 0, senza: 0, totale: 0, conta: Object.fromEntries(Object.keys(STATI).map(x => [x, 0])), coll: { n: 0, ore: 0, senzaDoc: [] }, collPrec: { n: 0, ore: 0 }, ore: 0 };
   enti.forEach(E => {
-    tot.con += E.con.length; tot.senza += E.senza.length; tot.totale += E.totale; tot.ore += E.ore.tot; tot.vari += E.vari;
+    tot.con += E.con.length; tot.senza += E.senza.length; tot.totale += E.totale; tot.ore += E.ore.tot; tot.coll.senzaDoc.push(...E.collettivi.senzaDoc);
     Object.keys(STATI).forEach(x => { tot.conta[x] += E.conta[x]; });
     tot.coll.n += E.collettivi.n; tot.coll.ore += E.collettivi.ore; tot.collPrec.n += E.collPrec.n; tot.collPrec.ore += E.collPrec.ore;
   });
@@ -1749,7 +1766,7 @@ function disegnaDirezione(k, c, y) {
   let h = testaStampa(nomeDir, c, y, firme);
   h += testaEnte(nomeDir, c, y, `Settore ${esc(c.categoria)} · ${keys.length - 1} Comandi · ${tot.totale} persone in PUMA<br>
         ROR: <b>${elencoNomi(R.ror)}</b>${R.fds.length ? ` · Funzionario di settore: <b>${elencoNomi(R.fds)}</b>` : ''}`);
-  h += `<div class="solo-schermo">${tessere(tot.conta, tot.con, tot.senza, tot.coll, tot.collPrec, y, tot.vari)}</div>`;
+  h += `<div class="solo-schermo">${tessere(tot.conta, tot.con, tot.senza, tot.coll, tot.collPrec, y)}${collSenzaDocHtml(tot.coll.senzaDoc, true)}</div>`;
 
   // Riepilogo Comando per Comando
   h += `<h4 class="sec">Riepilogo per Comando ${y} <span>· clic su una riga per andare al Comando</span></h4>${legendaHtml()}
@@ -1764,7 +1781,7 @@ function disegnaDirezione(k, c, y) {
       ${ORDINE_STATI.slice(0, 4).map(x => `<td class="n">${E.conta[x] || ''}</td>`).join('')}
       <td>${n ? `<div class="mini">${barre}</div><span class="sub-n">${Math.round(E.conta.ok / n * 100)}% idonei</span>` : '<span class="sub-n">—</span>'}</td>
       <td class="n">${E.senza.length || ''}</td>
-      <td class="n">${E.ore.tot ? fmtHM(E.ore.tot) : '—'}</td><td class="n">${E.collettivi.n || '—'}${E.collettivi.n ? `<span class="sub-n">${fmtHM(E.collettivi.ore)}</span>` : ''}</td></tr>`;
+      <td class="n">${E.ore.tot ? fmtHM(E.ore.tot) : '—'}</td><td class="n">${E.collettivi.n || '—'}${E.collettivi.n ? `<span class="sub-n">${fmtHM(E.collettivi.ore)}</span>` : ''}${E.collettivi.senzaDoc.length ? `<span class="sub-n vari">⚠ ${E.collettivi.senzaDoc.length} senza doc.</span>` : ''}</td></tr>`;
   });
   h += `<tr class="tot"><td>Totale ${esc(nomeDir)}</td><td></td><td class="n">${tot.totale}</td><td class="n">${tot.con}</td>
     ${ORDINE_STATI.slice(0, 4).map(x => `<td class="n">${tot.conta[x]}</td>`).join('')}<td>${tot.con ? Math.round(tot.conta.ok / tot.con * 100) + '% idonei' : ''}</td>
@@ -1883,19 +1900,27 @@ async function creaPdf() {
   if (R.tipo === 'comando') {
     const E = R.enti[0];
     doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-    doc.text(testoPdf(`Con corso ${E.con.length}: ${conteggi(E)} - Senza corso con attività ${E.senza.length} - Collettivi organizzati ${E.collettivi.n} (${fmtHM(E.collettivi.ore)})${E.vari ? ' - ' + variTxt(E.vari) : ''}`), M, yy + 3);
-    tabella(corpo(E), yy + 5);
+    doc.text(testoPdf(`Con corso ${E.con.length}: ${conteggi(E)} - Senza corso con attività ${E.senza.length} - Collettivi organizzati ${E.collettivi.n} (${fmtHM(E.collettivi.ore)})${E.collettivi.senzaDoc.length ? ', di cui ' + E.collettivi.senzaDoc.length + ' senza documentazione correlata' : ''}`), M, yy + 3);
+    let yt = yy + 5;
+    if (E.collettivi.senzaDoc.length) {
+      const righe = doc.splitTextToSize(testoPdf(`${titoloSenzaDoc(E.collettivi.senzaDoc.length)} tra i collettivi organizzati: ${E.collettivi.senzaDoc.map(voceCollSenzaDoc).join(' - ')}`), W - 2 * M);
+      doc.setFont('helvetica', 'italic'); doc.setTextColor(120, 70, 0);
+      doc.text(righe, M, yy + 6.5);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(0, 0, 0);
+      yt += righe.length * 3.4;
+    }
+    tabella(corpo(E), yt);
   } else {
     const body = R.enti.map(E => {
       const n = E.con.length, rop = resp('rop', c.categoria, E.k).map(senzaCf).join(', ');
       return [testoPdf(E.nome), testoPdf(rop || '-'), String(E.totale), String(n),
         ...ORDINE_STATI.slice(0, 4).map(k => String(E.conta[k] || '')), n ? Math.round(E.conta.ok / n * 100) + '%' : '-',
-        String(E.senza.length || ''), E.ore.tot ? fmtHM(E.ore.tot) : '-', String(E.collettivi.n || '-')];
+        String(E.senza.length || ''), E.ore.tot ? fmtHM(E.ore.tot) : '-', String(E.collettivi.n || '-') + (E.collettivi.senzaDoc.length ? ` (${E.collettivi.senzaDoc.length} senza doc.)` : '')];
     });
     const T = R.tot;
     body.push([{ content: testoPdf('Totale ' + R.nome), colSpan: 2, styles: { fontStyle: 'bold' } },
       ...[String(T.totale), String(T.con), ...ORDINE_STATI.slice(0, 4).map(k => String(T.conta[k])), T.con ? Math.round(T.conta.ok / T.con * 100) + '%' : '-',
-        String(T.senza), fmtHM(T.ore), String(T.coll.n)].map(v => ({ content: v, styles: { fontStyle: 'bold' } }))]);
+        String(T.senza), fmtHM(T.ore), String(T.coll.n) + (T.coll.senzaDoc.length ? ` (${T.coll.senzaDoc.length} senza doc.)` : '')].map(v => ({ content: v, styles: { fontStyle: 'bold' } }))]);
     doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.text('Riepilogo per Comando', M, yy + 3.5);
     doc.autoTable({
       startY: yy + 5, margin: { left: M, right: M, top: M, bottom: 8 }, theme: 'grid',
@@ -1921,7 +1946,15 @@ async function creaPdf() {
       doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
       doc.text(testoPdf(`ROP: ${rop || 'non indicato'} - con corso ${E.con.length}: ${conteggi(E)} - senza corso ${E.senza.length}`), M + wNome + 4, y0);
       doc.setTextColor(0);
-      tabella(corpo(E), y0 + 2);
+      let yt = y0 + 2;
+      if (E.collettivi.senzaDoc.length) {
+        const righe = doc.splitTextToSize(testoPdf(`${titoloSenzaDoc(E.collettivi.senzaDoc.length)} tra i collettivi organizzati: ${E.collettivi.senzaDoc.map(voceCollSenzaDoc).join(' - ')}`), W - 2 * M);
+        doc.setFontSize(7.5); doc.setFont('helvetica', 'italic'); doc.setTextColor(120, 70, 0);
+        doc.text(righe, M, y0 + 3.8);
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
+        yt += righe.length * 3.2 + 0.5;
+      }
+      tabella(corpo(E), yt);
     });
   }
   // Legenda delle manovre previste (codici usati nel dettaglio)
