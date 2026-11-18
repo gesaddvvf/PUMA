@@ -824,7 +824,16 @@ function elaboraReg(reg, pianoIdx) {
   colReg.manovre = head.map((h, i) => REG_MANOVRE.test(h) ? i : -1).filter(i => i >= 0);
   if (!colReg.manovre.length) colReg.manovre = [letterIdx('N'), letterIdx('O')];
 
-  let righe = 0, scartate = 0, senzaData = 0, collSenzaPiano = 0, nonAttivita = 0;
+  let righe = 0, scartate = 0, senzaData = 0, collSenzaPiano = 0, nonAttivita = 0, duplicate = 0;
+  // Inserimenti duplicati: lo stesso addestramento o intervento registrato più volte dalla stessa persona
+  // (stesso Piano di Sicurezza; oppure stesso giorno, orari, tipologia, Comando, squadra, numero intervento e descrizione).
+  // Si conta una volta sola e resta l'ultima registrazione inviata (come nei Libretti SAF E-R).
+  const idPiano = new Map(), chiaviAtt = new Map();
+  const chiaveAtt = a => a.giorno + '|' + a.tipo + '|' + (a.piano && !a.diGruppo
+    ? 'p' + (idPiano.has(a.piano) ? idPiano.get(a.piano) : idPiano.set(a.piano, idPiano.size).get(a.piano))
+    : normKey((a.inizio && a.fine
+      ? [a.inizio, a.fine, a.tipologia, a.organizzatoreRaw, a.team, a.catInt, a.numInt]   // stessi orari: correzione o reinvio
+      : [a.tipologia, a.organizzatoreRaw, a.team, a.catInt, a.numInt, a.descr, a.descrInt, a.manovreTxt]).join(' ')));
   const g = (r, k) => val(r[colReg[k]]);
   reg.slice(1).forEach(r => {
     const { nome, cf } = separaNome(g(r, 'nome'));
@@ -916,13 +925,19 @@ function elaboraReg(reg, pianoIdx) {
     p.originali.set(orig, (p.originali.get(orig) || 0) + 1);
     const app = nomeComando(g(r, 'appartenenza'));
     if (app) p.comandi.set(app, (p.comandi.get(app) || 0) + 1);
-    p.att.push(a);
+    const kDup = p.key + '#' + chiaveAtt(a), giaVista = chiaviAtt.get(kDup);
+    if (giaVista) {
+      duplicate++; p.duplicate = (p.duplicate || 0) + 1;
+      a.duplicati = (giaVista.duplicati || 1) + 1;   // quante volte è stato registrato
+      p.att[p.att.indexOf(giaVista)] = a;
+    } else p.att.push(a);
+    chiaviAtt.set(kDup, a);
   });
   const piuFrequente = m => [...m.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] || '';
   PERSONE.forEach(p => { p.nome = piuFrequente(p.grafie); p.comando = piuFrequente(p.comandi); DI_TUTTI.forEach(c => p.corsiPossesso.add(c)); });
   const perTipo = {};
   PERSONE.forEach(p => p.att.forEach(a => { perTipo[a.tipo] = (perTipo[a.tipo] || 0) + 1; }));
-  diag.reg = { righe, scartate, senzaData, collSenzaPiano, nonAttivita, perTipo, persone: PERSONE.size };
+  diag.reg = { righe, scartate, senzaData, collSenzaPiano, nonAttivita, duplicate, perTipo, persone: PERSONE.size };
 }
 
 /* =====================================================================
@@ -1539,6 +1554,7 @@ function datiDettaglio(s) {
     // attività generica: nessuna manovra prevista; le voci (N) riconosciute come descrizione
     const vario = s.vari.includes(a);
     const generiche = vario ? [...(a.generiche || [])].map(m => m.manovra.replace(RE_LETTERA_MANOVRA, '')) : [];
+    if (a.duplicati > 1) info += ` · registrato ${a.duplicati} volte (contato una)`;
     return { data: dataBreve(a.data), prima: a.anno !== state.anno, tipo, ore: a.ore == null ? '—' : fmtHM(a.ore), info, vario, generiche,
       descr: String(a.descr || (a.piano && a.piano.descr) || a.tipologia || '').replace(/\s+/g, ' ').slice(0, 80), manovre: tipo === 'intervento' ? [] : manovreAtt(a, s.c).sort(ordManovre) };
   });

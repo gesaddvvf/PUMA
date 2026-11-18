@@ -944,7 +944,16 @@ function elaboraReg(reg, pianoIdx) {
   colReg.manovre = head.map((h, i) => REG_MANOVRE.test(h) ? i : -1).filter(i => i >= 0);
   if (!colReg.manovre.length) colReg.manovre = [letterIdx('N'), letterIdx('O')];
 
-  let righe = 0, scartate = 0, senzaData = 0, collSenzaPiano = 0, nonAttivita = 0;
+  let righe = 0, scartate = 0, senzaData = 0, collSenzaPiano = 0, nonAttivita = 0, duplicate = 0;
+  // Inserimenti duplicati: lo stesso addestramento o intervento registrato più volte dalla stessa persona
+  // (stesso Piano di Sicurezza; oppure stesso giorno, orari, tipologia, Comando, squadra, numero intervento e descrizione).
+  // Si conta una volta sola e resta l'ultima registrazione inviata (come nei Libretti SAF E-R).
+  const idPiano = new Map(), chiaviAtt = new Map();
+  const chiaveAtt = a => a.giorno + '|' + a.tipo + '|' + (a.piano && !a.diGruppo
+    ? 'p' + (idPiano.has(a.piano) ? idPiano.get(a.piano) : idPiano.set(a.piano, idPiano.size).get(a.piano))
+    : normKey((a.inizio && a.fine
+      ? [a.inizio, a.fine, a.tipologia, a.organizzatoreRaw, a.team, a.catInt, a.numInt]   // stessi orari: correzione o reinvio
+      : [a.tipologia, a.organizzatoreRaw, a.team, a.catInt, a.numInt, a.descr, a.descrInt, a.manovreTxt]).join(' ')));
   const g = (r, k) => val(r[colReg[k]]);
   reg.slice(1).forEach(r => {
     const { nome, cf } = separaNome(g(r, 'nome'));
@@ -1036,13 +1045,19 @@ function elaboraReg(reg, pianoIdx) {
     p.originali.set(orig, (p.originali.get(orig) || 0) + 1);
     const app = nomeComando(g(r, 'appartenenza'));
     if (app) p.comandi.set(app, (p.comandi.get(app) || 0) + 1);
-    p.att.push(a);
+    const kDup = p.key + '#' + chiaveAtt(a), giaVista = chiaviAtt.get(kDup);
+    if (giaVista) {
+      duplicate++; p.duplicate = (p.duplicate || 0) + 1;
+      a.duplicati = (giaVista.duplicati || 1) + 1;   // quante volte è stato registrato
+      p.att[p.att.indexOf(giaVista)] = a;
+    } else p.att.push(a);
+    chiaviAtt.set(kDup, a);
   });
   const piuFrequente = m => [...m.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] || '';
   PERSONE.forEach(p => { p.nome = piuFrequente(p.grafie); p.comando = piuFrequente(p.comandi); DI_TUTTI.forEach(c => p.corsiPossesso.add(c)); });
   const perTipo = {};
   PERSONE.forEach(p => p.att.forEach(a => { perTipo[a.tipo] = (perTipo[a.tipo] || 0) + 1; }));
-  diag.reg = { righe, scartate, senzaData, collSenzaPiano, nonAttivita, perTipo, persone: PERSONE.size };
+  diag.reg = { righe, scartate, senzaData, collSenzaPiano, nonAttivita, duplicate, perTipo, persone: PERSONE.size };
 }
 
 /* =====================================================================
@@ -1536,6 +1551,8 @@ function disegna() {
   const senzaOre = anno.filter(a => a.ore == null && a.tipo !== 'intervento').length;
   if (senzaOre) note.push(`${senzaOre} attività senza orario di inizio/fine valido: contano come attività ma con 0 ore.`);
   const senzaPiano = anno.filter(a => a.tipo === 'collettivo' && !a.piano && !a.diGruppo).length;
+  const dupAnno = anno.filter(a => a.duplicati > 1);
+  if (dupAnno.length) note.push(`Inserimenti duplicati non conteggiati: ${dupAnno.map(a => `${a.data.toLocaleDateString('it-IT')} ${a.tipo === 'collettivo' ? 'collettivo' : a.tipo === 'intervento' ? 'intervento' : 'individuale'} registrato ${a.duplicati} volte`).join(' · ')}. Vale l'ultima registrazione inviata.`);
   if (senzaPiano) note.push(`${senzaPiano} addestramenti collettivi senza Piano di Sicurezza corrispondente (stesso giorno, Comando organizzatore e squadra).`);
   const senzaCorso = [...new Set(anno.filter(a => a.tipo !== 'intervento' && !a.corsi.size && !a.categoria && a.tipologia).map(a => a.tipologia))];
   if (senzaCorso.length) note.push(`Tipologie non collegate a un corso di Formazione: ${senzaCorso.map(esc).join(' · ')}`);
@@ -1966,7 +1983,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !dlg.hidde
 function diagnostica() {
   const lettera = i => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
   return `<div class="debug-box"><b>Diagnostica</b><br>
-    Registrazioni: ${diag.reg?.righe} righe · ${diag.reg?.scartate} prove scartate · ${diag.reg?.nonAttivita} non attività (stampa/invio…) · ${diag.reg?.senzaData} senza data · per tipo: <code>${esc(JSON.stringify(diag.reg?.perTipo || {}))}</code> · ${diag.reg?.collSenzaPiano} collettivi senza piano · ${diag.reg?.persone} persone<br>
+    Registrazioni: ${diag.reg?.righe} righe · ${diag.reg?.scartate} prove scartate · ${diag.reg?.nonAttivita} non attività (stampa/invio…) · ${diag.reg?.senzaData} senza data · per tipo: <code>${esc(JSON.stringify(diag.reg?.perTipo || {}))}</code> · ${diag.reg?.collSenzaPiano} collettivi senza piano · ${diag.reg?.duplicate} inserimenti duplicati non conteggiati · ${diag.reg?.persone} persone<br>
     Colonne registrazione: ${Object.entries(colReg).map(([k, v]) => `${k}=<code>${Array.isArray(v) ? v.map(lettera).join('+') : lettera(v)}</code>`).join(' ')}<br>
     Piano: ${diag.piano?.righe} righe · ${diag.piano?.validi} validi · ${diag.piano?.duplicati} duplicati · colonne: ${Object.entries(colPiano).map(([k, v]) => `${k}=<code>${esc(Array.isArray(v) ? v.join(' + ') : v)}</code>`).join(' ')}<br>
     Elenco_Filtrato: ${diag.elenco?.righe} righe · ${diag.elenco?.persone} persone${diag.elenco?.errore ? ' · <b>' + esc(diag.elenco.errore) + '</b>' : ''} · colonne: ${Object.entries(colElenco).map(([k, v]) => `${k}=<code>${v >= 0 ? lettera(v) : '—'}</code>`).join(' ')}${diag.elenco?.corsiNonTrovati?.length ? '<br>Corsi in possesso non trovati in Formazione: <code>' + esc(diag.elenco.corsiNonTrovati.join(' · ')) + '</code>' : ''}<br>
