@@ -209,8 +209,8 @@
   </div>
   <nav id="nav-buttons">
     <a class="nav-btn area-neu" id="btn-home" href="#home" data-route="home">Home Page</a>
-    <a class="nav-btn area-rt" id="btn-realtime" href="#mappa" data-route="mappa" data-gruppo="realtime">Real Time</a>
-    <a class="nav-btn area-att" id="btn-attivita" href="#moduli" data-route="moduli" data-gruppo="attivita">Attività</a>
+    <a class="nav-btn area-rt" id="btn-realtime" href="#presenze" data-route="presenze" data-gruppo="realtime">Real Time</a>
+    <a class="nav-btn area-att" id="btn-attivita" href="#profilazione" data-route="profilazione" data-gruppo="attivita">Attività</a>
     <a class="nav-btn area-doc" id="btn-doc" href="#doc-puma" data-route="doc-puma" data-gruppo="documentazione">Documentazione</a>
     <a class="nav-btn area-rep" id="btn-report" href="#individuale" data-route="individuale">Report Individuale</a>
     <a class="nav-btn area-rep" id="btn-collettivo" href="#collettivo" data-route="collettivo">🔒 Report Collettivo</a>
@@ -238,17 +238,17 @@
       </div>
       <div class="sez-tit">Aree</div>
       <div class="tessere">
-        <button class="tessera area-rt" type="button" data-route="mappa">
+        <button class="tessera area-rt" type="button" data-route="presenze">
           <div class="ic">🗺️</div><h4>Real Time</h4>
           <p>Presenze odierne, mappa degli addestramenti in corso e riepilogo globale degli addestramenti collettivi.</p>
         </button>
-        <button class="tessera area-att" type="button" data-route="moduli">
+        <button class="tessera area-att" type="button" data-route="profilazione">
           <div class="ic">📝</div><h4>Attività</h4>
-          <p>Moduli di profilazione, registrazione attività e pianificazione dei collettivi; archivio di Direzioni e Comandi.</p>
+          <p>Profilazione individuale, registrazione attività e pianificazione degli addestramenti collettivi.</p>
         </button>
         <button class="tessera area-doc" type="button" data-route="doc-puma">
           <div class="ic">📚</div><h4>Documentazione</h4>
-          <p>Manuali P.U.M.A., manuali e circolari di settore (SAF, CRA, USAR, TPSS, TAS, NBCR…).</p>
+          <p>Manuali P.U.M.A., manuali e circolari di settore (SAF, CRA, USAR, TPSS, TAS, NBCR…) e archivio di Direzioni e Comandi.</p>
         </button>
         <button class="tessera area-rep" type="button" data-route="individuale">
           <div class="ic">👤</div><h4>Report Individuale</h4>
@@ -312,8 +312,11 @@ const PAGINE = {
   presenze:    { titolo: 'Real Time · Presenze Odierne', url: BASE + 'personaleodierno.html', gruppo: 'realtime' },
   mappa:       { titolo: 'Real Time · Mappa Real Time', url: BASE + 'trainingmaprealtime.html', gruppo: 'realtime' },
   riepilogo:   { titolo: 'Real Time · Riepilogo Globale addestramenti collettivi', url: BASE + 'mappariepilogocollettivi.html', gruppo: 'realtime' },
-  moduli:      { titolo: 'Attività · Moduli P.U.M.A.', url: BASE + 'activities.html', gruppo: 'attivita', css: 'attivita' },
-  archivio:    { titolo: 'Attività · Archivio Direzioni e Comandi', url: BASE + 'archive.html', gruppo: 'attivita', css: 'archivio' },
+  // Attività: i moduli Google (gli stessi della pagina activities.html)
+  profilazione:   { titolo: 'Attività · Profilazione individuale', url: 'https://docs.google.com/forms/d/e/1FAIpQLSex-4B482W87qQfynn76qGeesezbszvUNR8gDXlB-Lo-ylQWw/viewform?embedded=true', fuori: 'https://docs.google.com/forms/d/e/1FAIpQLSex-4B482W87qQfynn76qGeesezbszvUNR8gDXlB-Lo-ylQWw/viewform', gruppo: 'attivita' },
+  registrazione:  { titolo: 'Attività · Registrazione attività', url: 'https://docs.google.com/forms/d/e/1FAIpQLSdbrjXdP6l7n3yrcVvoiVZsh9hRdZSVrQO4aJyF9riOhuxiBA/viewform?embedded=true', fuori: 'https://docs.google.com/forms/d/e/1FAIpQLSdbrjXdP6l7n3yrcVvoiVZsh9hRdZSVrQO4aJyF9riOhuxiBA/viewform', gruppo: 'attivita' },
+  pianificazione: { titolo: 'Attività · Pianificazione addestramenti collettivi', url: 'https://docs.google.com/forms/d/e/1FAIpQLSeqQNgaqhXLEPl7ilHosVrspMHhVwUzdGL24pWWhMxKKREBhA/viewform?embedded=true', fuori: 'https://docs.google.com/forms/d/e/1FAIpQLSeqQNgaqhXLEPl7ilHosVrspMHhVwUzdGL24pWWhMxKKREBhA/viewform', gruppo: 'attivita' },
+  archivio:    { titolo: 'Documentazione · Archivio Direzioni e Comandi', url: BASE + 'archive.html', gruppo: 'documentazione', css: 'archivio' },
   individuale: { titolo: 'Report Individuale', url: BASE + 'reportindividuale.html', area: 'rep', css: 'report' },
   'comando-individuale': { titolo: 'Area Comando · Report Individuale', url: BASE + 'reportindividuale.html', riservata: true, css: 'report' },
   collettivo: { titolo: 'Area Comando · Report Collettivo', url: BASE + 'reportcollettivo.html', riservata: true, css: 'report' },
@@ -332,11 +335,15 @@ const CSS_INCORPORATA = `
 const CSS_PAGINA = {
   archivio: `
     @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap');
-    :root { --card-bg: #262626; --card-hover: #2e2e2e; --text-main: #f0f0f0; --text-muted: #999; --border-color: #3a3a3a; }
+    :root { --primary-color: #1e88e5; --primary-hover: #42a5f5; --card-bg: #262626; --card-hover: #2e2e2e;
+            --text-main: #f0f0f0; --text-muted: #999; --border-color: #3a3a3a; --highlight-bg: rgba(30, 136, 229, .18); }
     body { font-family: 'Comfortaa', cursive !important; background: #1e1e1e !important; }
     .search-container { background: #1e1e1e !important; }
     .search-box { font-family: 'Comfortaa', cursive; }
+    .search-box:focus { box-shadow: 0 0 10px rgba(30, 136, 229, .25) !important; }
     .accordion-item { border-top: 3px solid var(--primary-color) !important; border-radius: 6px !important; }
+    .accordion-header:hover { color: #90caf9 !important; }
+    .command-row:hover { background-color: rgba(30, 136, 229, .1) !important; }
   `,
   // Report: accenti arancioni → giallo dell'area Reportistica (i colori di stato e gli avvisi restano)
   report: `
@@ -345,28 +352,13 @@ const CSS_PAGINA = {
     td.nome a:hover, tr.persona.apribile td.nome::before, .dh, tr.det .riga b, details.legman summary, .dlg h3, .dlg-btn button { color: #fff176 !important; }
     .seg button.on, .azioni button:hover:not(:disabled), .dlg-btn button.primario { color: #1e1e1e !important; }
   `,
-  // Moduli: da giallo a rosso (area Attività)
-  attivita: `
-    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap');
-    body { background: #1e1e1e !important; font-family: 'Comfortaa', cursive !important; }
-    .container { background: #232323 !important; border-color: #e53935 !important; }
-    .container h1 { color: #ef9a9a !important; }
-    .btn { background: linear-gradient(135deg, #e53935, #c62828); color: #fff; font-family: 'Comfortaa', cursive; }
-    .btn:hover { background: linear-gradient(135deg, #ef5350, #d32f2f); }
-    .secondary { background: #333; color: #ef9a9a; }
-    .secondary:hover { background: #3d3d3d; }
-    .admin-btn { background: #ffffff; color: #000; }
-    .login-btn { background: #333; color: #ff5252; border: 2px solid #ff5252; }
-    .cancel-btn { background: #e53935; color: #fff; }
-    .area-box { border-color: #e53935 !important; background: #1a1a1a !important; }
-  `
 };
 
 // Schede delle sezioni con più pagine (barra sotto l'intestazione)
 const GRUPPI = {
   realtime: { nome: 'Real Time', area: 'rt', schede: [['presenze', 'Presenze Odierne'], ['mappa', 'Mappa Real Time'], ['riepilogo', 'Riepilogo Globale']] },
-  attivita: { nome: 'Attività', area: 'att', schede: [['moduli', 'Moduli'], ['archivio', 'Archivio']] },
-  documentazione: { nome: 'Documentazione', area: 'doc', schede: [['doc-puma', 'Manuali P.U.M.A.'], ['doc-manuali', 'Manuali di settore'], ['doc-circolari', 'Circolari di settore']] }
+  attivita: { nome: 'Attività', area: 'att', schede: [['profilazione', 'Profilazione individuale'], ['registrazione', 'Registrazione attività'], ['pianificazione', 'Pianificazione addestramenti collettivi']] },
+  documentazione: { nome: 'Documentazione', area: 'doc', schede: [['doc-puma', 'Manuali P.U.M.A.'], ['doc-manuali', 'Manuali di settore'], ['doc-circolari', 'Circolari di settore'], ['archivio', 'Archivio']] }
 };
 
 // Documentazione: stessi elenchi delle pagine "Documentazione" del sito Google P.U.M.A.
@@ -620,7 +612,8 @@ function vai(rotta) {
   mostra(rotta);
 }
 function mostra(rotta) {
-  if (rotta === 'realtime') { rotta = 'mappa'; history.replaceState(null, '', '#mappa'); }   // vecchio indirizzo
+  const VECCHI = { realtime: 'presenze', moduli: 'profilazione' };   // vecchi indirizzi
+  if (VECCHI[rotta]) { rotta = VECCHI[rotta]; history.replaceState(null, '', '#' + rotta); }
   if (rotta.startsWith('f-') && !PAGINE[rotta]) { const f = paginaFile(rotta.slice(2)); if (f) PAGINE[rotta] = f; }
   const p = PAGINE[rotta];
   if (!p) rotta = 'home';
