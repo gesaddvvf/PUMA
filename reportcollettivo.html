@@ -267,6 +267,7 @@
     .logo { display: inline-block; width: 20px; height: 20px; vertical-align: middle; margin: -3px 6px -2px 0; }
     .logo svg { width: 100%; height: 100%; display: block; }
     .print-only { display: none; }
+    tr.manp { display: none; }   /* manovre fatte / da fare in breve: solo in stampa */
 
     /* ---------- STAMPA ---------- */
     @media print {
@@ -293,6 +294,9 @@
       tr.det > td { background: #fff !important; color: #000 !important; font-size: 7.5px; padding: 1px 4px 2px 12px; }
       tr.nodoc > td { background: #fff !important; color: #000 !important; font-size: 7.5px; padding: 1px 4px 2px 12px; }
       tr.nodoc b { color: #000 !important; }
+      tr.manp:not(.nascosta) { display: table-row !important; }
+      tr.manp > td { background: #fff !important; color: #000 !important; font-size: 7.5px; padding: 1px 4px 2px 12px; }
+      .ctrl-box { display: none !important; }   /* controllo conferme: solo a video */
       .dh, .dh span, .dh.si, .dh.no, table.dtab td, ul.ml li, ul.ml li b, ul.ml li i, table.dtab tr.prima td { color: #000 !important; }
       .ty { background: none !important; color: #000 !important; padding: 0; border: 1px solid #999; }
       ul.ml li.si::before, ul.ml li.no::before { color: #000 !important; }
@@ -1578,6 +1582,8 @@ annoSelect.addEventListener('change', () => { state.anno = +annoSelect.value; di
 tuttiChk.addEventListener('change', () => { state.tutti = tuttiChk.checked; disegna(); });
 detChk.addEventListener('change', () => { state.dettaglio = detChk.checked; state.invertite.clear(); disegna(); });
 refreshBtn.addEventListener('click', caricaDati);
+window.addEventListener('beforeprint', () => document.querySelectorAll('details.legman').forEach(d => { d.dataset.eraAperta = d.open ? '1' : ''; d.open = true; }));
+window.addEventListener('afterprint', () => document.querySelectorAll('details.legman').forEach(d => { if (!d.dataset.eraAperta) d.open = false; }));
 printBtn.addEventListener('click', () => window.print());
 
 /* =====================================================================
@@ -1632,7 +1638,7 @@ function rigaPersona(s, i, y) {
     <td class="c">${s.prev ? `<b>${s.fatte}</b> / ${s.prev}` : '—'}</td>
     <td class="n">${s.con && s.pct != null ? Math.round(s.pct * 100) + '%' : '—'}</td>
     <td>${statoHtml(s)}${s.motivi && s.motivi.length ? `<span class="sub-n">${esc(s.motivi.join(' · '))}</span>` : ''}</td>
-  </tr>${s.vari.length ? `<tr class="nodoc" style="--sc:${col}"><td></td><td colspan="11"><b>⚠ ${titoloSenzaDoc(s.vari.length)}:</b> ${s.vari.map(a => esc(voceSenzaDoc(a))).join(' · ')}</td></tr>` : ''}${det ? `<tr class="det" data-for="${esc(p.key)}" style="--sc:${col}${chiusa ? ';display:none' : ''}"><td></td><td colspan="11">${dettaglioHtml(s)}</td></tr>` : ''}`;
+  </tr>${s.vari.length ? `<tr class="nodoc" style="--sc:${col}"><td></td><td colspan="11"><b>⚠ ${titoloSenzaDoc(s.vari.length)}:</b> ${s.vari.map(a => esc(voceSenzaDoc(a))).join(' · ')}</td></tr>` : ''}${s.prev ? `<tr class="manp${det && !chiusa ? ' nascosta' : ''}" data-for="${esc(p.key)}"><td></td><td colspan="11">${manovreBreveHtml(s)}</td></tr>` : ''}${det ? `<tr class="det" data-for="${esc(p.key)}" style="--sc:${col}${chiusa ? ';display:none' : ''}"><td></td><td colspan="11">${dettaglioHtml(s)}</td></tr>` : ''}`;
 }
 
 /* ---------------- dettaglio delle attività di un nominativo ---------------- */
@@ -1717,6 +1723,22 @@ function testoDettaglio(s) {
   }
   if (D.vari.length) man += (man ? '\n' : '') + variTxt(D.vari.length).toUpperCase();
   return { att, man };
+}
+// Manovre fatte / da fare in breve (codici; i nomi sono nella legenda delle manovre previste)
+function manovreBreve(s) {
+  const D = datiDettaglio(s);
+  return {
+    fatte: `Manovre fatte (${D.fatte.length}/${s.prev})`, fatteL: D.fatte.map(f => codiceMan(f.m) + (f.n > 1 ? ` (${f.n}x)` : '')).join(', ') || '-',
+    daFare: s.con ? `Da fare (${D.daFare.length})` : '', daFareL: s.con ? (D.daFare.map(codiceMan).join(', ') || 'tutte fatte') : ''
+  };
+}
+function manovreBreveHtml(s) {
+  const M = manovreBreve(s);
+  return `<b>${M.fatte}:</b> ${esc(M.fatteL)}${M.daFare ? ` &nbsp;·&nbsp; <b>${M.daFare}:</b> ${esc(M.daFareL)}` : ''}`;
+}
+function manovreBreveTesto(s) {
+  const M = manovreBreve(s);
+  return `${M.fatte}: ${M.fatteL}${M.daFare ? `   -   ${M.daFare}: ${M.daFareL}` : ''}`;
 }
 function legendaManovre(c) {
   if (!c.previste.length) return '';
@@ -1803,6 +1825,7 @@ function disegna() {
     const chiudi = state.dettaglio === state.invertite.has(k);
     tr.classList.toggle('chiusa', chiudi);
     report.querySelectorAll(`tr.det[data-for="${CSS.escape(k)}"]`).forEach(d => { d.style.display = chiudi ? 'none' : ''; });
+    report.querySelectorAll(`tr.manp[data-for="${CSS.escape(k)}"]`).forEach(d => d.classList.toggle('nascosta', !chiudi));
   }));
   report.querySelectorAll('table.riep tr[data-k]').forEach(tr => tr.addEventListener('click', () => {
     const el = document.getElementById('sez-' + tr.dataset.k);
@@ -1959,6 +1982,10 @@ async function creaPdf() {
           b.push([{ content: '', styles: { fillColor: [255, 255, 255] } },
             { content: testoPdf(T.att), colSpan: 6, dett: 'att', styles: st },
             { content: testoPdf(T.man), colSpan: 5, dett: 'man', styles: st }]);
+        } else if (s.prev) {   // dettaglio chiuso: manovre fatte / da fare in breve
+          b.push([{ content: '', styles: { fillColor: [255, 255, 255] } },
+            { content: testoPdf(manovreBreveTesto(s)), colSpan: 11,
+              styles: { fontSize: 6.3, textColor: [40, 40, 40], fillColor: [255, 255, 255], halign: 'left', cellPadding: { top: 0.6, bottom: 0.8, left: 2, right: 1 } } }]);
         }
       });
     });
@@ -1991,14 +2018,6 @@ async function creaPdf() {
       doc.text(righe, M, yy + 6.5);
       doc.setFont('helvetica', 'normal'); doc.setTextColor(0, 0, 0);
       yt += righe.length * 3.4;
-    }
-    const G = controlloConferme([E.k], c, R.y);
-    if (G.length) {
-      const righe = doc.splitTextToSize(testoPdf(`Controllo conferme / Piani di Sicurezza (Comando, giorno, squadra) - ${G.length} anomalie: ` + G.map(g => TITOLI_CONTROLLO[g.tipo] + ': ' + testoGruppoControllo(g)).join(' | ')), W - 2 * M);
-      doc.setFontSize(7.5); doc.setFont('helvetica', 'italic'); doc.setTextColor(0, 70, 120);
-      doc.text(righe, M, yt + 1.5);
-      doc.setFont('helvetica', 'normal'); doc.setTextColor(0, 0, 0);
-      yt += righe.length * 3.2 + 1;
     }
     tabella(corpo(E), yt);
   } else {
@@ -2042,14 +2061,6 @@ async function creaPdf() {
         const righe = doc.splitTextToSize(testoPdf(`${titoloSenzaDoc(E.collettivi.senzaDoc.length)} tra i collettivi organizzati: ${E.collettivi.senzaDoc.map(voceCollSenzaDoc).join(' - ')}`), W - 2 * M);
         doc.setFontSize(7.5); doc.setFont('helvetica', 'italic'); doc.setTextColor(120, 70, 0);
         doc.text(righe, M, y0 + 3.8);
-        doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
-        yt += righe.length * 3.2 + 0.5;
-      }
-      const G = controlloConferme([E.k], c, R.y);
-      if (G.length) {
-        const righe = doc.splitTextToSize(testoPdf(`Controllo conferme / Piani di Sicurezza - ${G.length} anomalie: ` + G.map(g => TITOLI_CONTROLLO[g.tipo] + ': ' + testoGruppoControllo(g)).join(' | ')), W - 2 * M);
-        doc.setFontSize(7.5); doc.setFont('helvetica', 'italic'); doc.setTextColor(0, 70, 120);
-        doc.text(righe, M, yt + 1.8);
         doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
         yt += righe.length * 3.2 + 0.5;
       }
