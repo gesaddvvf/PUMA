@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P.U.M.A. - Sito</title>
+  <link rel="icon" type="image/jpeg" href="https://gesaddvvf.github.io/PUMA/images/puma.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --gold: #ffd700;
+      --arancio: #ef6c00;
+      --verde: #2e7d32;
+      --bg: #1e1e1e;
+    }
+    * { scrollbar-width: thin; scrollbar-color: #555 #1e1e1e; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #1e1e1e; }
+    ::-webkit-scrollbar-thumb { background-color: #555; border-radius: 5px; border: 2px solid #1e1e1e; }
+    ::-webkit-scrollbar-thumb:hover { background-color: var(--gold); }
+
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body { font-family: 'Comfortaa', cursive; background-color: var(--bg); color: #f0f0f0; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ---------- HEADER ---------- */
+    #page-header {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+      background-color: var(--bg); border-bottom: 1px solid #444; padding: 10px 16px; box-sizing: border-box; flex-shrink: 0;
+    }
+    #titolo { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    #page-header h1 { font-size: 16px; color: var(--gold); margin: 0 0 2px 0; font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    #page-header .puma-icon { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+    #page-header .subtitle-divider { color: #666; }
+    #page-header h2 { font-size: 13px; color: #ccc; font-weight: normal; margin: 0; display: flex; align-items: center; gap: 8px; }
+    #page-header h2 b { color: var(--gold); }
+    #apri-fuori { color: #999; text-decoration: none; font-size: 12px; border: 1px solid #555; border-radius: 4px; padding: 1px 6px; }
+    #apri-fuori:hover { color: var(--gold); border-color: var(--gold); }
+
+    #hamburger {
+      background: #2a2a2a; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px;
+      width: 40px; height: 36px; font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0;
+    }
+    #hamburger:hover { background: var(--gold); color: var(--bg); }
+
+    #nav-buttons { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .nav-btn {
+      display: inline-block; background-color: #2a2a2a; color: var(--gold);
+      border: 1px solid var(--gold); border-radius: 4px; padding: 8px 14px;
+      font-family: 'Comfortaa', cursive; font-weight: bold; font-size: 13px;
+      text-decoration: none; transition: background-color 0.15s, color 0.15s; cursor: pointer;
+    }
+    .nav-btn:hover, .nav-btn.attivo { background-color: var(--gold); color: var(--bg); }
+    #btn-report.nav-btn { background-color: var(--arancio); color: #fff; border-color: var(--arancio); }
+    #btn-report.nav-btn:hover, #btn-report.nav-btn.attivo { background-color: #fb8c00; border-color: #fff; color: #fff; }
+    #btn-comando.nav-btn { background-color: #2a2a2a; color: #90caf9; border-color: #90caf9; }
+    #btn-comando.nav-btn:hover { background-color: #90caf9; color: var(--bg); }
+    body.sbloccato #btn-comando.nav-btn { background-color: var(--verde); color: #fff; border-color: var(--verde); }
+
+    /* ---------- CONTENUTO ---------- */
+    main { flex: 1; position: relative; min-height: 0; }
+    #frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: var(--bg); display: none; }
+    body.vista-pagina #frame { display: block; }
+    body.vista-pagina #home { display: none; }
+    #caricamento { position: absolute; top: 12px; right: 16px; font-size: 12px; color: #999; display: none; }
+    body.carica #caricamento { display: block; }
+
+    #home { height: 100%; overflow-y: auto; box-sizing: border-box; padding: 28px 16px 40px; }
+    .home-wrap { max-width: 980px; margin: 0 auto; }
+    .benv { display: flex; align-items: center; gap: 18px; margin-bottom: 26px; }
+    .benv img { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; border: 1px solid #444; }
+    .benv h3 { margin: 0 0 6px; color: var(--gold); font-size: 20px; }
+    .benv p { margin: 0; color: #bbb; font-size: 13.5px; line-height: 1.5; }
+    .tessere { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .tessera {
+      background: #262626; border: 1px solid #3a3a3a; border-top: 3px solid var(--tc, var(--gold)); border-radius: 6px;
+      padding: 16px; cursor: pointer; text-align: left; color: inherit; font-family: inherit; transition: background .15s, transform .15s;
+    }
+    .tessera:hover { background: #2e2e2e; transform: translateY(-2px); }
+    .tessera .ic { font-size: 26px; }
+    .tessera h4 { margin: 8px 0 6px; font-size: 15px; color: var(--tc, var(--gold)); }
+    .tessera p { margin: 0; font-size: 12.5px; color: #bbb; line-height: 1.5; }
+
+    /* ---------- MENU LATERALE (hamburger) ---------- */
+    #velo { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    body.menu-aperto #velo { opacity: 1; pointer-events: auto; }
+    #menu {
+      position: fixed; top: 0; left: 0; bottom: 0; width: 310px; max-width: 88vw; background: #232323; border-right: 1px solid var(--gold);
+      z-index: 301; transform: translateX(-102%); transition: transform .22s ease; display: flex; flex-direction: column; box-shadow: 6px 0 24px rgba(0,0,0,.5);
+    }
+    body.menu-aperto #menu { transform: none; }
+    .menu-testa { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #444; }
+    .menu-testa b { color: var(--gold); font-size: 15px; }
+    #menu-chiudi { background: none; border: none; color: #bbb; font-size: 20px; cursor: pointer; }
+    #menu-chiudi:hover { color: var(--gold); }
+    .menu-corpo { flex: 1; overflow-y: auto; padding: 10px 0; }
+    .sez-titolo { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #999; padding: 12px 16px 6px; }
+    .sotto-titolo { font-size: 12.5px; color: #ffb74d; padding: 10px 16px 4px 26px; font-weight: bold; }
+    .voce {
+      display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; background: none; border: none; border-left: 3px solid transparent;
+      color: #eee; font-family: inherit; font-size: 13.5px; text-align: left; padding: 10px 16px; cursor: pointer;
+    }
+    .voce.liv2 { padding-left: 38px; font-size: 13px; }
+    .voce small { display: block; color: #999; font-size: 11px; margin-top: 2px; }
+    .voce:hover { background: #2e2e2e; border-left-color: var(--arancio); }
+    .voce.attivo { background: #2e2e2e; border-left-color: var(--gold); color: var(--gold); }
+    .menu-piede { border-top: 1px solid #444; padding: 12px 16px; }
+    .menu-piede button {
+      width: 100%; background: #2a2a2a; color: #ef9a9a; border: 1px solid #c62828; border-radius: 4px; padding: 8px;
+      font-family: inherit; font-weight: bold; font-size: 12.5px; cursor: pointer;
+    }
+    .menu-piede button:hover { background: #c62828; color: #fff; }
+
+    /* ---------- LOGIN AREA COMANDO ---------- */
+    .dlg-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .dlg-bg[hidden] { display: none; }
+    .dlg { background: #232323; border: 1px solid #90caf9; border-radius: 8px; padding: 20px 22px; width: 360px; max-width: 100%; box-sizing: border-box; font-size: 13px; }
+    .dlg h3 { margin: 0 0 6px; color: #90caf9; font-size: 16px; }
+    .dlg p { margin: 0 0 14px; color: #bbb; line-height: 1.5; }
+    .dlg input {
+      width: 100%; box-sizing: border-box; background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px;
+      padding: 9px 10px; font-family: inherit; font-size: 14px;
+    }
+    .dlg input:focus { outline: none; border-color: #90caf9; }
+    .dlg .errore { color: #ef5350; min-height: 18px; margin: 8px 0 0; font-size: 12.5px; }
+    .dlg.scuoti { animation: scuoti .35s; }
+    @keyframes scuoti { 20%,60% { transform: translateX(-7px); } 40%,80% { transform: translateX(7px); } }
+    .dlg-btn { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+    .dlg-btn button {
+      background: #2a2a2a; color: #90caf9; border: 1px solid #90caf9; border-radius: 4px; padding: 7px 14px;
+      font-family: inherit; font-weight: bold; font-size: 12.5px; cursor: pointer;
+    }
+    .dlg-btn button.primario { background: #1565c0; border-color: #1565c0; color: #fff; }
+
+    @media (max-width: 760px) {
+      #page-header { flex-direction: column; align-items: stretch; }
+      #nav-buttons { width: 100%; }
+      .nav-btn { flex: 1 1 40%; text-align: center; padding: 8px 6px; }
+      #page-header h1 .lungo { display: none; }
+      .benv { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+<header id="page-header">
+  <div id="titolo">
+    <button id="hamburger" type="button" aria-label="Menu" aria-controls="menu" aria-expanded="false">☰</button>
+    <div>
+      <h1 id="logo" title="Torna all'inizio"><img class="puma-icon" src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="PUMA">PUMA <span class="lungo"><span class="subtitle-divider">–</span> Piattaforma Unificata Monitoraggio Addestramenti</span></h1>
+      <h2><span id="sezione"><b>Benvenuto</b></span> <a id="apri-fuori" href="#" target="_blank" rel="noopener" title="Apri questa pagina in una nuova scheda" hidden>↗ nuova scheda</a></h2>
+    </div>
+  </div>
+  <nav id="nav-buttons">
+    <a class="nav-btn" id="btn-home" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener">Homepage P.U.M.A.</a>
+    <a class="nav-btn" id="btn-mappa" href="#realtime" data-route="realtime">Mappa Real Time</a>
+    <a class="nav-btn" id="btn-report" href="#individuale" data-route="individuale">Report Individuale</a>
+    <button class="nav-btn" id="btn-comando" type="button">🔒 Area Comando</button>
+  </nav>
+</header>
+
+<main>
+  <section id="home">
+    <div class="home-wrap">
+      <div class="benv">
+        <img src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="">
+        <div>
+          <h3>Piattaforma Unificata Monitoraggio Addestramenti</h3>
+          <p>Accesso rapido agli strumenti di P.U.M.A.: la mappa degli addestramenti in corso, il report individuale del personale e, per chi ha accesso all'Area Comando, la reportistica per ROP, ROR e Funzionario di settore.</p>
+        </div>
+      </div>
+      <div class="tessere">
+        <button class="tessera" type="button" data-route="realtime" style="--tc:var(--gold)">
+          <div class="ic">🗺️</div><h4>Mappa Real Time</h4>
+          <p>Addestramenti della giornata sulla mappa, aggiornati in tempo reale.</p>
+        </button>
+        <button class="tessera" type="button" data-route="individuale" style="--tc:#ffa726">
+          <div class="ic">👤</div><h4>Report Individuale</h4>
+          <p>Libretto di formazione del singolo: attività, ore e manovre per anno.</p>
+        </button>
+        <button class="tessera" type="button" data-comando style="--tc:#90caf9">
+          <div class="ic">🔒</div><h4>Area Comando</h4>
+          <p>Reportistica individuale e collettiva per ROP, ROR e Funzionario di settore. Accesso con password.</p>
+        </button>
+        <a class="tessera" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="--tc:#66bb6a; text-decoration:none">
+          <div class="ic">🏠</div><h4>Homepage P.U.M.A.</h4>
+          <p>Il sito principale con i moduli di registrazione (si apre in una nuova scheda).</p>
+        </a>
+      </div>
+    </div>
+  </section>
+  <iframe id="frame" title="Pagina P.U.M.A."></iframe>
+  <div id="caricamento">Caricamento…</div>
+</main>
+
+<!-- Menu laterale -->
+<div id="velo"></div>
+<aside id="menu" aria-label="Menu" aria-hidden="true">
+  <div class="menu-testa"><b>☰ Menu P.U.M.A.</b><button id="menu-chiudi" type="button" aria-label="Chiudi menu">✕</button></div>
+  <div class="menu-corpo" id="menu-corpo"></div>
+  <div class="menu-piede" id="menu-piede" hidden><button id="esci-btn" type="button">🔒 Esci dall'Area Comando</button></div>
+</aside>
+
+<!-- Password Area Comando -->
+<div id="login-dlg" class="dlg-bg" hidden>
+  <form class="dlg" id="login-form" role="dialog" aria-modal="true" aria-labelledby="login-titolo" autocomplete="off">
+    <h3 id="login-titolo">🔒 Area Comando</h3>
+    <p>Area riservata alla reportistica. Inserisci la password.</p>
+    <input type="password" id="login-pwd" placeholder="Password" aria-label="Password">
+    <div class="errore" id="login-err" role="alert"></div>
+    <div class="dlg-btn"><button type="button" id="login-annulla">Annulla</button><button type="submit" class="primario">Entra</button></div>
+  </form>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIGURAZIONE
+   ===================================================================== */
+const BASE = 'https://gesaddvvf.github.io/PUMA/';
+// Password Area Comando: si confronta l'impronta SHA-256, non il testo.
+// Per cambiarla: calcolare lo SHA-256 della nuova password e incollarlo qui.
+const PWD_SHA256 = 'd7141221ed2e9b99bff64bac4a6596a33a24859c038583b1a10885cdce8e20b0';
+const CHIAVE_SESSIONE = 'puma-area-comando';   // resta sbloccata finché non si chiude la scheda
+
+// Pagine del sito. riservata = solo Area Comando.
+const PAGINE = {
+  realtime:    { titolo: 'Mappa Real Time',   url: BASE + 'trainingmaprealtime.html' },
+  individuale: { titolo: 'Report Individuale', url: BASE + 'reportindividuale.html' },
+  'comando-individuale': { titolo: 'Area Comando · Report Individuale', url: BASE + 'reportindividuale.html', riservata: true },
+  rop: { titolo: 'Area Comando · Report Collettivo ROP',  url: BASE + 'reportcollettivo.html', riservata: true },
+  ror: { titolo: 'Area Comando · Report Collettivo ROR',  url: BASE + 'reportcollettivo.html?tipo=direzione', riservata: true },
+  fds: { titolo: 'Area Comando · Report Collettivo Funzionario di settore', url: BASE + 'reportcollettivo.html', riservata: true }
+};
+
+// Nelle pagine incorporate si nascondono il titolo e i pulsanti di navigazione (resta ⟳ Aggiorna):
+// la navigazione la fa il sito.
+const CSS_INCORPORATA = `
+  #page-header h1 { display: none !important; }
+  #nav-buttons a.nav-btn { display: none !important; }
+`;
+
+/* ===================================================================== */
+const $ = id => document.getElementById(id);
+const frame = $('frame');
+let sbloccato = false;
+let dopoLogin = null;          // pagina da aprire dopo la password
+let rottaCorrente = 'home';
+
+try { sbloccato = sessionStorage.getItem(CHIAVE_SESSIONE) === '1'; } catch (e) {}
+
+/* ---------- menu laterale ---------- */
+function disegnaMenu() {
+  const v = (rotta, testo, nota, liv2) =>
+    `<button class="voce${liv2 ? ' liv2' : ''}${rotta === rottaCorrente ? ' attivo' : ''}" type="button" data-route="${rotta}"><span>${testo}${nota ? `<small>${nota}</small>` : ''}</span></button>`;
+  let h = `<div class="sez-titolo">Navigazione</div>`
+    + `<button class="voce${rottaCorrente === 'home' ? ' attivo' : ''}" type="button" data-route="home">🏠 Pagina iniziale</button>`
+    + `<a class="voce" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="text-decoration:none">🌐 Homepage P.U.M.A. <small style="display:inline;margin-left:4px">↗</small></a>`
+    + v('realtime', '🗺️ Mappa Real Time')
+    + v('individuale', '👤 Report Individuale');
+  h += `<div class="sez-titolo">Area Comando</div>`;
+  if (!sbloccato) {
+    h += `<button class="voce" type="button" data-comando>🔒 Accedi con password</button>`;
+  } else {
+    h += `<div class="sotto-titolo">📊 Reportistica</div>`
+      + v('comando-individuale', '👤 Report individuale', 'Libretto del singolo', true)
+      + `<div class="sotto-titolo" style="padding-left:38px;color:#ccc;font-weight:normal">Report collettivo</div>`
+      + v('rop', '🏢 ROP', 'Responsabile Operativo Provinciale · per Comando', true)
+      + v('ror', '🗺️ ROR', 'Responsabile Operativo Regionale · per Direzione', true)
+      + v('fds', '🧑‍🚒 Funzionario di settore', 'Per Comando (Direzione dal selettore)', true);
+  }
+  $('menu-corpo').innerHTML = h;
+  $('menu-piede').hidden = !sbloccato;
+  document.body.classList.toggle('sbloccato', sbloccato);
+  $('btn-comando').textContent = sbloccato ? '🔓 Area Comando' : '🔒 Area Comando';
+}
+function apriMenu(si) {
+  document.body.classList.toggle('menu-aperto', si);
+  $('hamburger').setAttribute('aria-expanded', si);
+  $('menu').setAttribute('aria-hidden', !si);
+}
+$('hamburger').addEventListener('click', () => apriMenu(!document.body.classList.contains('menu-aperto')));
+$('menu-chiudi').addEventListener('click', () => apriMenu(false));
+$('velo').addEventListener('click', () => apriMenu(false));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { apriMenu(false); chiudiLogin(); } });
+
+/* ---------- Area Comando ---------- */
+async function sha256(t) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+function apriLogin(rotta) {
+  dopoLogin = rotta || null;
+  apriMenu(false);
+  $('login-err').textContent = '';
+  $('login-pwd').value = '';
+  $('login-dlg').hidden = false;
+  setTimeout(() => $('login-pwd').focus(), 30);
+}
+function chiudiLogin() { $('login-dlg').hidden = true; dopoLogin = null; }
+$('login-annulla').addEventListener('click', () => { chiudiLogin(); if (PAGINE[rottaCorrente] && PAGINE[rottaCorrente].riservata) vai('home'); });
+$('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  let ok = false;
+  try { ok = (await sha256($('login-pwd').value)) === PWD_SHA256; } catch (err) { $('login-err').textContent = 'Il browser non consente la verifica (serve https).'; return; }
+  if (!ok) {
+    $('login-err').textContent = 'Password errata.';
+    const d = $('login-form'); d.classList.remove('scuoti'); void d.offsetWidth; d.classList.add('scuoti');
+    $('login-pwd').select();
+    return;
+  }
+  sbloccato = true;
+  try { sessionStorage.setItem(CHIAVE_SESSIONE, '1'); } catch (err) {}
+  const dest = dopoLogin;
+  chiudiLogin();
+  disegnaMenu();
+  if (dest) vai(dest); else apriMenu(true);
+});
+$('btn-comando').addEventListener('click', () => sbloccato ? apriMenu(true) : apriLogin());
+$('esci-btn').addEventListener('click', () => {
+  sbloccato = false;
+  try { sessionStorage.removeItem(CHIAVE_SESSIONE); } catch (err) {}
+  apriMenu(false);
+  if (PAGINE[rottaCorrente] && PAGINE[rottaCorrente].riservata) vai('home'); else disegnaMenu();
+});
+
+/* ---------- navigazione ---------- */
+function vai(rotta) {
+  if (('#' + rotta) !== location.hash) { location.hash = rotta; return; }   // passa da hashchange
+  mostra(rotta);
+}
+function mostra(rotta) {
+  const p = PAGINE[rotta];
+  if (!p) rotta = 'home';
+  if (p && p.riservata && !sbloccato) { apriLogin(rotta); rotta = 'home'; history.replaceState(null, '', '#home'); }
+  rottaCorrente = rotta;
+  const pag = PAGINE[rotta];
+  document.body.classList.toggle('vista-pagina', !!pag);
+  document.querySelectorAll('#nav-buttons [data-route]').forEach(b => b.classList.toggle('attivo', b.dataset.route === rotta));
+  $('btn-comando').classList.toggle('attivo', !!(pag && pag.riservata));
+  $('sezione').innerHTML = pag ? `<b>${pag.titolo}</b>` : '<b>Benvenuto</b>';
+  $('apri-fuori').hidden = !pag;
+  if (pag) {
+    $('apri-fuori').href = pag.url;
+    document.title = 'P.U.M.A. - ' + pag.titolo.replace('Area Comando · ', '');
+    if (frame.dataset.rotta !== rotta) {
+      frame.dataset.rotta = rotta;
+      document.body.classList.add('carica');
+      frame.src = pag.url;
+    }
+  } else {
+    document.title = 'P.U.M.A. - Sito';
+  }
+  disegnaMenu();
+  apriMenu(false);
+}
+frame.addEventListener('load', () => {
+  document.body.classList.remove('carica');
+  try {   // stessa origine (gesaddvvf.github.io): si adatta la pagina incorporata
+    const d = frame.contentDocument;
+    if (d && d.head && !d.getElementById('puma-sito-css')) {
+      const s = d.createElement('style'); s.id = 'puma-sito-css'; s.textContent = CSS_INCORPORATA; d.head.appendChild(s);
+    }
+    if (d) {   // i link verso pagine esterne si aprono in una nuova scheda
+      d.addEventListener('click', ev => {
+        const a = ev.target.closest && ev.target.closest('a[href]');
+        if (a && a.origin !== location.origin) a.target = '_blank';
+      });
+    }
+  } catch (e) { /* altra origine: la pagina si vede comunque, con i suoi pulsanti */ }
+});
+
+document.addEventListener('click', e => {
+  const r = e.target.closest('[data-route]');
+  if (r) { e.preventDefault(); vai(r.dataset.route); return; }
+  if (e.target.closest('[data-comando]')) { e.preventDefault(); sbloccato ? apriMenu(true) : apriLogin(); }
+});
+$('logo').addEventListener('click', () => vai('home'));
+window.addEventListener('hashchange', () => mostra(location.hash.slice(1) || 'home'));
+
+mostra(location.hash.slice(1) || 'home');
+</script>
+</body>
+</html>
