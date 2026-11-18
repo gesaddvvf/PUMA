@@ -1277,8 +1277,8 @@ function riepilogoCorsi(p, y) {
       fatte.set(m, f);
     }));
     // addestramenti del corso senza nessuna manovra prevista riconosciuta (anche quelli con sole voci (N)):
-    // "addestramenti vari senza documentazione correlata" (solo nei corsi con voci (N) in Manovre_PREVISTE, es. SAF Basico)
-    const vari = c.previste.length && MANOVRE_N.some(m => m.corsi.includes(c)) ? add.filter(a => ![...a.manovre].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
+    // "addestramenti vari senza documentazione correlata" (in tutte le tipologie con manovre previste)
+    const vari = c.previste.length ? add.filter(a => ![...a.manovre].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
     const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
     let stato = 'nd';
     if (c.oreMin != null) stato = ore >= c.oreMin - 1e-6 && (collMin == null || oreColl >= collMin - 1e-6) ? 'ok' : 'ko';

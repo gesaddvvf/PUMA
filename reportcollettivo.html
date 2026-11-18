@@ -975,8 +975,8 @@ function riepilogoCorsi(p, y) {
       fatte.set(m, f);
     }));
     // addestramenti del corso senza nessuna manovra prevista riconosciuta (anche quelli con sole voci (N)):
-    // "addestramenti vari senza documentazione correlata" (solo nei corsi con voci (N) in Manovre_PREVISTE, es. SAF Basico)
-    const vari = c.previste.length && MANOVRE_N.some(m => m.corsi.includes(c)) ? add.filter(a => ![...a.manovre].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
+    // "addestramenti vari senza documentazione correlata" (in tutte le tipologie con manovre previste)
+    const vari = c.previste.length ? add.filter(a => ![...a.manovre].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
     const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
     let stato = 'nd';
     if (c.oreMin != null) stato = ore >= c.oreMin - 1e-6 && (collMin == null || oreColl >= collMin - 1e-6) ? 'ok' : 'ko';
@@ -1530,7 +1530,8 @@ function datiDettaglio(s) {
     // attività generica: nessuna manovra prevista; le voci (N) riconosciute come descrizione
     const vario = s.vari.includes(a);
     const generiche = vario ? [...(a.generiche || [])].map(m => m.manovra.replace(RE_LETTERA_MANOVRA, '')) : [];
-    return { data: dataBreve(a.data), prima: a.anno !== state.anno, tipo, ore: a.ore == null ? '—' : fmtHM(a.ore), info, vario, generiche, manovre: tipo === 'intervento' ? [] : manovreAtt(a, s.c).sort(ordManovre) };
+    return { data: dataBreve(a.data), prima: a.anno !== state.anno, tipo, ore: a.ore == null ? '—' : fmtHM(a.ore), info, vario, generiche,
+      descr: String(a.descr || (a.piano && a.piano.descr) || a.tipologia || '').replace(/\s+/g, ' ').slice(0, 80), manovre: tipo === 'intervento' ? [] : manovreAtt(a, s.c).sort(ordManovre) };
   });
   const fatte = (s.r ? [...s.r.fatte.entries()] : []).map(([m, f]) => ({ m, n: f.n, ultima: f.ultima })).sort((a, b) => ordManovre(a.m, b.m));
   const daFare = s.con ? s.mancanti.slice().sort(ordManovre) : [];
@@ -1557,7 +1558,7 @@ function dettaglioHtml(s) {
   } else h += `<div class="dh">Manovre previste <span>· nessuna per questa tipologia</span></div>`;
   if (D.vari.length) {
     h += `<div class="dh gen">Attività generiche <span>· ${esc(variTxt(D.vari.length))}</span></div>`;
-    h += `<ul class="ml">${D.vari.map(a => `<li class="gen"><b>${esc(a.data)}</b> ${esc(a.generiche.length ? a.generiche.join(', ') : a.info || TIPO_ATT[a.tipo])} <i>${esc(TIPO_ATT[a.tipo])} · ${esc(a.ore)}</i></li>`).join('')}</ul>`;
+    h += `<ul class="ml">${D.vari.map(a => `<li class="gen"><b>${esc(a.data)}</b> ${esc(a.generiche.length ? a.generiche.join(', ') : a.descr || a.info || TIPO_ATT[a.tipo])} <i>${esc(TIPO_ATT[a.tipo])} · ${esc(a.ore)}</i></li>`).join('')}</ul>`;
   }
   return h + `</div></div>`;
 }
@@ -1631,7 +1632,7 @@ function noteHtml(c, y) {
     <li>Requisito di ${esc(c.tipologia)}: ${requisitoTxt(c, y)}.</li>
     <li>Ore svolte = addestramenti collettivi e individuali di questa tipologia${INTERVENTI_NEL_TOTALE ? ` + interventi del settore ${esc(c.categoria)}` : ''}, nel periodo ${periodoDi(c, y)}. Gli interventi non hanno una tipologia: si contano per settore, come nel Libretto.</li>
     <li>Colori e stato come nel Report Collettivo del foglio: <b style="color:${STATI.ko.c}">Non idoneo</b> sotto il 75% delle ore previste · <b style="color:${STATI.quasi.c}">75% delle ore previste</b> tra il 75% e il 100% · <b style="color:${STATI.man.c}">Verificare</b> ore raggiunte ma individuali (con interventi) o collettive sotto la loro quota, oppure mancano manovre previste · <b style="color:${STATI.ok.c}">Idoneo</b> tutto raggiunto. OK% = ore svolte / ore previste.</li>
-    <li>Manovre previste: quelle con (N) non sono manovre previste ma attività generiche (le ore contano); quelle con (C) (es. «Addestramento provinciale di gruppo») risultano fatte con ogni addestramento collettivo della tipologia, o se scritte in un altro addestramento collettivo o individuale. Le registrazioni individuali «Addestramento provinciale di gruppo» contano come collettive. Nelle tipologie con voci (N), come il SAF Basico, gli addestramenti senza nessuna manovra prevista sono segnalati come «addestramenti vari senza documentazione correlata».</li>
+    <li>Manovre previste: quelle con (N) non sono manovre previste ma attività generiche (le ore contano); quelle con (C) (es. «Addestramento provinciale di gruppo») risultano fatte con ogni addestramento collettivo della tipologia, o se scritte in un altro addestramento collettivo o individuale. Le registrazioni individuali «Addestramento provinciale di gruppo» contano come collettive. In ogni tipologia con manovre previste, gli addestramenti senza nessuna manovra prevista riconosciuta sono segnalati come «addestramenti vari senza documentazione correlata».</li>
     <li>Con corso = il corso è tra quelli in possesso in Elenco_Filtrato${DI_TUTTI.includes(c) ? ' (questa tipologia la hanno tutti)' : ''}. Il Comando di ognuno è quello di appartenenza. Clic su un nominativo per il suo report individuale.</li>
   </ul></div>`;
 }
