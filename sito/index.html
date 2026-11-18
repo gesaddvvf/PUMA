@@ -11,8 +11,7 @@
       color-scheme: dark;
       --gold: #ffd700;
       --arancio: #ef6c00;
-      --verde: #2e7d32;
-      --bg: #1e1e1e;
+            --bg: #1e1e1e;
     }
     * { scrollbar-width: thin; scrollbar-color: #555 #1e1e1e; }
     ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -53,9 +52,23 @@
     .nav-btn:hover, .nav-btn.attivo { background-color: var(--gold); color: var(--bg); }
     #btn-report.nav-btn { background-color: var(--arancio); color: #fff; border-color: var(--arancio); }
     #btn-report.nav-btn:hover, #btn-report.nav-btn.attivo { background-color: #fb8c00; border-color: #fff; color: #fff; }
-    #btn-comando.nav-btn { background-color: #2a2a2a; color: #90caf9; border-color: #90caf9; }
-    #btn-comando.nav-btn:hover { background-color: #90caf9; color: var(--bg); }
-    body.sbloccato #btn-comando.nav-btn { background-color: var(--verde); color: #fff; border-color: var(--verde); }
+    /* Area Comando = reportistica: arancione (contorno; pieno quando è aperta) */
+    #btn-comando.nav-btn { background-color: #2a2a2a; color: #ffb74d; border-color: var(--arancio); }
+    #btn-comando.nav-btn:hover, #btn-comando.nav-btn.attivo, body.sbloccato #btn-comando.nav-btn { background-color: var(--arancio); color: #fff; border-color: var(--arancio); }
+    body.sbloccato #btn-comando.nav-btn:hover { background-color: #fb8c00; border-color: #fb8c00; }
+
+    /* ---------- SOTTO-SCHEDE (Real Time) ---------- */
+    #schede { display: none; gap: 8px; align-items: center; padding: 8px 16px; border-bottom: 1px solid #444; background: var(--bg); flex-shrink: 0; flex-wrap: wrap; }
+    body.con-schede #schede { display: flex; }
+    #schede .lbl { font-size: 12px; color: #999; margin-right: 4px; }
+    .seg { display: inline-flex; border: 1px solid var(--gold); border-radius: 4px; overflow: hidden; flex-wrap: wrap; }
+    .seg a {
+      background: #2a2a2a; color: var(--gold); padding: 7px 14px; font-family: 'Comfortaa', cursive; font-weight: bold;
+      font-size: 12.5px; text-decoration: none; transition: background-color .15s, color .15s;
+    }
+    .seg a + a { border-left: 1px solid var(--gold); }
+    .seg a:hover { background: #3a3420; }
+    .seg a.on { background: var(--gold); color: var(--bg); }
 
     /* ---------- CONTENUTO ---------- */
     main { flex: 1; position: relative; min-height: 0; }
@@ -80,6 +93,16 @@
     .tessera .ic { font-size: 26px; }
     .tessera h4 { margin: 8px 0 6px; font-size: 15px; color: var(--tc, var(--gold)); }
     .tessera p { margin: 0; font-size: 12.5px; color: #bbb; line-height: 1.5; }
+
+    .sez-home { margin-top: 30px; }
+    .sez-home h4 { color: var(--gold); font-size: 14px; margin: 0 0 10px; border-bottom: 1px solid #3a3a3a; padding-bottom: 6px; }
+    .doc-lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; }
+    .doc-lista a {
+      display: flex; gap: 10px; align-items: flex-start; background: #262626; border: 1px solid #3a3a3a; border-left: 3px solid var(--gold);
+      border-radius: 4px; padding: 10px 12px; color: #eee; text-decoration: none; font-size: 13px;
+    }
+    .doc-lista a:hover { background: #2e2e2e; color: var(--gold); }
+    .doc-lista small { display: block; color: #999; font-size: 11.5px; margin-top: 2px; }
 
     /* ---------- MENU LATERALE (hamburger) ---------- */
     #velo { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300; opacity: 0; pointer-events: none; transition: opacity .2s; }
@@ -114,23 +137,23 @@
     /* ---------- LOGIN AREA COMANDO ---------- */
     .dlg-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 16px; }
     .dlg-bg[hidden] { display: none; }
-    .dlg { background: #232323; border: 1px solid #90caf9; border-radius: 8px; padding: 20px 22px; width: 360px; max-width: 100%; box-sizing: border-box; font-size: 13px; }
-    .dlg h3 { margin: 0 0 6px; color: #90caf9; font-size: 16px; }
+    .dlg { background: #232323; border: 1px solid var(--arancio); border-radius: 8px; padding: 20px 22px; width: 360px; max-width: 100%; box-sizing: border-box; font-size: 13px; }
+    .dlg h3 { margin: 0 0 6px; color: #ffb74d; font-size: 16px; }
     .dlg p { margin: 0 0 14px; color: #bbb; line-height: 1.5; }
     .dlg input {
       width: 100%; box-sizing: border-box; background: #1e1e1e; color: #f0f0f0; border: 1px solid #555; border-radius: 4px;
       padding: 9px 10px; font-family: inherit; font-size: 14px;
     }
-    .dlg input:focus { outline: none; border-color: #90caf9; }
+    .dlg input:focus { outline: none; border-color: var(--arancio); }
     .dlg .errore { color: #ef5350; min-height: 18px; margin: 8px 0 0; font-size: 12.5px; }
     .dlg.scuoti { animation: scuoti .35s; }
     @keyframes scuoti { 20%,60% { transform: translateX(-7px); } 40%,80% { transform: translateX(7px); } }
     .dlg-btn { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
     .dlg-btn button {
-      background: #2a2a2a; color: #90caf9; border: 1px solid #90caf9; border-radius: 4px; padding: 7px 14px;
+      background: #2a2a2a; color: #ffb74d; border: 1px solid var(--arancio); border-radius: 4px; padding: 7px 14px;
       font-family: inherit; font-weight: bold; font-size: 12.5px; cursor: pointer;
     }
-    .dlg-btn button.primario { background: #1565c0; border-color: #1565c0; color: #fff; }
+    .dlg-btn button.primario { background: var(--arancio); color: #fff; }
 
     @media (max-width: 760px) {
       #page-header { flex-direction: column; align-items: stretch; }
@@ -152,11 +175,19 @@
   </div>
   <nav id="nav-buttons">
     <a class="nav-btn" id="btn-home" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener">Homepage P.U.M.A.</a>
-    <a class="nav-btn" id="btn-mappa" href="#realtime" data-route="realtime">Mappa Real Time</a>
+    <a class="nav-btn" id="btn-realtime" href="#mappa" data-route="mappa" data-gruppo="realtime">Real Time</a>
+    <a class="nav-btn" id="btn-archivio" href="#archivio" data-route="archivio">Archivio</a>
     <a class="nav-btn" id="btn-report" href="#individuale" data-route="individuale">Report Individuale</a>
     <button class="nav-btn" id="btn-comando" type="button">🔒 Area Comando</button>
   </nav>
 </header>
+
+<div id="schede">
+  <span class="lbl">Real Time</span>
+  <span class="seg" role="tablist" aria-label="Real Time">
+    <a href="#presenze" data-route="presenze" role="tab">Presenze Odierne</a><a href="#mappa" data-route="mappa" role="tab">Mappa Real Time</a><a href="#riepilogo" data-route="riepilogo" role="tab">Riepilogo Globale</a>
+  </span>
+</div>
 
 <main>
   <section id="home">
@@ -165,26 +196,34 @@
         <img src="https://gesaddvvf.github.io/PUMA/images/puma.jpg" alt="">
         <div>
           <h3>Piattaforma Unificata Monitoraggio Addestramenti</h3>
-          <p>Accesso rapido agli strumenti di P.U.M.A.: la mappa degli addestramenti in corso, il report individuale del personale e, per chi ha accesso all'Area Comando, la reportistica per ROP, ROR e Funzionario di settore.</p>
+          <p>Accesso rapido agli strumenti di P.U.M.A.: la situazione in tempo reale degli addestramenti, l'archivio dei Comandi e delle Direzioni, il report individuale del personale e, per chi ha accesso all'Area Comando, la reportistica per ROP, ROR e Funzionario di settore.</p>
         </div>
       </div>
       <div class="tessere">
-        <button class="tessera" type="button" data-route="realtime" style="--tc:var(--gold)">
-          <div class="ic">🗺️</div><h4>Mappa Real Time</h4>
-          <p>Addestramenti della giornata sulla mappa, aggiornati in tempo reale.</p>
+        <button class="tessera" type="button" data-route="mappa" style="--tc:var(--gold)">
+          <div class="ic">🗺️</div><h4>Real Time</h4>
+          <p>Presenze odierne, mappa degli addestramenti in corso e riepilogo globale degli addestramenti collettivi.</p>
         </button>
-        <button class="tessera" type="button" data-route="individuale" style="--tc:#ffa726">
+        <button class="tessera" type="button" data-route="archivio" style="--tc:var(--gold)">
+          <div class="ic">🗂️</div><h4>Archivio</h4>
+          <p>Cartelle di archivio delle Direzioni regionali e dei Comandi.</p>
+        </button>
+        <button class="tessera" type="button" data-route="individuale" style="--tc:#ffb74d">
           <div class="ic">👤</div><h4>Report Individuale</h4>
           <p>Libretto di formazione del singolo: attività, ore e manovre per anno.</p>
         </button>
-        <button class="tessera" type="button" data-comando style="--tc:#90caf9">
+        <button class="tessera" type="button" data-comando style="--tc:#ffb74d">
           <div class="ic">🔒</div><h4>Area Comando</h4>
           <p>Reportistica individuale e collettiva per ROP, ROR e Funzionario di settore. Accesso con password.</p>
         </button>
-        <a class="tessera" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="--tc:#66bb6a; text-decoration:none">
+        <a class="tessera" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="--tc:var(--gold); text-decoration:none">
           <div class="ic">🏠</div><h4>Homepage P.U.M.A.</h4>
           <p>Il sito principale con i moduli di registrazione (si apre in una nuova scheda).</p>
         </a>
+      </div>
+      <div class="sez-home" id="sez-doc" hidden>
+        <h4>📚 Documentazione</h4>
+        <div class="doc-lista" id="doc-lista"></div>
       </div>
     </div>
   </section>
@@ -223,7 +262,10 @@ const CHIAVE_SESSIONE = 'puma-area-comando';   // resta sbloccata finché non si
 
 // Pagine del sito. riservata = solo Area Comando.
 const PAGINE = {
-  realtime:    { titolo: 'Mappa Real Time',   url: BASE + 'trainingmaprealtime.html' },
+  presenze:    { titolo: 'Real Time · Presenze Odierne', url: BASE + 'personaleodierno.html', gruppo: 'realtime' },
+  mappa:       { titolo: 'Real Time · Mappa Real Time', url: BASE + 'trainingmaprealtime.html', gruppo: 'realtime' },
+  riepilogo:   { titolo: 'Real Time · Riepilogo Globale addestramenti collettivi', url: BASE + 'mappariepilogocollettivi.html', gruppo: 'realtime' },
+  archivio:    { titolo: 'Archivio Direzioni e Comandi', url: BASE + 'archive.html', css: 'archivio' },
   individuale: { titolo: 'Report Individuale', url: BASE + 'reportindividuale.html' },
   'comando-individuale': { titolo: 'Area Comando · Report Individuale', url: BASE + 'reportindividuale.html', riservata: true },
   rop: { titolo: 'Area Comando · Report Collettivo ROP',  url: BASE + 'reportcollettivo.html', riservata: true },
@@ -234,9 +276,37 @@ const PAGINE = {
 // Nelle pagine incorporate si nascondono il titolo e i pulsanti di navigazione (resta ⟳ Aggiorna):
 // la navigazione la fa il sito.
 const CSS_INCORPORATA = `
-  #page-header h1 { display: none !important; }
+  header h1 { display: none !important; }
   #nav-buttons a.nav-btn { display: none !important; }
 `;
+// Archivio: stessi colori del resto di P.U.M.A. (oro su grigio scuro, carattere Comfortaa)
+const CSS_PAGINA = {
+  archivio: `
+    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap');
+    :root { --primary-color: #ffd700; --primary-hover: #ffe44d; --card-bg: #262626; --card-hover: #2e2e2e;
+            --text-main: #f0f0f0; --text-muted: #999; --border-color: #3a3a3a; --highlight-bg: rgba(255, 215, 0, .15); }
+    body { font-family: 'Comfortaa', cursive !important; background: #1e1e1e !important; }
+    .search-container { background: #1e1e1e !important; }
+    .search-box { font-family: 'Comfortaa', cursive; }
+    .search-box:focus { box-shadow: 0 0 10px rgba(255, 215, 0, .2) !important; }
+    .accordion-item { border-top: 3px solid var(--primary-color) !important; border-radius: 6px !important; }
+    .command-row:hover { background-color: rgba(255, 215, 0, .08) !important; }
+    .external-link-btn:hover { color: #1e1e1e !important; }
+  `
+};
+
+// Documentazione: { chiave, titolo, nota, id } con id = file Google Drive condiviso con link.
+// Si vede dentro il sito (anteprima Drive); "↗ nuova scheda" apre il file in Drive.
+const DOCUMENTI = [
+  { chiave: 'manuale', titolo: 'Manuale Operatore P.U.M.A.', nota: 'Guida all\'uso della piattaforma (PDF)', id: '1JKY5QWb0ugFYydngwKk32W540ipnz2wG' }
+];
+DOCUMENTI.forEach(d => {
+  PAGINE['doc-' + d.chiave] = {
+    titolo: 'Documentazione · ' + d.titolo,
+    url: `https://drive.google.com/file/d/${d.id}/preview`,
+    fuori: `https://drive.google.com/file/d/${d.id}/view`
+  };
+});
 
 /* ===================================================================== */
 const $ = id => document.getElementById(id);
@@ -254,8 +324,16 @@ function disegnaMenu() {
   let h = `<div class="sez-titolo">Navigazione</div>`
     + `<button class="voce${rottaCorrente === 'home' ? ' attivo' : ''}" type="button" data-route="home">🏠 Pagina iniziale</button>`
     + `<a class="voce" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="text-decoration:none">🌐 Homepage P.U.M.A. <small style="display:inline;margin-left:4px">↗</small></a>`
-    + v('realtime', '🗺️ Mappa Real Time')
+    + `<div class="sotto-titolo">⏱️ Real Time</div>`
+    + v('presenze', 'Presenze Odierne', '', true)
+    + v('mappa', 'Mappa Real Time', '', true)
+    + v('riepilogo', 'Riepilogo Globale', 'Addestramenti collettivi', true)
+    + v('archivio', '🗂️ Archivio', 'Direzioni e Comandi')
     + v('individuale', '👤 Report Individuale');
+  if (DOCUMENTI.length) {
+    h += `<div class="sez-titolo">Documentazione</div>`
+      + DOCUMENTI.map(d => v('doc-' + d.chiave, '📄 ' + d.titolo, d.nota)).join('');
+  }
   h += `<div class="sez-titolo">Area Comando</div>`;
   if (!sbloccato) {
     h += `<button class="voce" type="button" data-comando>🔒 Accedi con password</button>`;
@@ -328,18 +406,22 @@ function vai(rotta) {
   mostra(rotta);
 }
 function mostra(rotta) {
+  if (rotta === 'realtime') { rotta = 'mappa'; history.replaceState(null, '', '#mappa'); }   // vecchio indirizzo
   const p = PAGINE[rotta];
   if (!p) rotta = 'home';
   if (p && p.riservata && !sbloccato) { apriLogin(rotta); rotta = 'home'; history.replaceState(null, '', '#home'); }
   rottaCorrente = rotta;
   const pag = PAGINE[rotta];
   document.body.classList.toggle('vista-pagina', !!pag);
-  document.querySelectorAll('#nav-buttons [data-route]').forEach(b => b.classList.toggle('attivo', b.dataset.route === rotta));
+  const gruppo = pag && pag.gruppo;
+  document.querySelectorAll('#nav-buttons [data-route]').forEach(b => b.classList.toggle('attivo', b.dataset.route === rotta || (!!gruppo && b.dataset.gruppo === gruppo)));
+  document.body.classList.toggle('con-schede', gruppo === 'realtime');
+  document.querySelectorAll('#schede [data-route]').forEach(b => b.classList.toggle('on', b.dataset.route === rotta));
   $('btn-comando').classList.toggle('attivo', !!(pag && pag.riservata));
   $('sezione').innerHTML = pag ? `<b>${pag.titolo}</b>` : '<b>Benvenuto</b>';
   $('apri-fuori').hidden = !pag;
   if (pag) {
-    $('apri-fuori').href = pag.url;
+    $('apri-fuori').href = pag.fuori || pag.url;
     document.title = 'P.U.M.A. - ' + pag.titolo.replace('Area Comando · ', '');
     if (frame.dataset.rotta !== rotta) {
       frame.dataset.rotta = rotta;
@@ -357,7 +439,10 @@ frame.addEventListener('load', () => {
   try {   // stessa origine (gesaddvvf.github.io): si adatta la pagina incorporata
     const d = frame.contentDocument;
     if (d && d.head && !d.getElementById('puma-sito-css')) {
-      const s = d.createElement('style'); s.id = 'puma-sito-css'; s.textContent = CSS_INCORPORATA; d.head.appendChild(s);
+      const p = PAGINE[frame.dataset.rotta] || {};
+      const s = d.createElement('style'); s.id = 'puma-sito-css';
+      s.textContent = (p.css ? CSS_PAGINA[p.css] : '') + CSS_INCORPORATA;
+      d.head.appendChild(s);
     }
     if (d) {   // i link verso pagine esterne si aprono in una nuova scheda
       d.addEventListener('click', ev => {
@@ -374,6 +459,10 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-comando]')) { e.preventDefault(); sbloccato ? apriMenu(true) : apriLogin(); }
 });
 $('logo').addEventListener('click', () => vai('home'));
+if (DOCUMENTI.length) {
+  $('doc-lista').innerHTML = DOCUMENTI.map(d => `<a href="#doc-${d.chiave}" data-route="doc-${d.chiave}"><span>📄</span><span>${d.titolo}${d.nota ? `<small>${d.nota}</small>` : ''}</span></a>`).join('');
+  $('sez-doc').hidden = false;
+}
 window.addEventListener('hashchange', () => mostra(location.hash.slice(1) || 'home'));
 
 mostra(location.hash.slice(1) || 'home');
