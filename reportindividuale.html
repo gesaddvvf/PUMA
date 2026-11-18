@@ -552,8 +552,6 @@ const NOME_NON_REALE = /\b(test\d*|prova\d*|demo|esempio|fake)\b|^x+$|^-+$|^\.+$
 const ORE_MAX = 168;
 // Duplicati in Piano_Di_Sicurezza: stesso giorno + Comando + squadra + tipologia → resta l'ultimo inserito
 const FILTRA_DUPLICATI = true;
-// Conferma di un addestramento collettivo: valida fino a 3 ore prima dell'inizio e dopo la fine del Piano di Sicurezza
-const TOLLERANZA_CONFERMA_ORE = 3;
 
 /* ===================================================================== */
 const URLP = new URLSearchParams(location.search);
@@ -999,17 +997,17 @@ function elaboraReg(reg, pianoIdx) {
     };
 
     if (tipo === 'collettivo') {
-      // Controllo con il Piano di Sicurezza: Comando organizzatore + giorno + squadra, poi ora della conferma
+      // Controllo con il Piano di Sicurezza: Comando organizzatore + giorno (fino a mezzanotte) + squadra
       const k2 = a.giorno + '|' + comandoKey(g(r, 'organizzatore'));
       const delGiorno = pianoIdx.idx2.get(k2) || [];
       const conSquadra = a.team ? (pianoIdx.idx3.get(k2 + '|' + squadraKey(a.team)) || []) : [];
-      // ora della conferma (timestamp del modulo), solo se la conferma è dello stesso giorno dell'addestramento
+      // ora della conferma (timestamp del modulo): nessun vincolo sull'orario del Piano, vale tutto il giorno fino a mezzanotte;
+      // serve solo a scegliere tra più Piani dello stesso giorno quando la squadra indicata non ha un Piano
       const ts = parseDataOra(g(r, 'cronologiche'));
       a.oraConferma = ts && ts.ora && giornoKey(ts.d) === a.giorno ? ts.d : null;
       const inOrario = p => {
         const i = parseDataOra(p.inizio), f = parseDataOra(p.fine);
-        if (!a.oraConferma || !i || !f) return true;
-        return a.oraConferma >= i.d.getTime() - TOLLERANZA_CONFERMA_ORE * 36e5 && a.oraConferma <= f.d.getTime() + TOLLERANZA_CONFERMA_ORE * 36e5;
+        return !a.oraConferma || !i || !f || (a.oraConferma >= i.d && a.oraConferma <= f.d);
       };
       let cand = conSquadra.length ? conSquadra : delGiorno;
       if (cand.length > 1 && a.attivita) {
@@ -1021,7 +1019,7 @@ function elaboraReg(reg, pianoIdx) {
       if (cand.length) {
         const p = cand[cand.length - 1];
         a.piano = p; a.pianiMultipli = cand.length > 1;
-        a.controllo = !conSquadra.length ? 'squadra' : !inOrario(p) ? 'orario' : '';
+        a.controllo = !conSquadra.length ? 'squadra' : '';
         a.tipologia = p.tipologia;
         if (a.ore == null && p.ore != null) { a.ore = p.ore; a.oreDa = 'piano'; a.inizio = p.inizio; a.fine = p.fine; }
         if (p.manovre) a.manovreTxt = [a.manovreTxt, p.manovre].filter(Boolean).join('\n');
@@ -1571,7 +1569,7 @@ function disegna() {
   if (senzaOre) note.push(`${senzaOre} attività senza orario di inizio/fine valido: contano come attività ma con 0 ore.`);
   const senzaPiano = anno.filter(a => a.tipo === 'collettivo' && !a.piano && !a.diGruppo).length;
   const ctrl = anno.filter(a => a.tipo === 'collettivo' && !a.diGruppo && a.controllo && a.controllo !== 'piano');
-  if (ctrl.length) note.push(`Controllo con il Piano di Sicurezza (Comando, giorno e ora della conferma, squadra): ${ctrl.map(a => `${a.data.toLocaleDateString('it-IT')} sq. ${a.team || '—'}: ${testoControllo(a)}`).map(esc).join(' · ')}.`);
+  if (ctrl.length) note.push(`Controllo con il Piano di Sicurezza (Comando, giorno, squadra): ${ctrl.map(a => `${a.data.toLocaleDateString('it-IT')} sq. ${a.team || '—'}: ${testoControllo(a)}`).map(esc).join(' · ')}.`);
   const dupAnno = anno.filter(a => a.duplicati > 1);
   if (dupAnno.length) note.push(`Inserimenti duplicati non conteggiati: ${dupAnno.map(a => `${a.data.toLocaleDateString('it-IT')} ${a.tipo === 'collettivo' ? 'collettivo' : a.tipo === 'intervento' ? 'intervento' : 'individuale'} registrato ${a.duplicati} volte`).join(' · ')}. Vale l'ultima registrazione inviata.`);
   if (senzaPiano) note.push(`${senzaPiano} addestramenti collettivi senza Piano di Sicurezza corrispondente (stesso giorno, Comando organizzatore e squadra).`);
@@ -1673,7 +1671,7 @@ function testoControllo(a) {
   if (!a.controllo) return '';
   if (a.controllo === 'piano') return `nessun Piano di Sicurezza del ${enteNome(a.organizzatoreRaw)} il ${a.data.toLocaleDateString('it-IT')}${a.team ? ' (sq. ' + a.team + ')' : ''}: ore non conteggiate`;
   if (a.controllo === 'squadra') return `${a.team ? 'nessun Piano con la sq. ' + a.team : 'squadra non indicata'}: conteggiato nel Piano sq. ${a.piano.squadra || '?'} (${orarioPiano(a.piano)})`;
-  return `confermato alle ${fmtOraBreve(a.oraConferma)}, fuori dall'orario del Piano sq. ${a.piano.squadra || '?'} (${orarioPiano(a.piano)})`;
+  return '';
 }
 const enteNome = t => nomeComando(t) || 'Comando';
 const variTxt = n => `${n} ${n === 1 ? 'addestramento collettivo' : 'addestramenti collettivi'} senza documentazione correlata`;
