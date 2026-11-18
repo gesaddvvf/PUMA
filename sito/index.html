@@ -61,15 +61,42 @@
     }
     #turno-box .t-lbl { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: .05em; }
     #turno-box b { font-size: 18px; color: #f0f0f0; margin-right: 6px; }
-    #nav-buttons { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    #nav-buttons { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
     .nav-btn {
       display: inline-block; background-color: #2a2a2a; color: var(--acl, var(--gold));
-      border: 1px solid var(--ac, var(--gold)); border-radius: 4px; padding: 8px 14px;
-      font-family: var(--ft); font-weight: bold; font-size: 13px;
+      border: 1px solid var(--ac, var(--gold)); border-radius: 4px; padding: 7px 10px;
+      font-family: var(--ft); font-weight: bold; font-size: 12.5px; white-space: nowrap;
       text-decoration: none; transition: background-color 0.15s, color 0.15s, filter .15s; cursor: pointer;
     }
     .nav-btn:hover, .nav-btn.attivo { background-color: var(--ac, var(--gold)); color: var(--acf, var(--bg)); }
     .nav-btn.attivo { box-shadow: 0 0 0 2px #1e1e1e, 0 0 0 3px var(--ac); }
+    /* Report Collettivo: solo con l'Area Comando aperta */
+    #btn-collettivo, .tessera[data-route="collettivo"] { display: none; }
+    body.sbloccato #btn-collettivo { display: inline-block; }
+    body.sbloccato .tessera[data-route="collettivo"] { display: block; }
+    /* schermo largo: titolo, aree e turno su una riga */
+    #apri-fuori { white-space: nowrap; }
+    @media (min-width: 1080px) {
+      #page-header { flex-wrap: nowrap; }
+      #apri-fuori .testo { display: none; }
+      #titolo { flex: 1 1 auto; }
+      #titolo > div { min-width: 0; }
+      #page-header h2 { flex-wrap: nowrap; }
+      #sezione { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #page-header h1 { white-space: nowrap; }
+      #nav-buttons { order: 2; flex-wrap: nowrap; }
+      #turno-box { order: 3; margin-left: 0; }
+    }
+    @media (max-width: 1700px) { #page-header h1 .lungo { display: none; } }
+    @media (min-width: 761px) and (max-width: 1079px) {
+      #nav-buttons { order: 3; width: 100%; flex-shrink: 1; justify-content: flex-start; }
+      .nav-btn { padding: 6px 9px; font-size: 12px; }
+    }
+    @media (min-width: 1080px) and (max-width: 1280px) {
+      .nav-btn { padding: 6px 8px; font-size: 11.5px; }
+      #nav-buttons { gap: 5px; }
+      #turno-box { padding: 4px 8px; } #turno-box .t-lbl { font-size: 9.5px; } #turno-box b { font-size: 15px; margin-right: 3px; }
+    }
     /* Area Comando aperta: bianco pieno */
     body.sbloccato #btn-comando.nav-btn { background-color: var(--ac); color: var(--acf); }
 
@@ -247,7 +274,7 @@
     <a class="nav-btn area-att" id="btn-attivita" href="#profilazione" data-route="profilazione" data-gruppo="attivita">Attività</a>
     <a class="nav-btn area-doc" id="btn-doc" href="#doc-puma" data-route="doc-puma" data-gruppo="documentazione">Documentazione</a>
     <a class="nav-btn area-rep" id="btn-report" href="#individuale" data-route="individuale">Report Individuale</a>
-    <a class="nav-btn area-rep" id="btn-collettivo" href="#collettivo" data-route="collettivo">🔒 Report Collettivo</a>
+    <a class="nav-btn area-rep" id="btn-collettivo" href="#collettivo" data-route="collettivo">Report Collettivo</a>
     <button class="nav-btn area-com" id="btn-comando" type="button">🔒 Area Comando</button>
   </nav>
 </header>
@@ -290,7 +317,7 @@
         </button>
         <button class="tessera area-rep" type="button" data-route="collettivo">
           <div class="ic">👥</div><h4>Report Collettivo</h4>
-          <p>Situazione per tipologia, Comando per Comando o per Direzione, da trasmettere a ROP e ROR. Accesso con password.</p>
+          <p>Situazione per tipologia, Comando per Comando o per Direzione, da trasmettere a ROP e ROR.</p>
         </button>
         <button class="tessera area-com" type="button" data-comando>
           <div class="ic">🔒</div><h4>Area Comando</h4>
@@ -576,8 +603,7 @@ function disegnaMenu() {
     + v('home', '🏠 Home Page', '', false, 'neu')
     + gr('realtime', '⏱️') + gr('attivita', '📝') + gr('documentazione', '📚')
     + `<div class="sotto-titolo area-rep">📊 Reportistica</div>`
-    + v('individuale', 'Report Individuale', '', true, 'rep')
-    + v('collettivo', (sbloccato ? '' : '🔒 ') + 'Report Collettivo', 'Comando e Direzione · con password', true, 'rep');
+    + v('individuale', 'Report Individuale', '', true, 'rep');
   h += `<div class="sez-titolo area-com" id="sez-comando">Area Comando</div>`;
   if (!sbloccato) {
     h += `<button class="voce area-com" type="button" data-comando>🔒 Accedi con password</button>`;
@@ -595,7 +621,7 @@ function disegnaMenu() {
   $('menu-piede').hidden = !sbloccato;
   document.body.classList.toggle('sbloccato', sbloccato);
   $('btn-comando').textContent = sbloccato ? '🔓 Area Comando' : '🔒 Area Comando';
-  $('btn-collettivo').textContent = (sbloccato ? '' : '🔒 ') + 'Report Collettivo';
+
 }
 function apriMenu(si, suComando) {
   document.body.classList.toggle('menu-aperto', si);
@@ -677,7 +703,9 @@ function mostra(rotta) {
   }
   if (pag && pag.interna) disegnaDocs(rotta);
   $('btn-comando').classList.toggle('attivo', !!(pag && pag.riservata) && rotta !== 'collettivo');
-  $('sezione').innerHTML = pag ? `<b>${pag.titolo}</b>` : '<b>Home Page</b>';
+  // nell'intestazione solo la pagina (l'area si vede dal pulsante acceso); il titolo intero nel suggerimento
+  $('sezione').innerHTML = pag ? `<b>${pag.titolo.split(' · ').pop()}</b>` : '<b>Home Page</b>';
+  $('sezione').title = pag ? pag.titolo : '';
   $('sezione').className = !pag ? '' : 'area-' + (GRUPPI[gruppo] ? GRUPPI[gruppo].area : pag.riservata ? 'rep' : (pag.area || 'neu'));
   $('apri-fuori').hidden = !pag;
   if (pag) {
