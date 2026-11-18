@@ -786,6 +786,7 @@ function elaboraPiano(piano) {
     inizio: trova([/giorno ed ora inizio/i, /inizio/i]),
     fine: trova([/giorno ed ora fine/i, /\bfine\b/i]),
     descr: trova([/descrizione manovre/i, /descrizione/i]),
+    compilazione: trova([/^compilazione/i]),
     area: trova([/area di addestramento/i]),
     manovre: headers.filter(h => PIANO_MANOVRE.test(h))
   };
@@ -801,6 +802,7 @@ function elaboraPiano(piano) {
       inizio: val(row[colPiano.inizio]), fine: val(row[colPiano.fine]),
       ore: oreTra(row[colPiano.inizio], row[colPiano.fine]),
       descr: val(row[colPiano.descr]), area: val(row[colPiano.area]),
+      test: colPiano.compilazione ? /test/i.test(val(row[colPiano.compilazione])) : false,   // Compilazione: Test (prova)
       manovre: colPiano.manovre.map(h => val(row[h])).filter(Boolean).join('\n')
     });
   });
@@ -1302,7 +1304,8 @@ function personaleEnte(k, c, y, tutti) {
 }
 // Addestramenti collettivi della tipologia organizzati dall'ente (Piani di Sicurezza)
 function collettiviOrganizzati(k, c, y) {
-  const l = PIANI.filter(p => p.data.getFullYear() === y && p.comandoKey === k && corsiPiano(p).has(c)).sort((a, b) => a.data - b.data);
+  // i Piani di prova (Compilazione: Test) contano solo se qualcuno ha confermato la presenza
+  const l = PIANI.filter(p => p.data.getFullYear() === y && p.comandoKey === k && corsiPiano(p).has(c) && !(p.test && !(partecipantiPiano().get(p) || []).length)).sort((a, b) => a.data - b.data);
   const senzaDoc = c.previste.length ? l.filter(p => !pianoDocumentato(p, c)) : [];
   return { n: l.length, ore: l.reduce((t, p) => t + (p.ore || 0), 0), senzaDoc };
 }
@@ -1335,7 +1338,7 @@ function controlloConferme(keys, c, y) {
   });
   // Piani senza nessuna conferma
   partecipantiPiano();
-  PIANI.filter(p => p.data.getFullYear() === y && ks.has(p.comandoKey) && corsiPiano(p).has(c) && !(PART_PIANO.get(p) || []).length)
+  PIANI.filter(p => p.data.getFullYear() === y && ks.has(p.comandoKey) && corsiPiano(p).has(c) && !p.test && !(PART_PIANO.get(p) || []).length)
     .forEach(p => add('v|' + PIANI.indexOf(p), { tipo: 'vuoto', piano: p }));
   const ord = { piano: 2, doppia: 3, vuoto: 4 };
   return [...gruppi.values()].sort((x, z) => ((x.a || x.piano).data - (z.a || z.piano).data) || ord[x.tipo] - ord[z.tipo]);

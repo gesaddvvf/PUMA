@@ -896,6 +896,7 @@ function elaboraPiano(piano) {
     inizio: trova([/giorno ed ora inizio/i, /inizio/i]),
     fine: trova([/giorno ed ora fine/i, /\bfine\b/i]),
     descr: trova([/descrizione manovre/i, /descrizione/i]),
+    compilazione: trova([/^compilazione/i]),
     area: trova([/area di addestramento/i]),
     manovre: headers.filter(h => PIANO_MANOVRE.test(h))
   };
@@ -911,6 +912,7 @@ function elaboraPiano(piano) {
       inizio: val(row[colPiano.inizio]), fine: val(row[colPiano.fine]),
       ore: oreTra(row[colPiano.inizio], row[colPiano.fine]),
       descr: val(row[colPiano.descr]), area: val(row[colPiano.area]),
+      test: colPiano.compilazione ? /test/i.test(val(row[colPiano.compilazione])) : false,   // Compilazione: Test (prova)
       manovre: colPiano.manovre.map(h => val(row[h])).filter(Boolean).join('\n')
     });
   });
