@@ -99,6 +99,7 @@
     .seg button.on { background: var(--arancio); color: #fff; }
     label.chk-f { display: inline-flex; align-items: center; gap: 6px; color: #ccc; cursor: pointer; }
     label.chk-f input { accent-color: var(--arancio); }
+    .export-scelta { display: inline-flex; gap: 10px; flex-wrap: wrap; padding: 3px 8px; border: 1px dashed #555; border-radius: 4px; }
     .azioni { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
     .azioni button {
       background: #2a2a2a; color: #ffb74d; border: 1px solid var(--arancio); border-radius: 4px;
@@ -294,7 +295,12 @@
       tr.det > td { background: #fff !important; color: #000 !important; font-size: 7.5px; padding: 1px 4px 2px 12px; }
       tr.nodoc > td { background: #fff !important; color: #000 !important; font-size: 7.5px; padding: 1px 4px 2px 12px; }
       tr.nodoc b { color: #000 !important; }
-      tr.manp:not(.nascosta) { display: table-row !important; }
+      body.exp-completo tr.det { display: table-row !important; }
+      body.exp-completo tr.manp, body.exp-completo details.legman { display: none !important; }
+      body.exp-ridotto tr.det { display: none !important; }
+      body.exp-ridotto tr.manp { display: table-row !important; }
+      .firme-com { display: flex !important; gap: 10mm; font-size: 9px; margin: 1mm 0 2mm; }
+      .firme-com div { flex: 1; } .firme-com span { display: inline-block; min-width: 55mm; border-bottom: 1px solid #000; margin-left: 2mm; }
       tr.manp > td { background: #fff !important; color: #000 !important; font-size: 7.5px; padding: 1px 4px 2px 12px; }
       .ctrl-box { display: none !important; }   /* controllo conferme: solo a video */
       .dh, .dh span, .dh.si, .dh.no, table.dtab td, ul.ml li, ul.ml li b, ul.ml li i, table.dtab tr.prima td { color: #000 !important; }
@@ -353,7 +359,11 @@
   <label class="lbl" for="anno-select">Anno</label>
   <select id="anno-select" aria-label="Anno di riferimento"></select>
   <label class="chk-f" title="Mostra anche chi non ha il corso né attività di questa tipologia"><input type="checkbox" id="tutti-chk"> Tutto il personale</label>
-  <label class="chk-f" title="Apre il dettaglio di tutti i nominativi (attività, manovre fatte e da fare). Con un clic sul nominativo si apre o chiude solo il suo. Nel PDF vanno i dettagli aperti."><input type="checkbox" id="det-chk"> Dettaglio attività</label>
+  <label class="chk-f" title="Apre a video il dettaglio di tutti i nominativi (attività, manovre fatte e da fare). Con un clic sul nominativo si apre o chiude solo il suo."><input type="checkbox" id="det-chk"> Dettaglio attività</label>
+  <span class="export-scelta" role="radiogroup" aria-label="Contenuto di stampa e PDF">
+    <label class="chk-f" title="Stampa e PDF: per ogni nominativo le attività svolte con la descrizione e le manovre fatte e da fare con il nome"><input type="radio" name="export" value="completo"> Export completo con descrizione manovre</label>
+    <label class="chk-f" title="Stampa e PDF: per ogni nominativo una riga con i codici delle manovre fatte e da fare; legenda delle manovre in fondo"><input type="radio" name="export" value="ridotto"> Export ridotto</label>
+  </span>
   <span class="azioni">
     <button id="print-btn" type="button" disabled>🖨 Stampa</button>
     <button id="pdf-btn" type="button" disabled>⬇ PDF</button>
@@ -1230,7 +1240,7 @@ function responsabiliDi(tipo, k, settore) {
   const com = comandiDi(NOME_ENTE.get(k) || k);
   let ror = resp('ror', settore, k);
   if (!ror.length) ror = unici(com.flatMap(c => resp('ror', settore, c)));
-  return { ror, rop: unici([k, ...com].flatMap(c => resp('rop', settore, c))), fds: resp('fds', settore, k) };
+  return { ror, rop: unici([k, ...com].flatMap(c => resp('rop', settore, c))), ropDir: resp('rop', settore, k), fds: resp('fds', settore, k) };
 }
 const elencoNomi = l => l.length ? l.map(senzaCf).map(esc).join(', ') : '<span class="manca">non indicato</span>';
 
@@ -1398,11 +1408,20 @@ const state = {
   anno: parseInt(URLP.get('anno'), 10) || ANNO_OGGI,
   tutti: URLP.has('tutti'),
   dettaglio: URLP.has('dettaglio'),   // di default tutto compresso
+  export: URLP.get('export') === 'ridotto' ? 'ridotto' : 'completo',   // contenuto di stampa e PDF
   invertite: new Set()   // nominativi aperti/chiusi a mano, al contrario della casella
 };
 tuttiChk.checked = state.tutti;
 const detChk = document.getElementById('det-chk');
 detChk.checked = state.dettaglio;
+const radioExport = [...document.querySelectorAll('input[name="export"]')];
+function applicaExport() {
+  radioExport.forEach(r => { r.checked = r.value === state.export; });
+  document.body.classList.toggle('exp-completo', state.export === 'completo');
+  document.body.classList.toggle('exp-ridotto', state.export === 'ridotto');
+}
+applicaExport();
+radioExport.forEach(r => r.addEventListener('change', () => { if (r.checked) { state.export = r.value; applicaExport(); aggiornaUrl(); } }));
 let ULTIMO = null;   // ultimo report disegnato (per PDF e invio)
 
 function scaricaGviz(foglio, range) {
@@ -1567,6 +1586,7 @@ function aggiornaUrl() {
   if (state.anno !== ANNO_OGGI) q.set('anno', state.anno);
   if (state.tutti) q.set('tutti', '1');
   if (state.dettaglio) q.set('dettaglio', '1');
+  if (state.export === 'ridotto') q.set('export', 'ridotto');
   if (DEBUG) q.set('debug', '1');
   history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : ''));
 }
@@ -1582,7 +1602,7 @@ annoSelect.addEventListener('change', () => { state.anno = +annoSelect.value; di
 tuttiChk.addEventListener('change', () => { state.tutti = tuttiChk.checked; disegna(); });
 detChk.addEventListener('change', () => { state.dettaglio = detChk.checked; state.invertite.clear(); disegna(); });
 refreshBtn.addEventListener('click', caricaDati);
-window.addEventListener('beforeprint', () => document.querySelectorAll('details.legman').forEach(d => { d.dataset.eraAperta = d.open ? '1' : ''; d.open = true; }));
+window.addEventListener('beforeprint', () => { if (state.export === 'ridotto') document.querySelectorAll('details.legman').forEach(d => { d.dataset.eraAperta = d.open ? '1' : ''; d.open = true; }); });
 window.addEventListener('afterprint', () => document.querySelectorAll('details.legman').forEach(d => { if (!d.dataset.eraAperta) d.open = false; }));
 printBtn.addEventListener('click', () => window.print());
 
@@ -1668,10 +1688,10 @@ function datiDettaglio(s) {
         : enteBreve(a.organizzatoreRaw || a.organizzatore) + (a.team ? ' · sq. ' + a.team : '');
       // descrizione attività del Piano di Sicurezza (se manca il Piano, quella della registrazione)
       const dp = String((a.piano && a.piano.descr) || a.descr || '').replace(/\s+/g, ' ').trim();
-      if (dp) info += ' · ' + (dp.length > 90 ? dp.slice(0, 89) + '…' : dp);
+      if (dp) info += ' · ' + dp;
       if (!a.piano && !a.diGruppo) info += ' · Piano di Sicurezza Mancante';
-    } else if (tipo === 'intervento') info = [a.numInt ? 'n. ' + a.numInt : '', (a.descrInt || '').slice(0, 70)].filter(Boolean).join(' · ');
-    else info = (a.descr || a.tipologia || '').replace(/\s+/g, ' ').slice(0, 70);
+    } else if (tipo === 'intervento') info = [a.numInt ? 'n. ' + a.numInt : '', String(a.descrInt || '').replace(/\s+/g, ' ').trim()].filter(Boolean).join(' · ');
+    else info = String(a.descr || a.tipologia || '').replace(/\s+/g, ' ').trim();
     // attività generica: nessuna manovra prevista; le voci (N) riconosciute come descrizione
     const vario = s.vari.includes(a);   // collettivo senza documentazione correlata
     const generica = !vario && a.tipo !== 'intervento' && !manovreAtt(a, s.c).length && !!s.c.previste.length;
@@ -1679,7 +1699,7 @@ function datiDettaglio(s) {
     if (a.duplicati > 1) info += ` · registrato ${a.duplicati} volte (contato una)`;
     if (a.tipo === 'collettivo' && a.controllo) info += ' · ⚠ ' + testoControllo(a);
     return { data: dataBreve(a.data), prima: a.anno !== state.anno, tipo, ore: a.ore == null ? '—' : fmtHM(a.ore), info, vario, generica, generiche,
-      descr: String(a.descr || (a.piano && a.piano.descr) || a.tipologia || '').replace(/\s+/g, ' ').slice(0, 80), manovre: tipo === 'intervento' ? [] : manovreAtt(a, s.c).sort(ordManovre) };
+      descr: String(a.descr || (a.piano && a.piano.descr) || a.tipologia || '').replace(/\s+/g, ' ').trim(), manovre: tipo === 'intervento' ? [] : manovreAtt(a, s.c).sort(ordManovre) };
   });
   const fatte = (s.r ? [...s.r.fatte.entries()] : []).map(([m, f]) => ({ m, n: f.n, ultima: f.ultima })).sort((a, b) => ordManovre(a.m, b.m));
   const daFare = s.con ? s.mancanti.slice().sort(ordManovre) : [];
@@ -1776,6 +1796,12 @@ function tessere(conta, nCon, nSenza, coll, collPrec, y) {
     <div class="tile" style="--tc:#4fc3f7"><div class="k">Collettivi organizzati</div><div class="v">${coll.n} <small>· ${fmtH(coll.ore)}</small></div><div class="p">${coll.senzaDoc.length ? `<span style="color:#ffb74d">⚠ ${coll.senzaDoc.length} senza documentazione correlata</span><br>` : ''}${y - 1}: ${collPrec.n} · ${fmtH(collPrec.ore)}</div></div>
   </div>`;
 }
+// Firme: Comando = ROP + Funzionario di settore; Direzione = ROR + ROP + Funzionario di settore della Direzione
+function firmeDi(R) {
+  return R.ropDir !== undefined
+    ? [['Visto del ROR', R.ror], ['Visto del ROP', R.ropDir], ['Visto del Funzionario di settore', R.fds]]
+    : [['Visto del ROP', R.rop], ['Visto del Funzionario di settore', R.fds]];
+}
 function testaStampa(titoloEnte, c, y, firme) {
   const ora = new Date(), due = n => String(n).padStart(2, '0');
   const luogo = titoloEnte.replace(/^(comando|direzione)\s+(regionale\s+)?/i, '');
@@ -1783,7 +1809,8 @@ function testaStampa(titoloEnte, c, y, firme) {
     <img src="${EMBLEMA_URL}" alt="">
     <div class="e">VIGILI DEL FUOCO<br>${esc(titoloEnte.toUpperCase())}<br>REPORT COLLETTIVO<br>${esc(c.tipologia)}</div>
     <table><tr><td class="k">Anno</td><td><b>${y}</b>${c.anniPrima ? ` (ore ${periodoDi(c, y)})` : ''}</td>${firme[0] ? `<td class="k">${esc(firme[0][0])}</td><td class="firma">${esc(firme[0][1])}</td>` : '<td></td><td></td>'}</tr>
-      <tr><td class="k">Luogo e Data</td><td>${esc(luogo)}, ${due(ora.getDate())}/${due(ora.getMonth() + 1)}/${ora.getFullYear()} ${due(ora.getHours())}.${due(ora.getMinutes())}</td>${firme[1] ? `<td class="k">${esc(firme[1][0])}</td><td class="firma">${esc(firme[1][1])}</td>` : '<td></td><td></td>'}</tr></table>
+      <tr><td class="k">Luogo e Data</td><td>${esc(luogo)}, ${due(ora.getDate())}/${due(ora.getMonth() + 1)}/${ora.getFullYear()} ${due(ora.getHours())}.${due(ora.getMinutes())}</td>${firme[1] ? `<td class="k">${esc(firme[1][0])}</td><td class="firma">${esc(firme[1][1])}</td>` : '<td></td><td></td>'}</tr>
+      ${firme[2] ? `<tr><td class="k">Requisito</td><td>${esc(requisitoTxt(c, y))}</td><td class="k">${esc(firme[2][0])}</td><td class="firma">${esc(firme[2][1])}</td></tr>` : ''}</table>
   </div>`;
 }
 function requisitoTxt(c, y) {
@@ -1845,8 +1872,7 @@ function disegnaComando(k, c, y) {
   const R = responsabiliDi('comando', k, c.categoria);
   const dir = direzioneDi(k);
   ULTIMO = { tipo: 'comando', k, nome: E.nome, c, y, enti: [E], R, dir };
-  const firme = [['Visto del ROP', R.rop.map(senzaCf).join(', ')], ['Visto del ROR', R.ror.map(senzaCf).join(', ')]];
-  let h = testaStampa(E.nome, c, y, firme);
+  let h = testaStampa(E.nome, c, y, firmeDi(R).map(([t, l]) => [t, l.map(senzaCf).join(', ')]));
   h += testaEnte(E.nome, c, y, `${dir && !k.startsWith('direzione') ? esc(dir) + ' · ' : ''}Settore ${esc(c.categoria)} · ${E.totale} persone in PUMA<br>
         ROP: <b>${elencoNomi(R.rop)}</b> · ROR: <b>${elencoNomi(R.ror)}</b> · Funzionario di settore: <b>${elencoNomi(R.fds)}</b>`);
   h += `<div class="solo-schermo">${tessere(E.conta, E.con.length, E.senza.length, E.collettivi, E.collPrec, y)}${collSenzaDocHtml(E.collettivi.senzaDoc)}${controlloHtml(ULTIMO.controllo = controlloConferme([k], c, y))}</div>`;
@@ -1868,10 +1894,9 @@ function disegnaDirezione(k, c, y) {
     tot.coll.n += E.collettivi.n; tot.coll.ore += E.collettivi.ore; tot.collPrec.n += E.collPrec.n; tot.collPrec.ore += E.collPrec.ore;
   });
   ULTIMO.tot = tot;
-  const firme = [['Visto del ROR', R.ror.map(senzaCf).join(', ')], R.fds.length ? ['Visto del Funzionario di settore', R.fds.map(senzaCf).join(', ')] : null].filter(Boolean);
-  let h = testaStampa(nomeDir, c, y, firme);
+  let h = testaStampa(nomeDir, c, y, firmeDi(R).map(([t, l]) => [t, l.map(senzaCf).join(', ')]));
   h += testaEnte(nomeDir, c, y, `Settore ${esc(c.categoria)} · ${keys.length - 1} Comandi · ${tot.totale} persone in PUMA<br>
-        ROR: <b>${elencoNomi(R.ror)}</b>${R.fds.length ? ` · Funzionario di settore: <b>${elencoNomi(R.fds)}</b>` : ''}`);
+        ROR: <b>${elencoNomi(R.ror)}</b> · ROP della Direzione: <b>${elencoNomi(R.ropDir)}</b> · Funzionario di settore della Direzione: <b>${elencoNomi(R.fds)}</b>`);
   h += `<div class="solo-schermo">${tessere(tot.conta, tot.con, tot.senza, tot.coll, tot.collPrec, y)}${collSenzaDocHtml(tot.coll.senzaDoc, true)}${controlloHtml(ULTIMO.controllo = controlloConferme(keys, c, y), true)}</div>`;
 
   // Riepilogo Comando per Comando
@@ -1898,7 +1923,9 @@ function disegnaDirezione(k, c, y) {
   enti.forEach(E => {
     if (!E.con.length && !E.senza.length && !E.altri.length) { vuoti.push(E.nome); return; }
     const rop = resp('rop', c.categoria, E.k);
-    h += `<div class="com-sez" id="sez-${E.k}"><h4 class="sec">${esc(E.nome)} <small>ROP: ${rop.length ? esc(rop.map(senzaCf).join(', ')) : 'non indicato'} · ${E.con.length} con corso · ${E.conta.ok} idonei · ${E.senza.length} senza corso</small></h4>
+    const fds = resp('fds', c.categoria, E.k);
+    h += `<div class="com-sez" id="sez-${E.k}"><h4 class="sec">${esc(E.nome)} <small>ROP: ${rop.length ? esc(rop.map(senzaCf).join(', ')) : 'non indicato'} · Funzionario di settore: ${fds.length ? esc(fds.map(senzaCf).join(', ')) : 'non indicato'} · ${E.con.length} con corso · ${E.conta.ok} idonei · ${E.senza.length} senza corso</small></h4>
+      <div class="print-only firme-com"><div>Visto del ROP <span>${esc(rop.map(senzaCf).join(', '))}</span></div><div>Visto del Funzionario di settore <span>${esc(fds.map(senzaCf).join(', '))}</span></div></div>
       ${tabellaPersonale(E, y, c)}</div>`;
   });
   if (vuoti.length) h += `<div class="note-box"><b>Nessuno con il corso o con attività di questa tipologia</b>: ${vuoti.map(esc).join(' · ')}</div>`;
@@ -1929,9 +1956,7 @@ async function creaPdf() {
 
   const ora = new Date(), due = n => String(n).padStart(2, '0');
   const luogo = R.nome.replace(/^(comando|direzione)\s+(regionale\s+)?/i, '');
-  const firme = R.tipo === 'comando'
-    ? [['Visto del ROP', R.R.rop], ['Visto del ROR', R.R.ror]]
-    : [['Visto del ROR', R.R.ror], ...(R.R.fds.length ? [['Visto del Funzionario di settore', R.R.fds]] : [])];
+  const firme = firmeDi(R.R);
   const voce = (k, v, x, yv) => { doc.setFont('helvetica', 'normal'); doc.text(k, x, yv, { align: 'right' }); if (v) { doc.setFont('helvetica', 'bold'); doc.text(testoPdf(v), x + 2.5, yv); } };
   doc.setFontSize(8);
   voce('Anno', String(R.y) + (c.anniPrima ? ` (ore ${periodoDi(c, R.y).replace('–', '-')})` : ''), 30, yy);
@@ -1941,6 +1966,7 @@ async function creaPdf() {
   if (firme[1]) { voce(firme[1][0], firme[1][1].map(senzaCf).join(', '), 175, yy); doc.line(177.5, yy + 1, W - M, yy + 1); }
   yy += 5;
   voce('Requisito', requisitoTxt(c, R.y).replace(/–/g, '-'), 30, yy);
+  if (firme[2]) { voce(firme[2][0], firme[2][1].map(senzaCf).join(', '), 175, yy); doc.line(177.5, yy + 1, W - M, yy + 1); }
   yy += 5;
 
   // legenda
@@ -1977,12 +2003,12 @@ async function creaPdf() {
         if (s.vari.length) b.push([{ content: '', styles: { fillColor: [255, 255, 255] } },
           { content: testoPdf(`${titoloSenzaDoc(s.vari.length)}: ${s.vari.map(voceSenzaDoc).join(' - ')}`), colSpan: 11,
             styles: { fontSize: 6.5, fontStyle: 'italic', textColor: [90, 50, 0], fillColor: [255, 248, 230], halign: 'left', cellPadding: { top: 0.6, bottom: 0.8, left: 2, right: 1 } } }]);
-        if (haDettaglio(s) && dettaglioAperto(s)) {
+        if (state.export === 'completo' && haDettaglio(s)) {
           const T = testoDettaglio(s), st = { fontSize: 6, textColor: [40, 40, 40], fillColor: [255, 255, 255], valign: 'top', halign: 'left', cellPadding: { top: 0.6, bottom: 0.8, left: 2, right: 1 } };
           b.push([{ content: '', styles: { fillColor: [255, 255, 255] } },
             { content: testoPdf(T.att), colSpan: 6, dett: 'att', styles: st },
             { content: testoPdf(T.man), colSpan: 5, dett: 'man', styles: st }]);
-        } else if (s.prev) {   // dettaglio chiuso: manovre fatte / da fare in breve
+        } else if (s.prev) {   // export ridotto: manovre fatte / da fare in breve
           b.push([{ content: '', styles: { fillColor: [255, 255, 255] } },
             { content: testoPdf(manovreBreveTesto(s)), colSpan: 11,
               styles: { fontSize: 6.3, textColor: [40, 40, 40], fillColor: [255, 255, 255], halign: 'left', cellPadding: { top: 0.6, bottom: 0.8, left: 2, right: 1 } } }]);
@@ -2048,27 +2074,37 @@ async function creaPdf() {
     R.enti.forEach(E => {
       if (!E.con.length && !E.senza.length && !E.altri.length) return;
       let y0 = doc.lastAutoTable.finalY + 7;
-      if (y0 > H - 35) { doc.addPage(); y0 = M + 5; }
-      const rop = resp('rop', c.categoria, E.k).map(senzaCf).join(', ');
+      if (y0 > H - 40) { doc.addPage(); y0 = M + 5; }
+      const rop = resp('rop', c.categoria, E.k).map(senzaCf).join(', '), fds = resp('fds', c.categoria, E.k).map(senzaCf).join(', ');
       doc.setFontSize(9.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...col.map(v => Math.round(v * 0.6)));
       doc.text(testoPdf(E.nome), M, y0);
       const wNome = doc.getTextWidth(testoPdf(E.nome));
       doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
       doc.text(testoPdf(`ROP: ${rop || 'non indicato'} - con corso ${E.con.length}: ${conteggi(E)} - senza corso ${E.senza.length}`), M + wNome + 4, y0);
       doc.setTextColor(0);
-      let yt = y0 + 2;
+      // firme del Comando: ROP + Funzionario di settore
+      doc.setFontSize(7.5);
+      [['Visto del ROP', rop], ['Visto del Funzionario di settore', fds]].forEach(([t, n], i) => {
+        const x = M + i * 120;
+        doc.setFont('helvetica', 'normal'); doc.text(t, x, y0 + 4.5);
+        const xn = x + doc.getTextWidth(t) + 2;
+        if (n) { doc.setFont('helvetica', 'bold'); doc.text(testoPdf(n), xn, y0 + 4.5); }
+        doc.setLineWidth(0.2); doc.line(xn, y0 + 5.3, x + 112, y0 + 5.3);
+      });
+      doc.setFont('helvetica', 'normal');
+      let yt = y0 + 6.5;
       if (E.collettivi.senzaDoc.length) {
         const righe = doc.splitTextToSize(testoPdf(`${titoloSenzaDoc(E.collettivi.senzaDoc.length)} tra i collettivi organizzati: ${E.collettivi.senzaDoc.map(voceCollSenzaDoc).join(' - ')}`), W - 2 * M);
         doc.setFontSize(7.5); doc.setFont('helvetica', 'italic'); doc.setTextColor(120, 70, 0);
-        doc.text(righe, M, y0 + 3.8);
+        doc.text(righe, M, yt + 1.8);
         doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
         yt += righe.length * 3.2 + 0.5;
       }
       tabella(corpo(E), yt);
     });
   }
-  // Legenda delle manovre previste (codici usati nel dettaglio)
-  if (c.previste.length) {
+  // Legenda delle manovre previste (codici della riga breve): solo export ridotto
+  if (state.export === 'ridotto' && c.previste.length) {
     let y0 = doc.lastAutoTable.finalY + 7;
     if (y0 > H - 30) { doc.addPage(); y0 = M + 5; }
     doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
