@@ -1202,38 +1202,47 @@ const corsoScelto = () => CORSI.find(c => c.id === state.corso) || null;
 function schedaPersona(p, c, y) {
   const r = riepilogoCorsi(p, y).find(x => x.c === c);
   const cat = c.categoria;
-  // interventi del settore nel periodo della tipologia (gli interventi non hanno tipologia)
-  const intv = p.att.filter(a => a.tipo === 'intervento' && a.anno <= y && a.anno >= y - c.anniPrima && a.cats.some(i => i.label === cat));
-  const oreInt = intv.reduce((t, a) => t + (a.ore || 0), 0);
   const con = p.corsiPossesso.has(c);
   const altri = [...p.corsiPossesso].filter(x => x !== c && x.categoria === cat && !(DI_TUTTI.includes(x) && !x.oreMin)).sort((a, b) => a.ordine - b.ordine);
-  const ore = r ? r.ore : 0, oreColl = r ? r.oreColl : 0;
-  const tot = ore + (INTERVENTI_NEL_TOTALE ? oreInt : 0);
-  const s = {
-    p, c, r, con, altri, attivo: !!(r && r.nAtt > 0),
-    coll: oreColl, ind: ore - oreColl, int: oreInt, nInt: intv.length, nAtt: r ? r.nAtt : 0,
-    tot, minTot: con && c.oreMin ? c.oreMin : 0, oreColl, collMin: con && c.oreMin && c.collPct ? c.oreMin * c.collPct : 0,
-    fatte: r ? r.fatte.size : 0, prev: c.previste.length, dal: y - c.anniPrima
-  };
-  s.pct = s.minTot ? s.tot / s.minTot : null;
+  const v = valutaTipologia(p.att, r, c, y, con);
+  const s = Object.assign(v, { p, c, r, con, altri, attivo: !!(r && r.nAtt > 0), nAtt: r ? r.nAtt : 0, dal: y - c.anniPrima });
   // Dettaglio: attività della tipologia nel periodo, interventi del settore, manovre previste mancanti
   s.attivita = p.att.filter(a => a.tipo !== 'intervento' && a.corsi.has(c) && a.anno <= y && a.anno >= y - c.anniPrima).sort((a, b) => a.data - b.data);
-  s.interventi = intv.slice().sort((a, b) => a.data - b.data);
+  s.interventi = v.intv.slice().sort((a, b) => a.data - b.data);
   s.mancanti = c.previste.filter(m => !(r && r.fatte.has(m)));
   s.fatteList = r ? [...r.fatte.keys()] : [];
   s.vari = r ? r.vari : [];
-  // Logica del foglio Stampa_Report_Collettivo (colonna M: R, Ar, A, V)
-  const eps = 1e-4, indMin = s.minTot - s.collMin;
-  s.motivi = [];
-  if (!con) s.stato = 'na';
-  else if (s.tot < s.minTot - eps) s.stato = s.tot < s.minTot * SOGLIA_QUASI - eps ? 'ko' : 'quasi';
-  else {
-    if (s.ind + (INTERVENTI_NEL_TOTALE ? s.int : 0) < indMin - eps) s.motivi.push('individuali sotto ' + fmtHM(indMin));
-    if (s.coll < s.collMin - eps) s.motivi.push('collettive sotto ' + fmtHM(s.collMin));
-    if (s.prev && s.fatte < s.prev) s.motivi.push(`mancano ${s.prev - s.fatte} manovre`);
-    s.stato = s.motivi.length ? 'man' : 'ok';
-  }
   return s;
+}
+
+// Stato di una tipologia (corso) per un nominativo: stessa logica nel Report Individuale e nel Report Collettivo
+// (foglio Stampa_Report_Collettivo, colonna M: R, Ar, A, V)
+//   ore svolte = addestramenti della tipologia nel periodo + interventi del settore (se INTERVENTI_NEL_TOTALE)
+//   na = senza corso · ko = sotto il 75% · quasi = tra il 75% e il 100% · man = da verificare · ok = idoneo
+function valutaTipologia(att, r, c, y, con) {
+  const cat = c.categoria;
+  // interventi del settore nel periodo della tipologia (gli interventi non hanno tipologia)
+  const intv = att.filter(a => a.tipo === 'intervento' && a.anno <= y && a.anno >= y - c.anniPrima && a.cats.some(i => i.label === cat));
+  const oreInt = intv.reduce((t, a) => t + (a.ore || 0), 0);
+  const ore = r ? r.ore : 0, oreColl = r ? r.oreColl : 0;
+  const v = {
+    intv, int: oreInt, nInt: intv.length, coll: oreColl, ind: ore - oreColl, oreColl,
+    tot: ore + (INTERVENTI_NEL_TOTALE ? oreInt : 0),
+    minTot: con && c.oreMin ? c.oreMin : 0,
+    collMin: con && c.oreMin && c.collPct ? c.oreMin * c.collPct : 0,
+    fatte: r ? r.fatte.size : 0, prev: c.previste.length, motivi: []
+  };
+  v.pct = v.minTot ? v.tot / v.minTot : null;
+  const eps = 1e-4, indMin = v.minTot - v.collMin;
+  if (!con) v.stato = 'na';
+  else if (v.tot < v.minTot - eps) v.stato = v.tot < v.minTot * SOGLIA_QUASI - eps ? 'ko' : 'quasi';
+  else {
+    if (v.ind + (INTERVENTI_NEL_TOTALE ? v.int : 0) < indMin - eps) v.motivi.push('individuali sotto ' + fmtHM(indMin));
+    if (v.coll < v.collMin - eps) v.motivi.push('collettive sotto ' + fmtHM(v.collMin));
+    if (v.prev && v.fatte < v.prev) v.motivi.push(`mancano ${v.prev - v.fatte} manovre`);
+    v.stato = v.motivi.length ? 'man' : 'ok';
+  }
+  return v;
 }
 
 // Personale di un Comando (o della Direzione come ente): con il corso / senza corso

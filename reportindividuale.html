@@ -181,6 +181,8 @@
     .stato.ok { color: var(--ok); }
     .stato.ko { color: var(--ko); }
     .stato.nd { color: #999; font-weight: normal; }
+    .stato.tip { color: var(--sc); }
+    .pallino { display: inline-block; width: 11px; height: 11px; border-radius: 50%; vertical-align: -1px; margin-right: 5px; background: var(--sc); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
     /* Manovre */
     .ciclo-title { color: #ccc; font-size: 11.5px; font-weight: bold; margin: 10px 0 5px; text-transform: uppercase; letter-spacing: .03em; }
@@ -1491,16 +1493,18 @@ function disegna() {
       st.righe.forEach(r => {
         const c = r.c, id = 'c' + c.id, aperto = state.aperti.has(id);
         const nPrev = c.previste.length, nFatte = r.fatte.size;
-        const ruolo = !r.possesso ? '<span class="stato nd">non in possesso</span>'
-          : c.oreMin ? `<span class="stato nd">concorre al minimo</span>`
+        const ruolo = !r.possesso ? ''
+          : c.oreMin ? `<span class="stato nd">concorre al minimo di categoria</span>`
           : c.soloRegistro ? '<span class="stato nd">solo registro</span>' : '<span class="stato nd">nessun minimo</span>';
+        // stato della tipologia, calcolato come nel Report Collettivo
+        const vt = valutaTipologia(att, r, c, y, r.possesso);
         req += `<tr class="corso-row${aperto ? ' open' : ''}" data-id="${id}" style="--cc:${cc}">
           <td class="corso-nome">${logoHtml(c.nome)}${esc(c.nome)}<span class="t">${[c.sigla ? 'Sigla ' + esc(c.sigla) : '', c.anniPrima ? 'conta anche ' + (c.anniPrima === 1 ? "l'anno precedente" : c.anniPrima + ' anni precedenti') : ''].filter(Boolean).join(' · ')}</span></td>
           <td class="c">${c.anniPrima ? `${r.dal}–${y}` : y}</td>
           <td class="n">${fmtH(r.ore)}${c.oreMin != null ? ` <span class="sub-n">· minimo ${fmtH(c.oreMin)}</span>` : ''}</td>
           <td class="n">${fmtH(r.oreColl)}${r.collMin != null ? ` <span class="sub-n">· ${Math.round(c.collPct * 100)}% = ${fmtH(r.collMin)}</span>` : ''}</td>
           <td class="c">${nPrev ? `<b style="color:${nFatte >= nPrev ? 'var(--ok)' : 'inherit'}">${nFatte}</b> / ${nPrev}` : '—'}${r.vari.length ? `<span class="sub-n" style="display:block">${variTxt(r.vari.length)}</span>` : ''}</td>
-          <td class="c">${ruolo}</td>
+          <td class="c">${!r.possesso || c.oreMin || nPrev ? statoTipHtml(vt) : ''}${vt.motivi.length ? `<span class="sub-n" style="display:block">${esc(vt.motivi.join(' · '))}</span>` : ''}${vt.minTot ? `<span class="sub-n" style="display:block">${fmtHM(vt.tot)} / ${fmtHM(vt.minTot)}${vt.int ? ` con interventi (${fmtHM(vt.int)})` : ''} · ${Math.round(vt.pct * 100)}%</span>` : ''}${ruolo ? `<span style="display:block">${ruolo}</span>` : ''}</td>
         </tr>
         <tr class="det-row" data-for="${id}" style="--cc:${cc};${aperto ? '' : 'display:none'}"><td colspan="6">${dettaglioManovre(c, r)}</td></tr>`;
       });
@@ -1580,6 +1584,49 @@ function dettaglioManovre(c, r) {
   }
   return h;
 }
+
+// Stato di una tipologia (corso) per un nominativo: stessa logica nel Report Individuale e nel Report Collettivo
+// (foglio Stampa_Report_Collettivo, colonna M: R, Ar, A, V)
+//   ore svolte = addestramenti della tipologia nel periodo + interventi del settore (se INTERVENTI_NEL_TOTALE)
+//   na = senza corso · ko = sotto il 75% · quasi = tra il 75% e il 100% · man = da verificare · ok = idoneo
+function valutaTipologia(att, r, c, y, con) {
+  const cat = c.categoria;
+  // interventi del settore nel periodo della tipologia (gli interventi non hanno tipologia)
+  const intv = att.filter(a => a.tipo === 'intervento' && a.anno <= y && a.anno >= y - c.anniPrima && a.cats.some(i => i.label === cat));
+  const oreInt = intv.reduce((t, a) => t + (a.ore || 0), 0);
+  const ore = r ? r.ore : 0, oreColl = r ? r.oreColl : 0;
+  const v = {
+    intv, int: oreInt, nInt: intv.length, coll: oreColl, ind: ore - oreColl, oreColl,
+    tot: ore + (INTERVENTI_NEL_TOTALE ? oreInt : 0),
+    minTot: con && c.oreMin ? c.oreMin : 0,
+    collMin: con && c.oreMin && c.collPct ? c.oreMin * c.collPct : 0,
+    fatte: r ? r.fatte.size : 0, prev: c.previste.length, motivi: []
+  };
+  v.pct = v.minTot ? v.tot / v.minTot : null;
+  const eps = 1e-4, indMin = v.minTot - v.collMin;
+  if (!con) v.stato = 'na';
+  else if (v.tot < v.minTot - eps) v.stato = v.tot < v.minTot * SOGLIA_QUASI - eps ? 'ko' : 'quasi';
+  else {
+    if (v.ind + (INTERVENTI_NEL_TOTALE ? v.int : 0) < indMin - eps) v.motivi.push('individuali sotto ' + fmtHM(indMin));
+    if (v.coll < v.collMin - eps) v.motivi.push('collettive sotto ' + fmtHM(v.collMin));
+    if (v.prev && v.fatte < v.prev) v.motivi.push(`mancano ${v.prev - v.fatte} manovre`);
+    v.stato = v.motivi.length ? 'man' : 'ok';
+  }
+  return v;
+}
+
+// Come nel Report Collettivo
+const INTERVENTI_NEL_TOTALE = true;
+const SOGLIA_QUASI = 0.75;
+const STATI = {
+  ok:    { t: 'Idoneo',                  c: '#26a69a' },
+  man:   { t: 'Verificare',              c: '#ffff00' },
+  quasi: { t: '75% delle ore previste',  c: '#ff9900' },
+  ko:    { t: 'Non idoneo',              c: '#e06666' },
+  na:    { t: 'Senza corso',             c: '#757575' }
+};
+const pallino = st => `<span class="pallino" style="--sc:${STATI[st].c}"></span>`;
+const statoTipHtml = v => `<span class="stato tip" style="--sc:${STATI[v.stato].c}">${pallino(v.stato)}${STATI[v.stato].t}</span>`;
 const variTxt = n => `${n} ${n === 1 ? 'addestramento' : 'addestramenti'} senza documentazione correlata`;
 
 function graficoMesi(a, p, y) {
