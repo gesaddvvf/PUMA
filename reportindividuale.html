@@ -1309,10 +1309,11 @@ function riepilogoCorsi(p, y) {
       f.n++; if (!f.ultima || a.data > f.ultima) f.ultima = a.data;
       fatte.set(m, f);
     }));
-    // addestramenti collettivi del corso senza documentazione correlata: nella registrazione e nel Piano di Sicurezza
-    // non è scritta nessuna manovra prevista (la (C) data in automatico ai collettivi non conta come documentazione)
+    // addestramenti collettivi del corso senza documentazione correlata: nessuna manovra prevista nella registrazione
+    // o nel Piano di Sicurezza. Nei corsi con una voce (C) (es. SAF Basico, «Addestramento provinciale di gruppo»)
+    // il collettivo è esso stesso la manovra prevista: è sempre documentato, senza scriverlo nel modulo
     // gli inserimenti duplicati (registrati più volte, contati una) non si segnalano come senza documentazione
-    const vari = c.previste.length ? add.filter(a => a.tipo === 'collettivo' && !(a.duplicati > 1) && ![...a.manovreDoc].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
+    const vari = c.previste.length ? add.filter(a => a.tipo === 'collettivo' && !(a.duplicati > 1) && ![...a.manovre].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
     const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
     let stato = 'nd';
     if (c.oreMin != null) stato = ore >= c.oreMin - 1e-6 && (collMin == null || oreColl >= collMin - 1e-6) ? 'ok' : 'ko';

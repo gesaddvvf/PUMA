@@ -1016,10 +1016,11 @@ function riepilogoCorsi(p, y) {
       f.n++; if (!f.ultima || a.data > f.ultima) f.ultima = a.data;
       fatte.set(m, f);
     }));
-    // addestramenti collettivi del corso senza documentazione correlata: nella registrazione e nel Piano di Sicurezza
-    // non è scritta nessuna manovra prevista (la (C) data in automatico ai collettivi non conta come documentazione)
+    // addestramenti collettivi del corso senza documentazione correlata: nessuna manovra prevista nella registrazione
+    // o nel Piano di Sicurezza. Nei corsi con una voce (C) (es. SAF Basico, «Addestramento provinciale di gruppo»)
+    // il collettivo è esso stesso la manovra prevista: è sempre documentato, senza scriverlo nel modulo
     // gli inserimenti duplicati (registrati più volte, contati una) non si segnalano come senza documentazione
-    const vari = c.previste.length ? add.filter(a => a.tipo === 'collettivo' && !(a.duplicati > 1) && ![...a.manovreDoc].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
+    const vari = c.previste.length ? add.filter(a => a.tipo === 'collettivo' && !(a.duplicati > 1) && ![...a.manovre].some(m => m.corsi.includes(c))).sort((a, b) => a.data - b.data) : [];
     const collMin = c.oreMin != null && c.collPct ? c.oreMin * c.collPct : null;
     let stato = 'nd';
     if (c.oreMin != null) stato = ore >= c.oreMin - 1e-6 && (collMin == null || oreColl >= collMin - 1e-6) ? 'ok' : 'ko';
@@ -1316,6 +1317,8 @@ function partecipantiPiano() {
   return PART_PIANO;
 }
 function pianoDocumentato(p, c) {
+  // corso con voce (C): il collettivo è la manovra prevista (es. SAF Basico, «Addestramento provinciale di gruppo»)
+  if (c.previste.some(m => m.lettera === 'C')) return true;
   partecipantiPiano();
   if ([...trovaManovre(p.manovre, corsiPiano(p), p.descr)].some(m => m.corsi.includes(c))) return true;
   return (PART_PIANO.get(p) || []).some(a => [...a.manovreDoc].some(m => m.corsi.includes(c)));
@@ -1764,7 +1767,7 @@ function noteHtml(c, y) {
     <li>Requisito di ${esc(c.tipologia)}: ${requisitoTxt(c, y)}.</li>
     <li>Ore svolte = addestramenti collettivi e individuali di questa tipologia${INTERVENTI_NEL_TOTALE ? ` + interventi del settore ${esc(c.categoria)}` : ''}, nel periodo ${periodoDi(c, y)}. Gli interventi non hanno una tipologia: si contano per settore, come nel Libretto.</li>
     <li>Colori e stato come nel Report Collettivo del foglio: <b style="color:${STATI.ko.c}">Non idoneo</b> sotto il 75% delle ore previste · <b style="color:${STATI.quasi.c}">75% delle ore previste</b> tra il 75% e il 100% · <b style="color:${STATI.man.c}">Verificare</b> ore raggiunte ma individuali (con interventi) o collettive sotto la loro quota, oppure mancano manovre previste · <b style="color:${STATI.ok.c}">Idoneo</b> tutto raggiunto. OK% = ore svolte / ore previste.</li>
-    <li>Manovre previste: quelle con (N) non sono manovre previste ma attività generiche (le ore contano); quelle con (C) (es. «Addestramento provinciale di gruppo») risultano fatte con ogni addestramento collettivo della tipologia, o se scritte in un altro addestramento collettivo o individuale. Le registrazioni individuali «Addestramento provinciale di gruppo» contano come collettive. In ogni tipologia con manovre previste, gli addestramenti collettivi senza nessuna manovra prevista scritta nella registrazione o nel Piano di Sicurezza sono segnalati come «senza documentazione correlata», con la data; le altre attività senza manovre previste sono «generiche».</li>
+    <li>Manovre previste: quelle con (N) non sono manovre previste ma attività generiche (le ore contano); quelle con (C) (es. «Addestramento provinciale di gruppo») risultano fatte con ogni addestramento collettivo della tipologia, o se scritte in un altro addestramento collettivo o individuale. Le registrazioni individuali «Addestramento provinciale di gruppo» contano come collettive. In ogni tipologia con manovre previste, gli addestramenti collettivi senza nessuna manovra prevista nella registrazione o nel Piano di Sicurezza sono segnalati come «senza documentazione correlata», con la data. Nelle tipologie con una voce (C), come il SAF Basico, il collettivo è esso stesso la manovra prevista e non è mai segnalato; le altre attività senza manovre previste sono «generiche».</li>
     <li>Con corso = il corso è tra quelli in possesso in Elenco_Filtrato${DI_TUTTI.includes(c) ? ' (questa tipologia la hanno tutti)' : ''}. Il Comando di ognuno è quello di appartenenza. Clic su un nominativo per il suo report individuale.</li>
   </ul></div>`;
 }
