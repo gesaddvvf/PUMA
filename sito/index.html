@@ -384,6 +384,7 @@ const PAGINE = {
   archivio:    { titolo: 'Documentazione · Archivio Direzioni e Comandi', url: BASE + 'archive.html', gruppo: 'documentazione', css: 'archivio' },
   individuale: { titolo: 'Report Individuale', url: BASE + 'reportindividuale.html', area: 'rep', css: 'report' },
   'comando-individuale': { titolo: 'Area Comando · Report Individuale', url: BASE + 'reportindividuale.html', riservata: true, css: 'report' },
+  gestione:   { titolo: 'Area Comando · Modulo Gestione Comando', url: 'https://docs.google.com/forms/d/e/1FAIpQLSe_Jav6RwQRWk-l6lWYE_4xQ7tNg8I6Sb-Lq9NeUWJJRCldIg/viewform?embedded=true', fuori: 'https://docs.google.com/forms/d/e/1FAIpQLSe_Jav6RwQRWk-l6lWYE_4xQ7tNg8I6Sb-Lq9NeUWJJRCldIg/viewform', riservata: true, area: 'com' },
   collettivo: { titolo: 'Area Comando · Report Collettivo', url: BASE + 'reportcollettivo.html', riservata: true, css: 'report' },
   rop: { titolo: 'Area Comando · Report Collettivo ROP',  url: BASE + 'reportcollettivo.html', riservata: true, css: 'report' },
   ror: { titolo: 'Area Comando · Report Collettivo ROR',  url: BASE + 'reportcollettivo.html?tipo=direzione', riservata: true, css: 'report' },
@@ -611,7 +612,9 @@ function disegnaMenu() {
   } else {
     h += `<div class="sotto-titolo area-rep">📊 Reportistica</div>`
       + v('comando-individuale', '👤 Report individuale', 'Libretto del singolo', true, 'rep')
-      + v('collettivo', '👥 Report collettivo', 'Comando o Direzione, dal selettore', true, 'rep');
+      + v('collettivo', '👥 Report collettivo', 'Comando o Direzione, dal selettore', true, 'rep')
+      + `<div class="sotto-titolo area-com">⚙️ Gestione</div>`
+      + v('gestione', '🏢 Modulo Gestione Comando', '', true, 'com');
   }
   h += `<div class="sez-titolo">Link</div>`
     + `<a class="voce area-neu" href="https://sites.google.com/view/pumavvf/home-page" target="_blank" rel="noopener" style="text-decoration:none"><span>🌐 Sito Google P.U.M.A. ↗<small>Versione precedente</small></span></a>`;
@@ -704,7 +707,7 @@ function mostra(rotta) {
   // nell'intestazione solo la pagina (l'area si vede dal pulsante acceso); il titolo intero nel suggerimento
   $('sezione').innerHTML = pag ? `<b>${pag.titolo.split(' · ').pop()}</b>` : '<b>Home Page</b>';
   $('sezione').title = pag ? pag.titolo : '';
-  $('sezione').className = !pag ? '' : 'area-' + (GRUPPI[gruppo] ? GRUPPI[gruppo].area : pag.riservata ? 'rep' : (pag.area || 'neu'));
+  $('sezione').className = !pag ? '' : 'area-' + (GRUPPI[gruppo] ? GRUPPI[gruppo].area : (pag.area || (pag.riservata ? 'rep' : 'neu')));
   $('apri-fuori').hidden = !pag;
   if (pag) {
     $('apri-fuori').href = pag.fuori || pag.url;
