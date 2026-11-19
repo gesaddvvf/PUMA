@@ -146,9 +146,29 @@
     .tessera h4 { margin: 8px 0 6px; font-size: 15px; color: var(--acl, var(--gold)); }
     .tessera p { margin: 0; font-size: 12.5px; color: #bbb; line-height: 1.5; }
 
+    /* ---------- ATTIVITÀ: sei già registrato? ---------- */
+    #scelta { display: none; height: 100%; overflow-y: auto; box-sizing: border-box; padding: 40px 16px; }
+    body.vista-scelta #scelta { display: block; }
+    body.vista-scelta #home { display: none; }
+    .scelta-box { max-width: 640px; margin: 0 auto; background: #262626; border: 1px solid #3a3a3a; border-top: 4px solid #e53935; border-radius: 8px; padding: 26px 26px 22px; text-align: center; }
+    .scelta-box h3 { margin: 0 0 6px; font-family: var(--ft); font-size: 22px; color: #ef9a9a; }
+    .scelta-box p { margin: 0 0 22px; color: #bbb; font-size: 14px; line-height: 1.5; }
+    .scelta-bottoni { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .scelta-bottoni button {
+      background: #2a2a2a; color: #f0f0f0; border: 2px solid #e53935; border-radius: 8px; padding: 18px 14px; cursor: pointer;
+      font-family: var(--ft); font-size: 22px; font-weight: 800; transition: background .15s, transform .15s;
+    }
+    .scelta-bottoni button small { display: block; font-family: var(--ff); font-size: 12.5px; font-weight: 500; color: #ef9a9a; margin-top: 6px; }
+    .scelta-bottoni button:hover { background: #e53935; transform: translateY(-2px); }
+    .scelta-bottoni button:hover small { color: #fff; }
+    .scelta-nota { margin-top: 18px; font-size: 12.5px; color: #999; line-height: 1.6; text-align: left; }
+    .scelta-nota b { color: #ef9a9a; }
+    @media (max-width: 520px) { .scelta-bottoni { grid-template-columns: 1fr; } .scelta-box { padding: 20px 16px; } #scelta { padding: 20px 10px; } }
+
     /* ---------- DOCUMENTAZIONE (vista interna) ---------- */
     #docs { display: none; height: 100%; overflow-y: auto; box-sizing: border-box; padding: 22px 16px 40px; }
     body.vista-docs #docs { display: block; }
+    body.vista-docs #scelta { display: none; }
     body.vista-docs #home { display: none; }
     .docs-testa { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
     .docs-testa h3 { margin: 0 0 4px; color: #90caf9; font-size: 18px; }
@@ -274,7 +294,7 @@
   </div>
   <nav id="nav-buttons">
     <a class="nav-btn area-neu" id="btn-home" href="#home" data-route="home">Home Page</a>
-    <a class="nav-btn area-att" id="btn-attivita" href="#profilazione" data-route="profilazione" data-gruppo="attivita">Attività</a>
+    <a class="nav-btn area-att" id="btn-attivita" href="#attivita" data-route="attivita" data-gruppo="attivita">Attività</a>
     <a class="nav-btn area-rt" id="btn-realtime" href="#presenze" data-route="presenze" data-gruppo="realtime">Real Time</a>
     <a class="nav-btn area-doc" id="btn-doc" href="#doc-puma" data-route="doc-puma" data-gruppo="documentazione">Documentazione</a>
     <a class="nav-btn area-rep" id="btn-report" href="#individuale" data-route="individuale">Report Individuale</a>
@@ -303,7 +323,7 @@
       </div>
       <div class="sez-tit">Aree</div>
       <div class="tessere">
-        <button class="tessera area-att" type="button" data-route="profilazione">
+        <button class="tessera area-att" type="button" data-route="attivita">
           <div class="ic">📝</div><h4>Attività</h4>
           <p>Profilazione individuale, registrazione attività e pianificazione degli addestramenti collettivi.</p>
         </button>
@@ -328,6 +348,19 @@
           <p>Reportistica individuale e collettiva per ROP, ROR e Funzionario di settore. Accesso con password.</p>
         </button>
       </div>
+    </div>
+  </section>
+  <section id="scelta">
+    <div class="scelta-box">
+      <h3>📝 Attività</h3>
+      <p><b style="color:#f0f0f0;font-size:17px">Sei già registrato su P.U.M.A.?</b></p>
+      <div class="scelta-bottoni">
+        <button type="button" data-route="registrazione">SÌ<small>vai a Registrazione attività</small></button>
+        <button type="button" data-route="profilazione">NO<small>inizia dalla Profilazione individuale</small></button>
+      </div>
+      <div class="scelta-nota">Dopo la scelta trovi sempre tutti e tre i moduli nelle schede in alto:
+        <b>Profilazione individuale</b> (una volta sola, i tuoi dati), <b>Registrazione attività</b> (ogni attività svolta)
+        e <b>Pianificazione addestramenti collettivi</b> (il Piano di Sicurezza dei collettivi).</div>
     </div>
   </section>
   <section id="docs">
@@ -377,7 +410,8 @@ const PAGINE = {
   presenze:    { titolo: 'Real Time · Presenze Odierne', url: BASE + 'personaleodierno.html', gruppo: 'realtime' },
   mappa:       { titolo: 'Real Time · Mappa Real Time', url: BASE + 'trainingmaprealtime.html', gruppo: 'realtime' },
   riepilogo:   { titolo: 'Real Time · Riepilogo Globale addestramenti collettivi', url: BASE + 'mappariepilogocollettivi.html', gruppo: 'realtime' },
-  // Attività: i moduli Google (gli stessi della pagina activities.html)
+  // Attività: prima la domanda "Sei già registrato?", poi i moduli Google (gli stessi della pagina activities.html)
+  attivita:       { titolo: 'Attività', gruppo: 'attivita', interna: 'scelta' },
   profilazione:   { titolo: 'Attività · Profilazione individuale', url: 'https://docs.google.com/forms/d/e/1FAIpQLSex-4B482W87qQfynn76qGeesezbszvUNR8gDXlB-Lo-ylQWw/viewform?embedded=true', fuori: 'https://docs.google.com/forms/d/e/1FAIpQLSex-4B482W87qQfynn76qGeesezbszvUNR8gDXlB-Lo-ylQWw/viewform', gruppo: 'attivita' },
   registrazione:  { titolo: 'Attività · Registrazione attività', url: 'https://docs.google.com/forms/d/e/1FAIpQLSdbrjXdP6l7n3yrcVvoiVZsh9hRdZSVrQO4aJyF9riOhuxiBA/viewform?embedded=true', fuori: 'https://docs.google.com/forms/d/e/1FAIpQLSdbrjXdP6l7n3yrcVvoiVZsh9hRdZSVrQO4aJyF9riOhuxiBA/viewform', gruppo: 'attivita' },
   pianificazione: { titolo: 'Attività · Pianificazione addestramenti collettivi', url: 'https://docs.google.com/forms/d/e/1FAIpQLSeqQNgaqhXLEPl7ilHosVrspMHhVwUzdGL24pWWhMxKKREBhA/viewform?embedded=true', fuori: 'https://docs.google.com/forms/d/e/1FAIpQLSeqQNgaqhXLEPl7ilHosVrspMHhVwUzdGL24pWWhMxKKREBhA/viewform', gruppo: 'attivita' },
@@ -574,7 +608,7 @@ const DOC = {
 // Elenchi → pagine interne; file → anteprima Drive dentro il sito (indirizzo #f-<id>)
 const FILE = {};
 Object.entries(DOC).forEach(([k, d]) => {
-  PAGINE[k] = { titolo: 'Documentazione · ' + d.titolo, gruppo: 'documentazione', interna: true, fuori: d.pagina };
+  PAGINE[k] = { titolo: 'Documentazione · ' + d.titolo, gruppo: 'documentazione', interna: 'docs', fuori: d.pagina };
   d.sezioni.forEach(([, voci]) => voci.forEach(([t, id]) => { if (!FILE[id]) FILE[id] = { titolo: t, lista: k }; }));
 });
 function paginaFile(id) {
@@ -681,7 +715,7 @@ function vai(rotta) {
   mostra(rotta);
 }
 function mostra(rotta) {
-  const VECCHI = { realtime: 'presenze', moduli: 'profilazione' };   // vecchi indirizzi
+  const VECCHI = { realtime: 'presenze', moduli: 'attivita' };   // vecchi indirizzi
   if (VECCHI[rotta]) { rotta = VECCHI[rotta]; history.replaceState(null, '', '#' + rotta); }
   if (rotta.startsWith('f-') && !PAGINE[rotta]) { const f = paginaFile(rotta.slice(2)); if (f) PAGINE[rotta] = f; }
   const p = PAGINE[rotta];
@@ -690,7 +724,8 @@ function mostra(rotta) {
   rottaCorrente = rotta;
   const pag = PAGINE[rotta];
   document.body.classList.toggle('vista-pagina', !!(pag && pag.url));
-  document.body.classList.toggle('vista-docs', !!(pag && pag.interna));
+  document.body.classList.toggle('vista-docs', !!(pag && pag.interna === 'docs'));
+  document.body.classList.toggle('vista-scelta', !!(pag && pag.interna === 'scelta'));
   const gruppo = pag && pag.gruppo;
   document.querySelectorAll('#nav-buttons [data-route]').forEach(b => b.classList.toggle('attivo', b.dataset.route === rotta || (!!gruppo && b.dataset.gruppo === gruppo)));
   document.body.classList.toggle('con-schede', !!GRUPPI[gruppo]);
@@ -702,13 +737,13 @@ function mostra(rotta) {
     $('schede-seg').setAttribute('aria-label', GRUPPI[gruppo].nome);
     $('schede-seg').innerHTML = GRUPPI[gruppo].schede.map(([r, t]) => `<a href="#${r}" data-route="${r}" role="tab"${r === on ? ' class="on"' : ''}>${t}</a>`).join('');
   }
-  if (pag && pag.interna) disegnaDocs(rotta);
+  if (pag && pag.interna === 'docs') disegnaDocs(rotta);
   $('btn-comando').classList.toggle('attivo', !!(pag && pag.riservata) && rotta !== 'collettivo');
   // nell'intestazione solo la pagina (l'area si vede dal pulsante acceso); il titolo intero nel suggerimento
   $('sezione').innerHTML = pag ? `<b>${pag.titolo.split(' · ').pop()}</b>` : '<b>Home Page</b>';
   $('sezione').title = pag ? pag.titolo : '';
   $('sezione').className = !pag ? '' : 'area-' + (GRUPPI[gruppo] ? GRUPPI[gruppo].area : (pag.area || (pag.riservata ? 'rep' : 'neu')));
-  $('apri-fuori').hidden = !pag;
+  $('apri-fuori').hidden = !(pag && (pag.fuori || pag.url));
   if (pag) {
     $('apri-fuori').href = pag.fuori || pag.url;
     document.title = 'P.U.M.A. - ' + pag.titolo.replace('Area Comando · ', '');
