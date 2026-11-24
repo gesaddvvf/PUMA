@@ -776,11 +776,13 @@ const CICLI_AVA = [
     [49, 'Passaggio della barella su spigolo']] }
 ];
 const ORE_CICLO_AVA = 36;
-// "UPGRADE SAF AVANZATO": vale come le manovre di questo ciclo, MANOVRE_GIORNO_UPGRADE per ogni giorno
-// di corso, nell'ordine del modello (1° giorno 31-32, 2° giorno 33-34, …); le ore del giorno sono divise tra quelle manovre
+// "UPGRADE SAF AVANZATO": vale come le manovre di questo ciclo, nell'ordine del modello;
+// numero di manovre per ogni giorno di corso (1° giorno 31-32-33, 2° giorno 34-35-38, 3° giorno 39-48);
+// le ore del giorno sono divise tra quelle manovre
 const RE_UPGRADE_AVA = /\bupgrade\b/i;
 const CICLO_UPGRADE = 'I';
-const MANOVRE_GIORNO_UPGRADE = 2;
+const MANOVRE_GIORNI_UPGRADE = [3, 3, 2];
+const RESPONSABILE_UPGRADE = 'CS Camporesi Enrico - UPGRADE SAF AVANZATO';
 
 // MODELLO SAF BASICO (Allegato 4): manovre obbligatorie, raggruppate per tempo minimo
 const VOCI_BAS = [
@@ -953,8 +955,10 @@ function libroAvanzato(p, y1) {
   const manUpg = CICLI_AVA.find(x => x.n === CICLO_UPGRADE).man.map(([n]) => n);
   const giorniUpg = [...new Set(att.filter(a => analizza(a).upgrade).map(a => a.giorno))].sort();
   const manovreUpgrade = a => {
-    const i = giorniUpg.indexOf(a.giorno) * MANOVRE_GIORNO_UPGRADE;
-    return Array.from({ length: MANOVRE_GIORNO_UPGRADE }, (_, j) => ({ ciclo: CICLO_UPGRADE, n: manUpg[(i + j) % manUpg.length] }));
+    const g = giorniUpg.indexOf(a.giorno), L = MANOVRE_GIORNI_UPGRADE;
+    let inizio = 0;
+    for (let k = 0; k < g; k++) inizio += L[k % L.length];      // oltre l'ultimo giorno previsto si ricomincia
+    return Array.from({ length: L[g % L.length] }, (_, j) => ({ ciclo: CICLO_UPGRADE, n: manUpg[(inizio + j) % manUpg.length] }));
   };
   att.forEach(a => {
     const an = analizza(a);
@@ -965,7 +969,9 @@ function libroAvanzato(p, y1) {
       const quota = a.ore == null ? null : a.ore / (DIVIDI_ORE_TRA_MANOVRE ? man.length : 1);
       man.forEach(m => {
         const c = cicli.find(x => x.n === cicloDi(m, a.data, y1));
-        c.righe.find(r => r.n === m.n).voci.push(voce(a, quota));
+        const v = voce(a, quota);
+        if (an.upgrade && RESPONSABILE_UPGRADE) v.resp = RESPONSABILE_UPGRADE;
+        c.righe.find(r => r.n === m.n).voci.push(v);
       });
     } else if (an.ava || an.interventoSaf) {
       altre.push({ ...voce(a, a.ore), descr: descrizioneBreve(a) });
@@ -1509,7 +1515,7 @@ modBtn.addEventListener('click', () => {
 function noteHtml() {
   return `<div class="note-box"><b>Come vengono compilati i libretti</b><ul>
     <li><b>SAF Avanzato:</b> le manovre sono quelle indicate in «Manovre SAF Avanzato previste» del Piano di Sicurezza; il ciclo è quello scritto nella manovra (es. «II Ciclo - 27»), altrimenti il semestre del biennio.</li>
-    <li><b>Upgrade SAF Avanzato:</b> un'attività con «Upgrade» (tipologia, corso o descrizione) vale come manovre del Ciclo ${CICLO_UPGRADE}: ${MANOVRE_GIORNO_UPGRADE} manovre per ogni giorno di corso, nell'ordine del modello, con le ore del giorno divise tra le due.</li>
+    <li><b>Upgrade SAF Avanzato:</b> un'attività con «Upgrade» (tipologia, corso o descrizione) vale come manovre del Ciclo ${CICLO_UPGRADE}, nell'ordine del modello: ${MANOVRE_GIORNI_UPGRADE.map((n, i) => n + ' il ' + (i + 1) + '° giorno').join(', ')}, con le ore del giorno divise tra quelle manovre. Responsabile: ${esc(RESPONSABILE_UPGRADE)}.</li>
     <li><b>SAF Basico:</b> le manovre sono quelle indicate in «Attività addestrativa svolta (SAF BASICO)»; gli addestramenti collettivi SAF Basico senza manovre indicate vanno in «Addestramento provinciale di gruppo». Le manovre BAS di Manovre_PREVISTE che non sono nel modello (es. con (N)) sono righe in più in fondo alla tabella; le manovre (C) si cercano in tutti gli addestramenti dell'anno (se l'attività è già nel libretto, solo la data, senza ore).</li>
     <li>Le attività SAF senza manovre del modello e gli interventi con categoria SAF vanno nelle righe delle altre attività. Le attività SFA non entrano nei libretti SAF: sono nell'elenco SFA.</li>
     <li>${DIVIDI_ORE_TRA_MANOVRE ? 'Le ore di un addestramento con più manovre sono divise tra le manovre: il totale corrisponde alle ore effettive.' : 'Ogni manovra riporta le ore intere dell\'addestramento.'}</li>
