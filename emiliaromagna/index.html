@@ -776,6 +776,9 @@ const CICLI_AVA = [
     [49, 'Passaggio della barella su spigolo']] }
 ];
 const ORE_CICLO_AVA = 36;
+// "UPGRADE SAF AVANZATO": vale come tutte le manovre di questo ciclo (ore divise tra le manovre)
+const RE_UPGRADE_AVA = /\bupgrade\b/i;
+const CICLO_UPGRADE = 'I';
 
 // MODELLO SAF BASICO (Allegato 4): manovre obbligatorie, raggruppate per tempo minimo
 const VOCI_BAS = [
@@ -880,8 +883,16 @@ function analizza(a) {
   const txtAva = [testoColonne(a.manCol, RE_COL_AVANZATO), a.piano ? testoColonne(a.piano.manCol, RE_COL_AVANZATO) : ''].filter(Boolean).join('\n');
   const txtBas = [testoColonne(a.manCol, RE_COL_BASICO), a.piano ? testoColonne(a.piano.manCol, RE_COL_BASICO) : ''].filter(Boolean).join('\n');
   const manAva = manovreAva(txtAva);
+  // Upgrade SAF Avanzato (tipologia, corso, attività o descrizione): manovre del ciclo indicato
+  const testiUpg = [a.tipologia, a.attivita, a.descr, a.piano ? a.piano.tipologia : '', a.piano ? a.piano.descr : '', ...[...a.corsi].map(c => c.tipologia + ' ' + c.prof)].join('\n');
+  const upgrade = a.tipo !== 'intervento' && RE_UPGRADE_AVA.test(testiUpg) && (liv.has('AVA') || /avanzat/i.test(testiUpg));
+  if (upgrade) {
+    const c = CICLI_AVA.find(x => x.n === CICLO_UPGRADE);
+    c.man.forEach(([n]) => { if (!manAva.some(m => m.n === n && (m.ciclo || CICLO_UPGRADE) === CICLO_UPGRADE)) manAva.push({ ciclo: CICLO_UPGRADE, n }); });
+    manAva.forEach(m => { if (!m.ciclo) m.ciclo = CICLO_UPGRADE; });
+  }
   const interventoSaf = a.tipo === 'intervento' && (a.cats || []).some(c => eSaf(c.label) || eSaf(c.cat));
-  const ava = a.tipo !== 'intervento' && (liv.has('AVA') || manAva.length > 0);
+  const ava = a.tipo !== 'intervento' && (liv.has('AVA') || manAva.length > 0 || upgrade);
   const bas = a.tipo !== 'intervento' && (liv.has('BAS') || !!txtBas);
   const sfa = eSfa(a);
   const safGenerico = a.tipo !== 'intervento' && !ava && !bas && !sfa && !!a.categoria && eSaf(a.categoria);
@@ -1490,6 +1501,7 @@ modBtn.addEventListener('click', () => {
 function noteHtml() {
   return `<div class="note-box"><b>Come vengono compilati i libretti</b><ul>
     <li><b>SAF Avanzato:</b> le manovre sono quelle indicate in «Manovre SAF Avanzato previste» del Piano di Sicurezza; il ciclo è quello scritto nella manovra (es. «II Ciclo - 27»), altrimenti il semestre del biennio.</li>
+    <li><b>Upgrade SAF Avanzato:</b> un'attività con «Upgrade» (tipologia, corso o descrizione) vale come tutte le manovre del Ciclo ${CICLO_UPGRADE}, con le ore divise tra le manovre.</li>
     <li><b>SAF Basico:</b> le manovre sono quelle indicate in «Attività addestrativa svolta (SAF BASICO)»; gli addestramenti collettivi SAF Basico senza manovre indicate vanno in «Addestramento provinciale di gruppo». Le manovre BAS di Manovre_PREVISTE che non sono nel modello (es. con (N)) sono righe in più in fondo alla tabella; le manovre (C) si cercano in tutti gli addestramenti dell'anno (se l'attività è già nel libretto, solo la data, senza ore).</li>
     <li>Le attività SAF senza manovre del modello e gli interventi con categoria SAF vanno nelle righe delle altre attività. Le attività SFA non entrano nei libretti SAF: sono nell'elenco SFA.</li>
     <li>${DIVIDI_ORE_TRA_MANOVRE ? 'Le ore di un addestramento con più manovre sono divise tra le manovre: il totale corrisponde alle ore effettive.' : 'Ogni manovra riporta le ore intere dell\'addestramento.'}</li>
